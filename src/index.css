@@ -1,0 +1,321 @@
+/* ==============================================================================
+   DESIGN SYSTEM : MINIMALISME ÉPURÉ, FOND BLANC PUR & NOIR MONOCHROME
+   Inspiré du Style Suisse & Directives UI/UX Pro Max
+   ============================================================================== */
+
+:root {
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Palette monochrome épurée */
+  --bg-pure: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f4f4f5;
+  --bg-muted: #fafafa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+
+  /* Bordures nettes */
+  --border-light: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --border-dark: #09090b;
+  --border-focus: #09090b;
+
+  /* Typographie & contraste */
+  --text-main: #09090b;
+  --text-secondary: #27272a;
+  --text-muted: #71717a;
+  --text-dim: #a1a1aa;
+  --text-white: #ffffff;
+
+  /* Accents monochromes */
+  --color-black: #09090b;
+  --color-charcoal: #27272a;
+  --color-gray-dark: #52525b;
+  --color-gray-light: #e4e4e7;
+  --color-accent-subtle: #18181b;
+
+  /* Ombres ultra-légères & précises */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.07);
+
+  /* Rayons de courbure */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  /* Transitions précises */
+  --transition-fast: 0.15s ease;
+  --transition-smooth: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-pure);
+  color: var(--text-main);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-pure);
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ==============================================================================
+   COMPOSANTS & ÉLÉMENTS MINIMALISTES
+   ============================================================================== */
+
+/* Cartes épurées sur fond blanc */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-smooth), transform var(--transition-fast);
+}
+
+.glass-card-interactive:hover {
+  border-color: #d4d4d8;
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Titres monochromes nets */
+.gradient-text {
+  color: var(--color-black);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.gradient-text-gold {
+  color: var(--color-black);
+  font-weight: 800;
+}
+
+/* Boutons principaux : Noir Pur & Haute Lisibilité */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--color-black);
+  color: var(--text-white);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-black);
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #27272a;
+  border-color: #27272a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Bouton secondaire blanc avec bordure subtile */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: #d4d4d8;
+  color: #000000;
+}
+
+/* Bouton fantôme épuré */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.btn-ghost:hover {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+/* Badges pilules monochromes */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  letter-spacing: 0.02em;
+}
+
+/* Champ de code d'accès - style épuré */
+.input-code {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid var(--border-light);
+  color: var(--text-main);
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-subtle);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-code:focus {
+  border-color: var(--color-black);
+  box-shadow: 0 0 0 3px rgba(9, 9, 11, 0.08);
+}
+
+/* Champ standard */
+.input-standard {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 11px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-standard:focus {
+  border-color: var(--color-black);
+  box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.08);
+}
+
+/* Animation discrète d'erreur */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.35s ease-in-out;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: floatSlow 3s infinite ease-in-out;
+}
+
+.animate-pulse-glow {
+  /* En style épuré, pas de lueur néon agressive, ombre nette */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ==============================================================================
+   LAYOUT & CONTENEURS
+   ============================================================================== */
+
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 32px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 40px 24px;
+  }
+}
+
+/* Accessibilité pour les utilisateurs sensibles au mouvement */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float, .animate-shake {
+    animation: none !important;
+  }
+}
