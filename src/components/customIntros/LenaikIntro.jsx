@@ -659,7 +659,7 @@ export default function LenaikIntro({ onComplete }) {
               {/* Bouton : Déclenche l'explosion immédiatement au clic ou laisse le son détoner à 5s */}
               <button
                 onClick={triggerExplosion}
-                className="btn-primary party-cta-btn"
+                className="btn party-cta-btn"
                 onMouseEnter={(e) => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2, ease: 'power2.out' })}
                 onMouseLeave={(e) => gsap.to(e.currentTarget, { scale: 1, duration: 0.2, ease: 'power2.out' })}
                 style={{

@@ -148,8 +148,10 @@ export default function App() {
     }
   };
 
+  const showGuestChrome = currentGuest && activeView !== 'admin' && !showIntro;
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
+    <>
       {/* Bannière d'aide de configuration Supabase */}
       <ConfigBanner />
 
@@ -161,8 +163,23 @@ export default function App() {
         />
       )}
 
+      {showGuestChrome && (
+        <header className="navbar">
+          <div className="navbar__inner">
+            <span className="navbar__title">{EVENT_CONFIG.title}</span>
+            <div className="navbar__actions">
+              <span className="avatar avatar--sm" aria-hidden="true">{currentGuest.emoji || '🎉'}</span>
+              <span className="footnote navbar__name" style={{ color: 'var(--label)', marginRight: 4 }}>{currentGuest.first_name}</span>
+              <button type="button" className="btn btn--plain btn--small" onClick={handleLogout}>
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </header>
+      )}
+
       {/* Contenu principal selon la vue active */}
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {activeView === 'admin' ? (
           <AdminPortal onBackToSite={() => handleNavigate(currentGuest ? 'dashboard' : 'login')} />
         ) : !currentGuest ? (
@@ -181,40 +198,19 @@ export default function App() {
             guest={currentGuest}
             onOpenSurvey={handleOpenSurvey}
             onReplayAnimation={handleReplayAnimation}
-            onLogout={handleLogout}
           />
         )}
       </main>
 
-      {/* Footer discret */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '24px 16px',
-        borderTop: '1px solid var(--border-light)',
-        fontSize: '0.8rem',
-        color: 'var(--text-muted)',
-        background: '#ffffff'
-      }}>
-        <div style={{ color: '#09090b', fontWeight: 600 }}>
-          {EVENT_CONFIG.title} • {EVENT_CONFIG.datesProposed}
-        </div>
-        <div style={{ marginTop: '4px', color: 'var(--text-dim)' }}>
-          Supabase Postgres & Realtime
-        </div>
-        <div style={{ marginTop: '8px' }}>
-          <button
-            onClick={() => handleNavigate(activeView === 'admin' ? (currentGuest ? 'dashboard' : 'login') : 'admin')}
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-dim)',
-              textDecoration: 'underline',
-              cursor: 'pointer'
-            }}
-          >
-            {activeView === 'admin' ? '← Retour au site' : 'Accès Organisateur (Admin)'}
-          </button>
-        </div>
+      <footer className="site-footer">
+        <div>{EVENT_CONFIG.title} · {EVENT_CONFIG.datesProposed}</div>
+        <button
+          type="button"
+          onClick={() => handleNavigate(activeView === 'admin' ? (currentGuest ? 'dashboard' : 'login') : 'admin')}
+        >
+          {activeView === 'admin' ? 'Retour au site' : 'Espace organisateur'}
+        </button>
       </footer>
-    </div>
+    </>
   );
 }

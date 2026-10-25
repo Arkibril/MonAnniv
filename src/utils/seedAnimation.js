@@ -23,27 +23,27 @@ export function createRng(seed) {
   };
 }
 
-// Palettes monochromes et tons purs épurés
+// Palettes inspirées des couleurs système Apple
 export const COLOR_PALETTES = [
   {
-    name: 'Noir Pur & Charbon',
-    colors: ['#09090b', '#18181b', '#27272a', '#52525b', '#71717a'],
-    accent: '#09090b'
+    name: 'Bleu & Indigo',
+    colors: ['#0071e3', '#5e5ce6', '#64d2ff', '#0a84ff', '#bf5af2'],
+    accent: '#0071e3'
   },
   {
-    name: 'Éditorial Monolithique',
-    colors: ['#000000', '#18181b', '#3f3f46', '#52525b', '#a1a1aa'],
-    accent: '#18181b'
+    name: 'Coucher de soleil',
+    colors: ['#ff9f0a', '#ff375f', '#ffd60a', '#ff6482', '#ff453a'],
+    accent: '#ff375f'
   },
   {
-    name: 'Ardoise & Gris Épuré',
-    colors: ['#0f172a', '#1e293b', '#334155', '#475569', '#64748b'],
-    accent: '#0f172a'
+    name: 'Fête',
+    colors: ['#0071e3', '#34c759', '#ff9f0a', '#ff375f', '#bf5af2'],
+    accent: '#bf5af2'
   },
   {
-    name: 'Zinc Minimaliste',
-    colors: ['#18181b', '#27272a', '#3f3f46', '#71717a', '#d4d4d8'],
-    accent: '#27272a'
+    name: 'Menthe & Ciel',
+    colors: ['#30d158', '#63e6e2', '#64d2ff', '#0071e3', '#34c759'],
+    accent: '#30d158'
   }
 ];
 
@@ -99,7 +99,7 @@ export function startDeterministicCanvas(canvas, params, prefersReducedMotion = 
   window.addEventListener('resize', handleResize);
 
   if (prefersReducedMotion) {
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#f5f5f7';
     ctx.fillRect(0, 0, width, height);
     return () => window.removeEventListener('resize', handleResize);
   }
@@ -152,7 +152,7 @@ export function startDeterministicCanvas(canvas, params, prefersReducedMotion = 
 
   function render() {
     // Fond blanc pur avec effacement progressif
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.fillStyle = 'rgba(245, 245, 247, 0.35)';
     ctx.fillRect(0, 0, width, height);
 
     const centerX = width / 2;

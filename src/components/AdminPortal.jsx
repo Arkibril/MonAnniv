@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  Shield, UserPlus, Users, Copy, Check, Trash2, 
-  Download, RefreshCw, AlertCircle, Send, FileSpreadsheet,
-  Lock, Eye, EyeOff
+import {
+  Check, Trash2, Download, RefreshCw, AlertCircle, Eye, EyeOff
 } from 'lucide-react';
 import { 
   adminVerifyPassword, 
@@ -11,7 +9,8 @@ import {
   adminBulkCreateGuests, 
   adminDeleteGuest,
   adminChangePassword,
-  fetchAnswers
+  fetchAnswers,
+  isSupabaseConfigured
 } from '../lib/supabase';
 import { EVENT_CONFIG } from '../config/event';
 import { QUESTIONS } from '../config/questions';
@@ -37,7 +36,8 @@ export default function AdminPortal({ onBackToSite }) {
   const [newPassword, setNewPassword] = useState('');
   const [pwdFeedback, setPwdFeedback] = useState({ type: '', text: '' });
 
-  const [copiedCode, setCopiedCode] = useState(null);
+  const [formError, setFormError] = useState('');
+  const [bulkError, setBulkError] = useState('');
   const [copiedMsgId, setCopiedMsgId] = useState(null);
 
   const EMOJI_OPTIONS = ['🎉', '🥳', '🚀', '✨', '🎸', '🌟', '🦄', '🕺', '💃', '🥂', '🍕', '🎂', '⚡', '🔥'];
@@ -58,7 +58,7 @@ export default function AdminPortal({ onBackToSite }) {
         setIsAuthenticated(true);
         loadGuestList(password);
       } else {
-        setAuthError('Mot de passe incorrect. (Par défaut : anniv2026)');
+        setAuthError('Mot de passe incorrect.');
       }
     } catch (err) {
       setAuthError(err.message || 'Erreur lors de la vérification.');
@@ -84,12 +84,13 @@ export default function AdminPortal({ onBackToSite }) {
     if (!firstName.trim()) return;
 
     setIsCreating(true);
+    setFormError('');
     try {
       await adminCreateGuest(password, firstName.trim(), emoji);
       setFirstName('');
       await loadGuestList();
     } catch (err) {
-      alert(err.message || 'Erreur de création');
+      setFormError(err.message || 'L\'invité n\'a pas pu être ajouté.');
     } finally {
       setIsCreating(false);
     }
@@ -103,18 +104,20 @@ export default function AdminPortal({ onBackToSite }) {
       .filter(Boolean);
 
     if (names.length === 0) {
-      alert('Veuillez coller ou écrire au moins un prénom.');
+      setBulkError('Colle ou écris au moins un prénom.');
       return;
     }
 
     setIsBulkCreating(true);
+    setBulkError('');
     try {
       await adminBulkCreateGuests(password, names);
       setBulkText('');
       setActiveTab('guests');
       await loadGuestList();
     } catch (err) {
-      alert(err.message || 'Erreur lors de l’import en masse.');
+      setBulkError(err.message || 'L\'import n\'a pas abouti.');
+      await loadGuestList();
     } finally {
       setIsBulkCreating(false);
     }
@@ -144,12 +147,6 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
     navigator.clipboard.writeText(msg);
     setCopiedMsgId(guest.id);
     setTimeout(() => setCopiedMsgId(null), 2500);
-  };
-
-  const copyCodeOnly = (code) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleExportCSV = async () => {
@@ -199,527 +196,313 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
       await adminChangePassword(password, newPassword);
       setPassword(newPassword);
       setNewPassword('');
-      setPwdFeedback({ type: 'success', text: 'Mot de passe modifié avec succès dans Postgres !' });
+      setPwdFeedback({ type: 'success', text: 'Mot de passe modifié.' });
       setTimeout(() => setPwdFeedback({ type: '', text: '' }), 4000);
     } catch (err) {
       setPwdFeedback({ type: 'error', text: err.message || 'Erreur lors du changement.' });
     }
   };
 
+  const answeredCount = guests.filter((g) => g.answers_count > 0).length;
+
   if (!isAuthenticated) {
     return (
-      <div style={{
-        minHeight: 'calc(100vh - 80px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '32px 16px',
-        background: '#ffffff'
-      }}>
-        <div className="glass-card" style={{
-          maxWidth: '400px',
-          width: '100%',
-          padding: '36px 28px',
-          textAlign: 'center',
-          background: '#ffffff',
-          border: '1px solid var(--border-light)'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            background: 'var(--bg-subtle)',
-            border: '1px solid var(--border-light)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 16px',
-            color: '#09090b'
-          }}>
-            <Shield size={24} />
-          </div>
-
-          <h1 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '6px', color: '#09090b' }}>
-            Espace Organisateur
-          </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
-            Accès sécurisé pour gérer les invités et les codes
+      <div className="page page--center">
+        <div style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
+          <h1 className="title-1">Espace organisateur</h1>
+          <p className="subhead" style={{ marginTop: 8 }}>
+            Gère la liste des invités et récupère leurs réponses.
           </p>
 
-          <form onSubmit={handleLogin}>
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <form onSubmit={handleLogin} noValidate style={{ marginTop: 32 }}>
+            <label htmlFor="admin-password-input" className="headline" style={{ display: 'block', padding: '0 4px 8px' }}>
+              Mot de passe
+            </label>
+            <div className="field-wrap">
               <input
                 id="admin-password-input"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Mot de passe admin"
+                autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-standard"
-                style={{ paddingRight: '40px', fontSize: '0.95rem', textAlign: 'center' }}
+                onChange={(e) => { setPassword(e.target.value); if (authError) setAuthError(''); }}
+                className={`field ${authError ? 'field--invalid' : ''}`}
+                aria-invalid={Boolean(authError)}
                 autoFocus
               />
               <button
                 type="button"
+                className="icon-btn field-wrap__action"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)'
-                }}
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                style={{ color: 'var(--label-2)' }}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
             {authError && (
-              <div style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                color: '#b91c1c',
-                padding: '10px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.82rem',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <AlertCircle size={15} />
+              <p className="field-error" role="alert">
+                <AlertCircle size={16} aria-hidden="true" />
                 <span>{authError}</span>
-              </div>
+              </p>
             )}
 
             <button
               id="admin-login-btn"
               type="submit"
-              disabled={isVerifying}
-              className="btn-primary"
-              style={{ width: '100%', padding: '12px' }}
+              disabled={isVerifying || !password}
+              className="btn btn--filled btn--large btn--block"
+              style={{ marginTop: 24 }}
             >
-              {isVerifying ? 'Vérification...' : 'Déverrouiller l\'espace'}
+              {isVerifying ? 'Vérification…' : 'Se connecter'}
             </button>
           </form>
 
-          <div style={{
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--border-light)',
-            fontSize: '0.78rem',
-            color: 'var(--text-dim)'
-          }}>
-            Mot de passe initial dans schema.sql : <code style={{ color: '#09090b', fontWeight: 600 }}>anniv2026</code>
-          </div>
+          {!isSupabaseConfigured && (
+            <p className="footnote" style={{ marginTop: 20, padding: '0 4px' }}>
+              Mode démo : le mot de passe est <strong style={{ color: 'var(--label)' }}>anniv2026</strong>.
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
+  const tabs = [
+    { id: 'guests', label: `Invités (${guests.length})` },
+    { id: 'bulk', label: 'Importer' },
+    { id: 'export', label: 'Exporter' },
+    { id: 'security', label: 'Sécurité' }
+  ];
+
   return (
-    <div className="container" style={{ paddingBottom: '80px', background: '#ffffff' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px',
-        marginBottom: '24px'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="badge-pill">
-              <Shield size={12} />
-              <span>Organisateur connecté</span>
-            </span>
+    <>
+      <header className="navbar">
+        <div className="navbar__inner">
+          <span className="navbar__title">Espace organisateur</span>
+          <div className="navbar__actions">
+            <button
+              type="button"
+              onClick={() => loadGuestList()}
+              className="icon-btn"
+              aria-label="Actualiser la liste"
+              disabled={isLoadingGuests}
+            >
+              <RefreshCw size={18} className={isLoadingGuests ? 'animate-spin' : ''} />
+            </button>
+            <button type="button" onClick={onBackToSite} className="btn btn--plain btn--small">
+              Voir le site
+            </button>
           </div>
-          <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2rem)', fontWeight: 800, marginTop: '6px', color: '#09090b' }}>
-            Gestion des Invités.
-          </h1>
+        </div>
+      </header>
+
+      <div className="page" style={{ paddingTop: 36 }}>
+        <h1 className="large-title">Invités.</h1>
+        <p className="lede" style={{ marginTop: 10 }}>
+          {answeredCount} sur {guests.length} {answeredCount > 1 ? 'ont' : 'a'} répondu.
+        </p>
+
+        <div className="segmented" role="tablist" aria-label="Sections" style={{ marginTop: 28 }}>
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              className="segmented__item"
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => loadGuestList()}
-            className="btn-secondary"
-            title="Rafraîchir"
-            style={{ padding: '8px 12px' }}
-          >
-            <RefreshCw size={15} className={isLoadingGuests ? 'animate-spin' : ''} />
-          </button>
-          <button
-            onClick={onBackToSite}
-            className="btn-primary"
-            style={{ padding: '8px 16px', fontSize: '0.88rem' }}
-          >
-            Voir le site public
-          </button>
-        </div>
-      </div>
-
-      {/* Onglets épurés */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        borderBottom: '1px solid var(--border-light)',
-        paddingBottom: '12px',
-        marginBottom: '24px',
-        overflowX: 'auto'
-      }}>
-        <button
-          onClick={() => setActiveTab('guests')}
-          style={{
-            padding: '7px 16px',
-            borderRadius: 'var(--radius-full)',
-            background: activeTab === 'guests' ? '#09090b' : 'var(--bg-subtle)',
-            color: activeTab === 'guests' ? '#ffffff' : '#09090b',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Users size={15} />
-          <span>Invités ({guests.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('bulk')}
-          style={{
-            padding: '7px 16px',
-            borderRadius: 'var(--radius-full)',
-            background: activeTab === 'bulk' ? '#09090b' : 'var(--bg-subtle)',
-            color: activeTab === 'bulk' ? '#ffffff' : '#09090b',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <UserPlus size={15} />
-          <span>Import en masse</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('export')}
-          style={{
-            padding: '7px 16px',
-            borderRadius: 'var(--radius-full)',
-            background: activeTab === 'export' ? '#09090b' : 'var(--bg-subtle)',
-            color: activeTab === 'export' ? '#ffffff' : '#09090b',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <FileSpreadsheet size={15} />
-          <span>Export CSV</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('security')}
-          style={{
-            padding: '7px 16px',
-            borderRadius: 'var(--radius-full)',
-            background: activeTab === 'security' ? '#09090b' : 'var(--bg-subtle)',
-            color: activeTab === 'security' ? '#ffffff' : '#09090b',
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Lock size={15} />
-          <span>Sécurité</span>
-        </button>
-      </div>
-
-      {activeTab === 'guests' && (
-        <div>
-          <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: '#09090b' }}>
-              <UserPlus size={16} />
-              <span>Ajouter un invité individuel</span>
-            </h2>
-
-            <form onSubmit={handleCreateGuest} style={{
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}>
-              <select
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid var(--border-light)',
-                  padding: '10px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '1.2rem',
-                  cursor: 'pointer'
-                }}
-              >
-                {EMOJI_OPTIONS.map(em => (
-                  <option key={em} value={em}>{em}</option>
-                ))}
-              </select>
-
-              <input
-                id="admin-guest-name-input"
-                type="text"
-                placeholder="Prénom de l'invité (ex: Maxime, Sophie...)"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="input-standard"
-                style={{ flex: 1, minWidth: '200px' }}
-              />
-
-              <button
-                id="admin-add-guest-btn"
-                type="submit"
-                disabled={isCreating || !firstName.trim()}
-                className="btn-primary"
-                style={{ padding: '11px 20px', whiteSpace: 'nowrap' }}
-              >
-                {isCreating ? 'Ajout...' : 'Ajouter l\'invité'}
-              </button>
-            </form>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '12px'
-          }}>
-            {guests.map((g) => (
-              <div key={g.id} className="glass-card" style={{ padding: '18px 20px', background: '#ffffff' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '1.6rem' }}>{g.emoji}</span>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#09090b' }}>{g.first_name}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        {g.answers_count > 0 ? (
-                          <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ A répondu ({g.answers_count} rép.)</span>
-                        ) : (
-                          <span>En attente</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(g.id, g.first_name)}
-                    title="Supprimer"
-                    className="btn-ghost"
-                    style={{ padding: '4px', color: '#71717a' }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-
-                <div style={{
-                  background: 'var(--bg-subtle)',
-                  border: '1px solid var(--border-light)',
-                  padding: '7px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '12px'
-                }}>
-                  <span style={{
-                    fontFamily: 'monospace',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    letterSpacing: '0.08em',
-                    color: '#09090b'
-                  }}>
-                    {g.code}
-                  </span>
-
-                  <button
-                    onClick={() => copyCodeOnly(g.code)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: copiedCode === g.code ? '#16a34a' : 'var(--text-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {copiedCode === g.code ? <Check size={13} /> : <Copy size={13} />}
-                    <span>{copiedCode === g.code ? 'Copié' : 'Copier'}</span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => copyInvitationMessage(g)}
-                  className="btn-secondary"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    fontSize: '0.82rem',
-                    justifyContent: 'center'
-                  }}
+        {activeTab === 'guests' && (
+          <div style={{ marginTop: 32 }}>
+            <form onSubmit={handleCreateGuest} noValidate>
+              <div className="section-header">
+                <h2 className="headline">Ajouter un invité</h2>
+              </div>
+              <div className="group add-guest">
+                <label htmlFor="admin-guest-emoji" className="sr-only">Emoji</label>
+                <select
+                  id="admin-guest-emoji"
+                  value={emoji}
+                  onChange={(e) => setEmoji(e.target.value)}
+                  className="field"
+                  style={{ padding: '0 10px', fontSize: 22, textAlign: 'center', cursor: 'pointer' }}
                 >
-                  {copiedMsgId === g.id ? (
-                    <>
-                      <Check size={14} color="#16a34a" />
-                      <span style={{ color: '#16a34a', fontWeight: 600 }}>Message copié !</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send size={13} />
-                      <span>Copier le message d'invitation</span>
-                    </>
-                  )}
+                  {EMOJI_OPTIONS.map(em => (
+                    <option key={em} value={em}>{em}</option>
+                  ))}
+                </select>
+                <label htmlFor="admin-guest-name-input" className="sr-only">Prénom</label>
+                <input
+                  id="admin-guest-name-input"
+                  type="text"
+                  placeholder="Prénom"
+                  autoComplete="off"
+                  value={firstName}
+                  onChange={(e) => { setFirstName(e.target.value); if (formError) setFormError(''); }}
+                  className={`field ${formError ? 'field--invalid' : ''}`}
+                />
+                <button
+                  id="admin-add-guest-btn"
+                  type="submit"
+                  disabled={isCreating || !firstName.trim()}
+                  className="btn btn--filled btn--large add-guest__submit"
+                >
+                  {isCreating ? 'Ajout…' : 'Ajouter'}
                 </button>
               </div>
-            ))}
+              {formError ? (
+                <p className="field-error" role="alert">
+                  <AlertCircle size={16} aria-hidden="true" />
+                  <span>{formError}</span>
+                </p>
+              ) : (
+                <p className="section-footer">Le prénom sert de code d'accès.</p>
+              )}
+            </form>
+
+            <section className="section" style={{ marginTop: 36 }}>
+              <div className="section-header">
+                <h2 className="headline">Liste des invités</h2>
+                <span className="section-header__meta">{guests.length}</span>
+              </div>
+              <div className="group">
+                {guests.length === 0 ? (
+                  <p className="empty">
+                    {isLoadingGuests ? 'Chargement…' : 'Aucun invité pour l\'instant. Ajoute le premier ci-dessus.'}
+                  </p>
+                ) : guests.map((g) => (
+                  <div key={g.id} className="row" style={{ '--row-inset': '70px' }}>
+                    <span className="avatar" aria-hidden="true">{g.emoji}</span>
+                    <span className="row__body">
+                      <span className="row__title" style={{ fontWeight: 600 }}>{g.first_name}</span>
+                      <span className="row__subtitle" style={g.answers_count > 0 ? { color: 'var(--green-text)' } : undefined}>
+                        {g.answers_count > 0 ? 'A répondu' : 'En attente'}
+                      </span>
+                    </span>
+                    <span className="row__trail" style={{ gap: 2 }}>
+                      <button
+                        type="button"
+                        onClick={() => copyInvitationMessage(g)}
+                        className="btn btn--tinted btn--small"
+                        aria-label={`Copier le message d'invitation pour ${g.first_name}`}
+                      >
+                        {copiedMsgId === g.id ? (
+                          <><Check size={15} strokeWidth={2.6} aria-hidden="true" /> Copié</>
+                        ) : 'Copier'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(g.id, g.first_name)}
+                        className="icon-btn icon-btn--danger"
+                        aria-label={`Supprimer ${g.first_name}`}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="section-footer">
+                « Copier » copie le message d'invitation avec le lien du site et le prénom à saisir, prêt pour WhatsApp ou SMS.
+              </p>
+            </section>
           </div>
+        )}
 
-          {guests.length === 0 && !isLoadingGuests && (
-            <div className="glass-card" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Aucun invité pour l'instant.
+        {activeTab === 'bulk' && (
+          <form onSubmit={handleBulkCreate} noValidate style={{ marginTop: 32 }}>
+            <div className="section-header">
+              <h2 className="headline">Importer une liste</h2>
             </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'bulk' && (
-        <div className="glass-card" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '6px', color: '#09090b' }}>
-            Importation rapide d'une liste
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px' }}>
-            Collez la liste des prénoms (séparés par une virgule ou un retour à la ligne).
-          </p>
-
-          <form onSubmit={handleBulkCreate}>
+            <label htmlFor="admin-bulk-input" className="sr-only">Liste de prénoms</label>
             <textarea
+              id="admin-bulk-input"
               rows={7}
-              placeholder={`Exemple :\nLucas\nSarah\nMaxime\nJulie`}
+              placeholder={`Lucas\nSarah\nMaxime\nJulie`}
               value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#ffffff',
-                border: '1.5px solid var(--border-light)',
-                borderRadius: 'var(--radius-sm)',
-                color: '#09090b',
-                padding: '14px',
-                fontSize: '0.92rem',
-                fontFamily: 'inherit',
-                lineHeight: '1.5',
-                marginBottom: '16px'
-              }}
+              onChange={(e) => { setBulkText(e.target.value); if (bulkError) setBulkError(''); }}
+              className={`field ${bulkError ? 'field--invalid' : ''}`}
             />
-
+            {bulkError ? (
+              <p className="field-error" role="alert">
+                <AlertCircle size={16} aria-hidden="true" />
+                <span>{bulkError}</span>
+              </p>
+            ) : (
+              <p className="section-footer">Un prénom par ligne, ou séparés par des virgules. Un emoji est choisi au hasard pour chacun.</p>
+            )}
             <button
               type="submit"
               disabled={isBulkCreating || !bulkText.trim()}
-              className="btn-primary"
-              style={{ padding: '11px 22px' }}
+              className="btn btn--filled btn--large btn--block"
+              style={{ marginTop: 20 }}
             >
-              {isBulkCreating ? 'Génération...' : 'Importer et générer les codes'}
+              {isBulkCreating ? 'Import…' : 'Importer les invités'}
             </button>
           </form>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'export' && (
-        <div className="glass-card" style={{ padding: '24px' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#09090b' }}>Exportation des données</h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Téléchargez un tableur CSV avec tous les invités, leurs codes et leurs réponses.
+        {activeTab === 'export' && (
+          <div style={{ marginTop: 32 }}>
+            <div className="section-header">
+              <h2 className="headline">Exporter les réponses</h2>
+            </div>
+            <div className="group" style={{ padding: '18px 16px' }}>
+              <p className="body-text" style={{ fontSize: 15, color: 'var(--label-2)' }}>
+                Un fichier CSV avec chaque invité, son code et toutes ses réponses. S'ouvre dans Numbers, Excel ou Google Sheets.
               </p>
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="btn btn--filled"
+                style={{ marginTop: 16 }}
+              >
+                <Download size={17} aria-hidden="true" />
+                Télécharger le CSV
+              </button>
             </div>
-
-            <button
-              onClick={handleExportCSV}
-              className="btn-primary"
-              style={{ padding: '10px 18px', gap: '8px' }}
-            >
-              <Download size={15} />
-              <span>Télécharger le CSV</span>
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'security' && (
-        <div className="glass-card" style={{ padding: '24px', maxWidth: '500px' }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '6px', color: '#09090b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Lock size={16} />
-            <span>Modifier le mot de passe admin</span>
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px' }}>
-            Le mot de passe est haché avec bcrypt dans Postgres.
-          </p>
-
-          <form onSubmit={handleChangePassword}>
-            <div style={{ marginBottom: '14px' }}>
-              <input
-                type="password"
-                placeholder="Nouveau mot de passe"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="input-standard"
-              />
+        {activeTab === 'security' && (
+          <form onSubmit={handleChangePassword} noValidate style={{ marginTop: 32 }}>
+            <div className="section-header">
+              <h2 className="headline">Changer le mot de passe</h2>
             </div>
-
-            {pwdFeedback.text && (
-              <div style={{
-                padding: '9px 12px',
-                borderRadius: 'var(--radius-sm)',
-                marginBottom: '14px',
-                fontSize: '0.82rem',
-                background: pwdFeedback.type === 'success' ? '#f0fdf4' : '#fef2f2',
-                border: `1px solid ${pwdFeedback.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-                color: pwdFeedback.type === 'success' ? '#16a34a' : '#b91c1c'
-              }}>
-                {pwdFeedback.text}
-              </div>
+            <label htmlFor="admin-new-password" className="sr-only">Nouveau mot de passe</label>
+            <input
+              id="admin-new-password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Nouveau mot de passe"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className={`field ${pwdFeedback.type === 'error' ? 'field--invalid' : ''}`}
+            />
+            {pwdFeedback.text ? (
+              <p
+                className={pwdFeedback.type === 'error' ? 'field-error' : 'field-error'}
+                role={pwdFeedback.type === 'error' ? 'alert' : 'status'}
+                style={pwdFeedback.type === 'success' ? { color: 'var(--green-text)' } : undefined}
+              >
+                {pwdFeedback.type === 'error' ? <AlertCircle size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
+                <span>{pwdFeedback.text}</span>
+              </p>
+            ) : (
+              <p className="section-footer">Au moins 4 caractères. Stocké chiffré (bcrypt) dans la base.</p>
             )}
-
-            <button
-              type="submit"
-              className="btn-primary"
-              style={{ width: '100%', padding: '11px' }}
-            >
-              Enregistrer le nouveau mot de passe
+            <button type="submit" className="btn btn--filled btn--large btn--block" style={{ marginTop: 20 }}>
+              Enregistrer
             </button>
           </form>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }

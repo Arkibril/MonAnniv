@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, MessageCircle, Flame, Sparkles, Edit3 } from 'lucide-react';
 import { QUESTIONS } from '../config/questions';
 import { fetchGuests, fetchAnswers, subscribeToAnswers, isSupabaseConfigured } from '../lib/supabase';
 
-export default function Dashboard({ guest, onOpenSurvey, onReplayAnimation, onLogout }) {
+export default function Dashboard({ guest, onOpenSurvey, onReplayAnimation }) {
   const [guests, setGuests] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pulseQuestionId, setPulseQuestionId] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -34,9 +32,6 @@ export default function Dashboard({ guest, onOpenSurvey, onReplayAnimation, onLo
     const unsubscribe = subscribeToAnswers((payload) => {
       const newOrUpdated = payload.new || payload;
       if (!newOrUpdated || !newOrUpdated.guest_id) return;
-
-      setPulseQuestionId(newOrUpdated.question_id);
-      setTimeout(() => setPulseQuestionId(null), 1000);
 
       setAnswers((prevAnswers) => {
         const index = prevAnswers.findIndex(
@@ -79,6 +74,7 @@ export default function Dashboard({ guest, onOpenSurvey, onReplayAnimation, onLo
         return {
           id: a.id,
           text: a.value,
+          authorId: a.guest_id,
           authorName: author.first_name,
           authorEmoji: author.emoji,
           updatedAt: a.updated_at
@@ -144,445 +140,166 @@ export default function Dashboard({ guest, onOpenSurvey, onReplayAnimation, onLo
 
   const dateQuestion = QUESTIONS.find((q) => q.isDateQuestion || q.id === 'q_date');
   const dateStats = dateQuestion ? calculateStats(dateQuestion) : null;
+  const otherQuestions = QUESTIONS.filter((q) => !q.isDateQuestion && q.type !== 'text');
 
-  return (
-    <div className="container" style={{ paddingBottom: '80px', background: '#ffffff' }}>
-      {/* Profil de l'invité connecté et Déconnexion */}
-      {guest && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingBottom: '16px',
-          borderBottom: '1px solid var(--border-light)',
-          marginBottom: '28px',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.2rem' }}>{guest.emoji || '🎉'}</span>
-            <span style={{ fontWeight: 700, color: '#09090b', fontSize: '0.95rem' }}>{guest.first_name}</span>
-            <span style={{
-              fontFamily: 'monospace',
-              fontSize: '0.72rem',
-              color: 'var(--text-muted)',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)',
-              padding: '2px 7px',
-              borderRadius: '4px'
-            }}>
-              {guest.code}
-            </span>
-          </div>
+  const cleanTag = (text = '') =>
+    text.replace(/\p{Extended_Pictographic}|️/gu, '').replace(/\s*!+\s*$/, '').trim();
 
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="btn-ghost"
-              style={{ fontSize: '0.8rem', padding: '5px 10px', color: '#71717a' }}
-            >
-              Déconnexion
-            </button>
-          )}
-        </div>
-      )}
+  const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
-      {/* En-tête du Dashboard épuré */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <div style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#16a34a'
-              }} />
-              <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600 }}>
-                {isSupabaseConfigured ? 'Direct Supabase Realtime actif' : 'Mode Démo local actif'}
-              </span>
-            </div>
-            <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.3rem)', color: '#09090b', letterSpacing: '-0.03em' }}>
-              Tableau des Votes en Direct.
-            </h1>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={onOpenSurvey}
-              className="btn-secondary"
-            >
-              <Edit3 size={14} />
-              <span>Modifier mes réponses</span>
-            </button>
-            <button
-              onClick={onReplayAnimation}
-              className="btn-secondary"
-            >
-              <Sparkles size={14} />
-              <span>Mon animation</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Chiffres clés */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px'
-        }}>
-          <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#09090b'
-            }}>
-              <Users size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#09090b' }}>
-                {guestsWhoAnswered.length} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>/ {guests.length}</span>
-              </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Invités ayant répondu</div>
-            </div>
-          </div>
-
-          <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#09090b'
-            }}>
-              <MessageCircle size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#09090b' }}>{wallMessages.length}</div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Messages sur le Mur d'Or</div>
-            </div>
-          </div>
+  // Une ligne de résultat : emoji, libellé, compte, barre
+  const ResultRow = ({ opt, isLeader }) => (
+    <div className="row" style={{ display: 'block', '--row-inset': '60px' }}>
+      <div className="result-row">
+        <span className="row__lead" aria-hidden="true">{opt.emoji}</span>
+        <span className="row__title" style={{ minWidth: 0 }}>
+          {opt.label}
+          {isLeader && <> <span className="tag">En tête</span></>}
+          {!isLeader && opt.badge && <> <span className="tag tag--gray">{cleanTag(opt.badge)}</span></>}
+        </span>
+        <span className="row__trail">
+          <span style={{ color: 'var(--label)', fontWeight: 600 }}>{opt.count}</span>
+          <span style={{ minWidth: '3.2ch', textAlign: 'right', fontSize: 15 }}>{opt.percent}%</span>
+        </span>
+        <div
+          className="meter"
+          role="meter"
+          aria-label={`${opt.label} : ${opt.count} vote(s)`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={opt.percent}
+        >
+          <div
+            className={`meter__fill ${isLeader ? '' : 'meter__fill--muted'}`}
+            style={{ width: `${opt.percent}%` }}
+          />
         </div>
       </div>
+    </div>
+  );
 
-      {/* =====================================================================
-          1. LE GRAND DUEL DES DATES (10 OU 11 OCTOBRE)
-          ===================================================================== */}
+  const leaderId = (stats) => {
+    if (!stats || stats.totalVotes === 0) return null;
+    const max = Math.max(...stats.options.map((o) => o.count));
+    const top = stats.options.filter((o) => o.count === max);
+    return top.length === 1 ? top[0].id : null;
+  };
+
+  const dateLeader = leaderId(dateStats);
+
+  return (
+    <div className="page page--wide">
+      {/* En-tête */}
+      <header style={{ maxWidth: 640 }}>
+        <h1 className="large-title rise-in">Les votes.</h1>
+        <p className="lede rise-in rise-in--d1" style={{ marginTop: 12 }}>
+          {loading
+            ? 'Chargement des réponses…'
+            : `${guestsWhoAnswered.length} invité${guestsWhoAnswered.length > 1 ? 's' : ''} sur ${guests.length} ${guestsWhoAnswered.length > 1 ? 'ont' : 'a'} répondu, ${plural(wallMessages.length, 'message')} sur le mur.`}
+        </p>
+        <div className="rise-in rise-in--d2" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 24 }}>
+          <button type="button" onClick={onOpenSurvey} className="btn btn--filled">
+            Modifier mes réponses
+          </button>
+          <button type="button" onClick={onReplayAnimation} className="btn btn--gray">
+            Revoir mon animation
+          </button>
+          <span className="live" style={{ marginLeft: 6 }}>
+            <span className="live__dot" aria-hidden="true" />
+            {isSupabaseConfigured ? 'En direct' : 'Démo locale'}
+          </span>
+        </div>
+      </header>
+
+      {/* Le week-end : vote principal */}
       {dateQuestion && dateStats && (
-        <section style={{ marginBottom: '32px' }}>
-          <div className="glass-card" style={{
-            padding: '28px 24px',
-            background: '#ffffff',
-            border: '1.5px solid #09090b'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-              flexWrap: 'wrap',
-              gap: '8px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} className="badge-pill">
-                <Flame size={12} color="#09090b" />
-                <span>Vote Prioritaire</span>
-              </div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                {dateStats.totalVotes} vote{dateStats.totalVotes > 1 ? 's' : ''} au total
-              </div>
-            </div>
-
-            <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.6rem)', fontWeight: 800, marginBottom: '6px', color: '#09090b' }}>
-              {dateQuestion.title}
-            </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
-              {dateQuestion.subtitle}
-            </p>
-
-            {/* Cartes épurées côte à côte */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-              marginBottom: '20px'
-            }}>
-              {dateStats.options.map((opt) => (
-                <div
-                  key={opt.id}
-                  style={{
-                    background: 'var(--bg-subtle)',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '16px',
-                    textAlign: 'center'
-                  }}
-                >
-                  <div style={{ fontSize: '1.6rem', marginBottom: '4px' }}>{opt.emoji}</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#09090b', marginBottom: opt.badge ? '4px' : '8px' }}>
-                    {opt.label}
-                  </div>
-                  {opt.badge && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <span style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        background: '#09090b',
-                        color: '#ffffff',
-                        padding: '2px 7px',
-                        borderRadius: '4px',
-                        display: 'inline-block'
-                      }}>
-                        {opt.badge}
-                      </span>
-                    </div>
-                  )}
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 900,
-                    fontFamily: 'var(--font-heading)',
-                    color: '#09090b',
-                    lineHeight: 1
-                  }}>
-                    {opt.count}
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {opt.percent}% des votes
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Barre proportionnelle monochrome */}
-            {dateStats.totalVotes > 0 && (
-              <div style={{
-                height: '8px',
-                borderRadius: 'var(--radius-full)',
-                overflow: 'hidden',
-                display: 'flex',
-                background: 'var(--bg-subtle)'
-              }}>
-                {dateStats.options.map((opt) => (
-                  <div
-                    key={opt.id}
-                    title={`${opt.label}: ${opt.count} votes (${opt.percent}%)`}
-                    style={{
-                      height: '100%',
-                      width: `${opt.percent}%`,
-                      background: opt.color || '#09090b',
-                      transition: 'width 0.3s ease'
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+        <section className="section" style={{ marginTop: 48 }}>
+          <div className="section-header">
+            <h2 className="section-header__title">Le week-end</h2>
+            <span className="section-header__meta">{plural(dateStats.totalVotes, 'vote')}</span>
           </div>
+          <div className="group">
+            {dateStats.options.map((opt) => (
+              <ResultRow key={opt.id} opt={opt} isLeader={opt.id === dateLeader} />
+            ))}
+          </div>
+          {dateQuestion.subtitle && (
+            <p className="section-footer">{dateQuestion.subtitle.replace(/^💡\s*/, '')}</p>
+          )}
         </section>
       )}
 
-      {/* =====================================================================
-          2. AUTRES QUESTIONS DU QUESTIONNAIRE
-          ===================================================================== */}
-      <section style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '16px', color: '#09090b' }}>
-          Tendances de la Soirée.
-        </h2>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '16px'
-        }}>
-          {QUESTIONS.filter((q) => !q.isDateQuestion && q.type !== 'text').map((q) => {
-            const stats = calculateStats(q);
-            return (
-              <div key={q.id} className="glass-card" style={{ padding: '20px' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: '14px'
-                }}>
-                  <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#09090b' }}>{q.title}</h3>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                    {stats.totalVotes} rép.
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {stats.options.map((opt) => (
-                    <div key={opt.id}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '0.85rem',
-                        marginBottom: '4px'
-                      }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#09090b' }}>
-                          <span>{opt.emoji}</span>
-                          <span>{opt.label}</span>
-                        </span>
-                        <span style={{ fontWeight: 600, color: '#09090b', fontSize: '0.8rem' }}>
-                          {opt.count} ({opt.percent}%)
-                        </span>
-                      </div>
-                      <div style={{
-                        height: '6px',
-                        background: 'var(--bg-subtle)',
-                        borderRadius: 'var(--radius-full)',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          height: '100%',
-                          width: `${opt.percent}%`,
-                          background: '#09090b',
-                          borderRadius: 'var(--radius-full)',
-                          transition: 'width 0.3s ease'
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      {/* Les autres questions */}
+      <div className="results-grid">
+        {otherQuestions.map((q) => {
+          const stats = calculateStats(q);
+          const leader = leaderId(stats);
+          return (
+            <section key={q.id} className="section">
+              <div className="section-header">
+                <h2 className="headline">{q.title}</h2>
+                <span className="section-header__meta">
+                  {plural(stats.totalVotes, q.type === 'multiple_choice' ? 'réponse' : 'vote')}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <div className="group">
+                {stats.options.map((opt) => (
+                  <ResultRow key={opt.id} opt={opt} isLeader={opt.id === leader} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
 
-      {/* =====================================================================
-          3. MUR DES MESSAGES
-          ===================================================================== */}
-      <section style={{ marginBottom: '32px' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px'
-        }}>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b' }}>
-              Le Mur d'Or des Invités.
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Les messages et petits mots d'encouragement
+      {/* Mur des messages */}
+      <section className="section" style={{ marginTop: 48 }}>
+        <div className="section-header">
+          <h2 className="section-header__title">Le mur des messages</h2>
+          <span className="section-header__meta">{plural(wallMessages.length, 'message')}</span>
+        </div>
+        <div className="group">
+          {wallMessages.length === 0 ? (
+            <p className="empty">
+              Aucun message pour l'instant. Laisse le premier en modifiant tes réponses.
             </p>
-          </div>
-          <span className="badge-pill">
-            <MessageCircle size={12} />
-            <span>{wallMessages.length} message{wallMessages.length > 1 ? 's' : ''}</span>
-          </span>
+          ) : (
+            <div className="thread">
+              {wallMessages.map((msg) => {
+                const mine = guest && msg.authorId === guest.id;
+                return (
+                  <div key={msg.id} className={`bubble-line ${mine ? 'bubble-line--mine' : ''}`}>
+                    <span className="avatar avatar--sm" aria-hidden="true">{msg.authorEmoji}</span>
+                    <div className="bubble-wrap">
+                      <div className="bubble-author">{mine ? 'Toi' : msg.authorName}</div>
+                      <p className="bubble">{msg.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-
-        {wallMessages.length === 0 ? (
-          <div className="glass-card" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <p>Aucun message pour le moment. Laisse un mot lors du questionnaire !</p>
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-            gap: '12px'
-          }}>
-            {wallMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className="glass-card"
-                style={{
-                  padding: '18px 20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  background: '#ffffff'
-                }}
-              >
-                <p style={{
-                  fontSize: '0.92rem',
-                  lineHeight: '1.5',
-                  color: '#09090b'
-                }}>
-                  "{msg.text}"
-                </p>
-
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  borderTop: '1px solid var(--border-light)',
-                  paddingTop: '10px'
-                }}>
-                  <span style={{ fontSize: '1.1rem' }}>{msg.authorEmoji}</span>
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#09090b' }}>{msg.authorName}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
-      {/* =====================================================================
-          4. INVITÉS QUI ONT RÉPONDU
-          ===================================================================== */}
-      <section>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '14px', color: '#09090b' }}>
-          Ils ont déjà répondu ({guestsWhoAnswered.length}).
-        </h2>
-
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px'
-        }}>
-          {guestsWhoAnswered.map((g) => (
-            <div
-              key={g.id}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'var(--bg-subtle)',
-                border: '1px solid var(--border-light)',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.85rem',
-                color: '#09090b'
-              }}
-            >
-              <span>{g.emoji}</span>
-              <span style={{ fontWeight: 500 }}>{g.first_name}</span>
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#16a34a'
-              }} />
-            </div>
-          ))}
-          {guestsWhoAnswered.length === 0 && (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-              Aucune réponse pour l'instant. Les votes apparaîtront ici dès validation !
-            </div>
+      {/* Invités ayant répondu */}
+      <section className="section" style={{ marginTop: 48 }}>
+        <div className="section-header">
+          <h2 className="section-header__title">Ils ont répondu</h2>
+          <span className="section-header__meta">{guestsWhoAnswered.length} sur {guests.length}</span>
+        </div>
+        <div className="group">
+          {guestsWhoAnswered.length === 0 ? (
+            <p className="empty">Personne n'a encore répondu. Les prénoms apparaîtront ici.</p>
+          ) : (
+            <ul className="people" role="list">
+              {guestsWhoAnswered.map((g) => (
+                <li key={g.id} className="person">
+                  <span className="avatar" aria-hidden="true">{g.emoji}</span>
+                  <span className="person__name">{g.first_name}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </section>
