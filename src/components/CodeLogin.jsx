@@ -11,7 +11,7 @@ export default function CodeLogin({ onLoginSuccess, isLoggingIn }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!code.trim()) {
-      triggerError('Saisis ton code d\'accès pour continuer.');
+      triggerError('Saisis ton prénom pour continuer.');
       return;
     }
 
@@ -19,7 +19,7 @@ export default function CodeLogin({ onLoginSuccess, isLoggingIn }) {
       setErrorMessage('');
       await onLoginSuccess(code.trim());
     } catch (err) {
-      triggerError(err.message || 'Code incorrect. Vérifie les majuscules et le tiret.');
+      triggerError(err.message || 'Prénom introuvable. Vérifie l\'orthographe.');
     }
   };
 
@@ -105,10 +105,10 @@ export default function CodeLogin({ onLoginSuccess, isLoggingIn }) {
               </div>
 
               <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px', color: '#09090b' }}>
-                Entre ton code d'accès
+                Entre ton prénom
               </h2>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Reçu personnellement par SMS ou WhatsApp
+                Majuscules et accents, peu importe 😉
               </p>
             </div>
 
@@ -119,11 +119,11 @@ export default function CodeLogin({ onLoginSuccess, isLoggingIn }) {
                 type="text"
                 autoComplete="off"
                 spellCheck="false"
-                placeholder="EX: LUNA-4821"
+                placeholder="Ton prénom"
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onChange={(e) => setCode(e.target.value)}
                 className="input-code"
-                maxLength={16}
+                maxLength={40}
                 disabled={isLoggingIn}
                 autoFocus
               />
@@ -185,10 +185,10 @@ export default function CodeLogin({ onLoginSuccess, isLoggingIn }) {
                 gap: '6px'
               }}>
                 <Info size={13} color="#71717a" />
-                <span>Codes de test disponibles :</span>
+                <span>Prénoms de test disponibles :</span>
               </div>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {['CAMILLE-1024', 'THOMAS-8492', 'SARAH-3912'].map((c) => (
+                {['Camille', 'thomas', 'SARAH'].map((c) => (
                   <button
                     key={c}
                     type="button"

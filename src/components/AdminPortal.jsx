@@ -137,7 +137,7 @@ export default function AdminPortal({ onBackToSite }) {
 Tu es invité(e) à mon anniversaire (${EVENT_CONFIG.datesProposed}) !
 
 Rends-toi sur : ${siteUrl}
-Ton code d'accès personnel : ${guest.code}
+Connecte-toi simplement avec ton prénom : ${guest.code}
 
 Tu pourras y découvrir ton animation personnalisée et voter pour la date ! 🎉`;
 
@@ -491,7 +491,7 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
                 className="btn-primary"
                 style={{ padding: '11px 20px', whiteSpace: 'nowrap' }}
               >
-                {isCreating ? 'Génération...' : 'Créer & Générer le code'}
+                {isCreating ? 'Ajout...' : 'Ajouter l\'invité'}
               </button>
             </form>
           </div>

@@ -95,7 +95,21 @@ BEGIN
 END;
 $$;
 
--- RPC : Connexion d'un invité via son code
+-- Helper : normalise un prénom (minuscules, sans accents, sans espaces ni ponctuation)
+-- Ex : 'Lénaïk' -> 'lenaik', '  MATHILDE ' -> 'mathilde'
+CREATE OR REPLACE FUNCTION public._normalize_name(p_text TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT regexp_replace(
+        translate(lower(COALESCE(p_text, '')), 'àáâãäåāăąçćčďèéêëēėęěîïíīįìłñńňôöòóøōõŕřśšşťûüùúūůÿýžźż', 'aaaaaaaaacccdeeeeeeeeiiiiiilnnnooooooorrssstuuuuuuyyzzz'),
+        '[^a-z0-9]', '', 'g'
+    );
+$$;
+
+-- RPC : Connexion d'un invité avec son prénom (majuscules, accents et espaces ignorés)
+-- Pour un couple ('Mathilde & Guillaume'), chaque prénom seul fonctionne aussi.
 CREATE OR REPLACE FUNCTION public.login_with_code(p_code TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -103,19 +117,29 @@ SECURITY DEFINER
 SET search_path = public, extensions
 AS $$
 DECLARE
-    v_clean_code TEXT;
+    v_input TEXT;
     v_guest RECORD;
 BEGIN
-    v_clean_code := UPPER(TRIM(p_code));
+    v_input := public._normalize_name(p_code);
+
+    IF LENGTH(v_input) = 0 THEN
+        RAISE EXCEPTION 'Entre ton prenom pour continuer.';
+    END IF;
 
     SELECT g.id, g.first_name, g.emoji, gc.code
     INTO v_guest
     FROM public.guest_codes gc
     JOIN public.guests g ON g.id = gc.guest_id
-    WHERE UPPER(gc.code) = v_clean_code;
+    WHERE public._normalize_name(gc.code) = v_input
+       OR v_input IN (
+            SELECT public._normalize_name(part)
+            FROM regexp_split_to_table(g.first_name, '\s*[&+,/]\s*|\s+et\s+', 'i') AS part
+       )
+    ORDER BY (public._normalize_name(gc.code) = v_input) DESC, g.created_at
+    LIMIT 1;
 
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'Code invalide ou introuvable. Verifiez les majuscules et le tiret !';
+        RAISE EXCEPTION 'Prenom introuvable. Verifie l''orthographe ou demande a Jibril !';
     END IF;
 
     RETURN jsonb_build_object(
@@ -145,10 +169,11 @@ DECLARE
 BEGIN
     v_clean_code := UPPER(TRIM(p_code));
 
-    -- Validation du code
+    -- Validation du code (= prénom, casse et accents ignorés)
     SELECT guest_id INTO v_guest_id
     FROM public.guest_codes
-    WHERE UPPER(code) = v_clean_code;
+    WHERE public._normalize_name(code) = public._normalize_name(p_code)
+    LIMIT 1;
 
     IF v_guest_id IS NULL THEN
         RAISE EXCEPTION 'Code invalide ou session expiree.';
@@ -211,34 +236,29 @@ BEGIN
 END;
 $$;
 
--- Helper interne : Générer un code unique convivial (ex: LUNA-4821 ou THEO-9382)
+-- Helper interne : le code d'un invité est simplement son prénom.
+-- Refuse un doublon (même prénom à la casse / aux accents près).
 CREATE OR REPLACE FUNCTION public._generate_unique_guest_code(p_name TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_prefix TEXT;
-    v_suffix INT;
     v_code TEXT;
-    v_exists BOOLEAN;
 BEGIN
-    -- Nettoie le prénom pour ne garder que 3 à 5 lettres majuscules
-    v_prefix := UPPER(REGEXP_REPLACE(p_name, '[^a-zA-Z]', '', 'g'));
-    IF LENGTH(v_prefix) = 0 THEN
-        v_prefix := 'INVITE';
-    ELSE
-        v_prefix := SUBSTRING(v_prefix FROM 1 FOR 6);
+    v_code := TRIM(p_name);
+
+    IF LENGTH(public._normalize_name(v_code)) = 0 THEN
+        RAISE EXCEPTION 'Le prenom doit contenir au moins une lettre.';
     END IF;
 
-    LOOP
-        v_suffix := FLOOR(1000 + random() * 9000)::INT;
-        v_code := v_prefix || '-' || v_suffix::TEXT;
+    IF EXISTS (
+        SELECT 1 FROM public.guest_codes
+        WHERE public._normalize_name(code) = public._normalize_name(v_code)
+    ) THEN
+        RAISE EXCEPTION 'Un invite avec le prenom "%" existe deja. Ajoute une initiale (ex : % B.).', v_code, v_code;
+    END IF;
 
-        SELECT EXISTS(SELECT 1 FROM public.guest_codes WHERE code = v_code) INTO v_exists;
-        IF NOT v_exists THEN
-            RETURN v_code;
-        END IF;
-    END LOOP;
+    RETURN v_code;
 END;
 $$;
 

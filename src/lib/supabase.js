@@ -37,9 +37,9 @@ const getMockGuests = () => {
   const data = localStorage.getItem(MOCK_STORAGE_KEY_GUESTS);
   if (data) return JSON.parse(data);
   const initial = [
-    { id: '11111111-1111-4111-8111-111111111111', first_name: 'Camille', emoji: '✨', code: 'CAMILLE-1024', created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
-    { id: '22222222-2222-4222-8222-222222222222', first_name: 'Thomas', emoji: '🚀', code: 'THOMAS-8492', created_at: new Date(Date.now() - 3600000 * 12).toISOString() },
-    { id: '33333333-3333-4333-8333-333333333333', first_name: 'Sarah', emoji: '🦄', code: 'SARAH-3912', created_at: new Date(Date.now() - 3600000 * 4).toISOString() }
+    { id: '11111111-1111-4111-8111-111111111111', first_name: 'Camille', emoji: '✨', code: 'Camille', created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
+    { id: '22222222-2222-4222-8222-222222222222', first_name: 'Thomas', emoji: '🚀', code: 'Thomas', created_at: new Date(Date.now() - 3600000 * 12).toISOString() },
+    { id: '33333333-3333-4333-8333-333333333333', first_name: 'Sarah', emoji: '🦄', code: 'Sarah', created_at: new Date(Date.now() - 3600000 * 4).toISOString() }
   ];
   localStorage.setItem(MOCK_STORAGE_KEY_GUESTS, JSON.stringify(initial));
   return initial;
@@ -71,14 +71,22 @@ const getMockAnswers = () => {
 /**
  * Connexion d'un invité via son code secret
  */
+// Normalise un prénom : minuscules, sans accents, sans espaces ni ponctuation
+export const normalizeName = (str) =>
+  (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+
 export async function loginWithCode(code) {
-  const cleanCode = (code || '').trim().toUpperCase();
+  const cleanCode = (code || '').trim();
 
   if (!isSupabaseConfigured) {
     const guests = getMockGuests();
-    const guest = guests.find(g => g.code.toUpperCase() === cleanCode);
+    const input = normalizeName(cleanCode);
+    const guest = guests.find(g =>
+      normalizeName(g.code) === input ||
+      g.first_name.split(/\s*[&+,/]\s*|\s+et\s+/i).some(part => normalizeName(part) === input)
+    );
     if (!guest) {
-      throw new Error("Code introuvable. Testez avec 'CAMILLE-1024', 'THOMAS-8492' ou créez-en un dans /admin !");
+      throw new Error("Prénom introuvable. Testez avec 'Camille', 'Thomas' ou créez-en un dans /admin !");
     }
     return {
       id: guest.id,
@@ -103,11 +111,11 @@ export async function loginWithCode(code) {
  * Enregistrer ou mettre à jour la réponse d'un invité
  */
 export async function saveAnswer(code, questionId, value) {
-  const cleanCode = (code || '').trim().toUpperCase();
+  const cleanCode = (code || '').trim();
 
   if (!isSupabaseConfigured) {
     const guests = getMockGuests();
-    const guest = guests.find(g => g.code.toUpperCase() === cleanCode);
+    const guest = guests.find(g => normalizeName(g.code) === normalizeName(cleanCode));
     if (!guest) throw new Error('Session expirée ou code invalide.');
 
     const answers = getMockAnswers();
@@ -271,8 +279,11 @@ export async function adminCreateGuest(password, firstName, emoji = '🎉') {
     const cleanName = (firstName || '').trim();
     if (!cleanName) throw new Error('Le prénom ne peut être vide.');
 
-    const prefix = cleanName.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6) || 'INVITE';
-    const code = `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+    if (!normalizeName(cleanName)) throw new Error('Le prénom doit contenir au moins une lettre.');
+    if (guests.some(g => normalizeName(g.code) === normalizeName(cleanName))) {
+      throw new Error(`Un invité avec le prénom "${cleanName}" existe déjà. Ajoute une initiale (ex : ${cleanName} B.).`);
+    }
+    const code = cleanName;
     const newGuest = {
       id: 'mock_' + Math.random().toString(36).slice(2),
       first_name: cleanName,

@@ -51,6 +51,16 @@ export default function App() {
           if (parsed && parsed.code) {
             setCurrentGuest(parsed);
             loadGuestAnswers(parsed.id);
+            // Les codes sont désormais les prénoms : on rafraîchit la session
+            // (une ancienne session avec un code type LNAK-4821 est mise à jour).
+            loginWithCode(parsed.first_name)
+              .then((fresh) => {
+                if (fresh && fresh.id === parsed.id && fresh.code !== parsed.code) {
+                  setCurrentGuest(fresh);
+                  localStorage.setItem(STORAGE_KEY_GUEST, JSON.stringify(fresh));
+                }
+              })
+              .catch(() => {});
             setActiveView(requestedView === 'quiz' || requestedView === 'onboarding' ? 'onboarding' : (prev => prev === 'admin' ? 'admin' : 'dashboard'));
           }
         }
