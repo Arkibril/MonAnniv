@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CodeLogin from './components/CodeLogin';
 import PersonalizedIntro from './components/PersonalizedIntro';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
 import AdminPortal from './components/AdminPortal';
 import ConfigBanner from './components/ConfigBanner';
+import Dock from './components/Dock';
+import { LogOut } from 'lucide-react';
 import { loginWithCode, fetchAnswers } from './lib/supabase';
-import { EVENT_CONFIG } from './config/event';
 
 const STORAGE_KEY_GUEST = 'monanniv_current_guest';
 
@@ -109,14 +110,16 @@ export default function App() {
   };
 
   // Fin de l'animation d'entrée : mène TOUJOURS au quizz
-  const handleIntroComplete = () => {
+  const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
     setActiveView('onboarding');
-  };
+    window.scrollTo({ top: 0 });
+  }, []);
 
   // Fin du questionnaire d'onboarding
   const handleFinishOnboarding = () => {
     setActiveView('dashboard');
+    window.scrollTo({ top: 0 });
   };
 
   // Rejouer l'animation personnalisée
@@ -127,6 +130,7 @@ export default function App() {
   // Ouvrir le questionnaire pour modifier ses réponses
   const handleOpenSurvey = () => {
     setActiveView('onboarding');
+    window.scrollTo({ top: 0 });
   };
 
   // Déconnexion
@@ -148,69 +152,69 @@ export default function App() {
     }
   };
 
-  const showGuestChrome = currentGuest && activeView !== 'admin' && !showIntro;
+  const showGuestChrome = currentGuest && activeView === 'dashboard' && !showIntro;
+
+  const hour = new Date().getHours();
+  const hello = hour >= 18 || hour < 5 ? 'Bonsoir,' : 'Salut,';
 
   return (
     <>
-      {/* Bannière d'aide de configuration Supabase */}
       <ConfigBanner />
 
-      {/* Animation d'entrée plein écran personnalisée selon le seed */}
+      {/* Animation d'entrée plein écran personnalisée */}
       {showIntro && currentGuest && (
-        <PersonalizedIntro
-          guest={currentGuest}
-          onComplete={handleIntroComplete}
-        />
+        <PersonalizedIntro guest={currentGuest} onComplete={handleIntroComplete} />
       )}
 
       {showGuestChrome && (
-        <header className="navbar">
-          <div className="navbar__inner">
-            <span className="navbar__title">{EVENT_CONFIG.title}</span>
-            <div className="navbar__actions">
-              <span className="avatar avatar--sm" aria-hidden="true">{currentGuest.emoji || '🎉'}</span>
-              <span className="footnote navbar__name" style={{ color: 'var(--label)', marginRight: 4 }}>{currentGuest.first_name}</span>
-              <button type="button" className="btn btn--plain btn--small" onClick={handleLogout}>
-                Se déconnecter
-              </button>
+        <header className="topbar topbar--wide">
+          <div className="topbar__inner">
+            <div className="greet">
+              <span className="avatar avatar--white" aria-hidden="true">{currentGuest.emoji || '🎉'}</span>
+              <span className="greet__text">
+                <span className="greet__hello">{hello}</span>
+                <span className="greet__name">{currentGuest.first_name}</span>
+              </span>
             </div>
+            <button type="button" className="round" onClick={handleLogout} aria-label="Se déconnecter">
+              <LogOut size={19} strokeWidth={2.2} aria-hidden="true" />
+            </button>
           </div>
         </header>
       )}
 
-      {/* Contenu principal selon la vue active */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {activeView === 'admin' ? (
           <AdminPortal onBackToSite={() => handleNavigate(currentGuest ? 'dashboard' : 'login')} />
         ) : !currentGuest ? (
-          <CodeLogin
-            onLoginSuccess={handleLogin}
-            isLoggingIn={isLoggingIn}
-          />
+          <CodeLogin onLoginSuccess={handleLogin} isLoggingIn={isLoggingIn} />
         ) : activeView === 'onboarding' ? (
-          <Onboarding
-            guest={currentGuest}
-            initialAnswers={guestAnswers}
-            onFinish={handleFinishOnboarding}
-          />
+          <Onboarding guest={currentGuest} initialAnswers={guestAnswers} onFinish={handleFinishOnboarding} />
         ) : (
-          <Dashboard
-            guest={currentGuest}
-            onOpenSurvey={handleOpenSurvey}
-            onReplayAnimation={handleReplayAnimation}
-          />
+          <Dashboard guest={currentGuest} />
         )}
       </main>
 
-      <footer className="site-footer">
-        <div>{EVENT_CONFIG.title} · {EVENT_CONFIG.datesProposed}</div>
-        <button
-          type="button"
-          onClick={() => handleNavigate(activeView === 'admin' ? (currentGuest ? 'dashboard' : 'login') : 'admin')}
-        >
-          {activeView === 'admin' ? 'Retour au site' : 'Espace organisateur'}
-        </button>
-      </footer>
+      {showGuestChrome && (
+        <Dock
+          active="votes"
+          onVotes={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onAnswers={handleOpenSurvey}
+          onReplay={handleReplayAnimation}
+        />
+      )}
+
+      {activeView !== 'onboarding' && !showIntro && (
+        <footer className={`site-footer ${showGuestChrome ? 'site-footer--lifted' : ''}`}>
+          <button
+            type="button"
+            className="btn btn--link btn--sm"
+            onClick={() => handleNavigate(activeView === 'admin' ? (currentGuest ? 'dashboard' : 'login') : 'admin')}
+          >
+            {activeView === 'admin' ? 'Retour au site' : 'Espace organisateur'}
+          </button>
+        </footer>
+      )}
     </>
   );
 }

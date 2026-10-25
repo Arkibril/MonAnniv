@@ -1,114 +1,113 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Player } from '@remotion/player';
+import gsap from 'gsap';
+import { ArrowRight } from 'lucide-react';
 import { EVENT_CONFIG } from '../config/event';
-import { getAnimationParams, startDeterministicCanvas } from '../utils/seedAnimation';
 import LenaikIntro from './customIntros/LenaikIntro';
+import { WelcomeComposition, WELCOME_SIZE } from '../motion/WelcomeComposition';
+import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
+
+const AUTO_ADVANCE_S = 8;
 
 export default function PersonalizedIntro({ guest, onComplete }) {
-  // Détection d'intro sur-mesure pour Lénaïk
-  const normalizedName = (guest?.first_name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Intro sur-mesure pour Lénaïk : on n'y touche pas
+  const normalizedName = (guest?.first_name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const isLenaik = normalizedName.includes('lenaik') || (guest?.code || '').startsWith('LNAK');
 
   if (isLenaik) {
     return <LenaikIntro onComplete={onComplete} />;
   }
-  return <SeededIntro guest={guest} onComplete={onComplete} />;
+  return <WelcomeIntro guest={guest} onComplete={onComplete} />;
 }
 
-function SeededIntro({ guest, onComplete }) {
-  const canvasRef = useRef(null);
-  const [params, setParams] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(6.0);
-  const TOTAL_DURATION = 6.0;
+function WelcomeIntro({ guest, onComplete }) {
+  const reduced = usePrefersReducedMotion();
+  const bodyRef = useRef(null);
+  const timerRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  const firstName = guest?.first_name || '';
+  const initial = firstName.trim().charAt(0).toUpperCase() || 'J';
 
   useEffect(() => {
-    if (!guest) return;
-    const computedParams = getAnimationParams(guest.code);
-    setParams(computedParams);
+    buttonRef.current?.focus({ preventScroll: true });
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const cleanup = startDeterministicCanvas(canvasRef.current, computedParams, prefersReduced);
-
-    const interval = 100;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 0.1) {
-          clearInterval(timer);
-          onComplete();
-          return 0;
-        }
-        return Math.max(0, prev - interval / 1000);
+    const tl = gsap.timeline();
+    if (!reduced && bodyRef.current) {
+      tl.from(bodyRef.current.querySelectorAll('[data-rise]'), {
+        y: 26,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'expo.out',
+        stagger: 0.08,
+        delay: 0.9,
+        clearProps: 'transform,opacity',
       });
-    }, interval);
+    }
+
+    // Avance automatique, avec une barre qui montre le temps restant
+    const bar = gsap.to(timerRef.current, {
+      scaleX: 1,
+      duration: AUTO_ADVANCE_S,
+      ease: 'none',
+      onComplete,
+    });
 
     return () => {
-      cleanup();
-      clearInterval(timer);
+      tl.kill();
+      bar.kill();
     };
-  }, [guest, onComplete]);
+  }, [onComplete, reduced]);
 
-  if (!guest || !params) return null;
-
-  const progressPercent = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+  if (!guest) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Bienvenue ${guest.first_name}`}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        background: 'var(--bg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'var(--gutter)'
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
-      />
+    <div className="welcome" role="dialog" aria-modal="true" aria-label={`Bienvenue ${firstName}`}>
+      <div className="welcome__stage" aria-hidden="true">
+        <Player
+          component={WelcomeComposition}
+          inputProps={{ seed: guest.code || firstName, emoji: guest.emoji || '🎉', initial }}
+          durationInFrames={WELCOME_SIZE.durationInFrames}
+          compositionWidth={WELCOME_SIZE.width}
+          compositionHeight={WELCOME_SIZE.height}
+          fps={WELCOME_SIZE.fps}
+          autoPlay={!reduced}
+          loop={false}
+          moveToBeginningWhenEnded={false}
+          initialFrame={reduced ? WELCOME_SIZE.durationInFrames - 1 : 0}
+          controls={false}
+          clickToPlay={false}
+          doubleClickToFullscreen={false}
+          spaceKeyToPlayOrPause={false}
+          acknowledgeRemotionLicense
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
 
-      <div
-        className="sheet rise-in"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          width: '100%',
-          maxWidth: 420,
-          padding: '40px 28px 28px',
-          textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.82)',
-          WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-          backdropFilter: 'saturate(180%) blur(24px)'
-        }}
-      >
-        <span className="avatar avatar--xl" aria-hidden="true" style={{ background: '#fff', boxShadow: 'var(--shadow-1)' }}>
-          {guest.emoji || params.mascotEmoji}
-        </span>
-
-        <h1 className="title-1" style={{ marginTop: 22 }}>
-          Bienvenue {guest.first_name}.
+      <div className="welcome__body" ref={bodyRef}>
+        <h1 className="display" data-rise>
+          <span className="display__pre">Bienvenue,</span>
+          {firstName}.
         </h1>
-        <p className="subhead" style={{ marginTop: 8, fontSize: 17 }}>
-          Tu es invité(e) à l'anniversaire de {EVENT_CONFIG.hostName}.
+        <p className="lede" data-rise style={{ margin: '14px auto 0' }}>
+          Tu es invité{EVENT_CONFIG.hostGender === 'f' ? 'e' : '(e)'} à l'anniversaire de {EVENT_CONFIG.hostName}. Quelques questions, deux minutes, et tu vois les votes de tout le monde.
         </p>
 
-        <div className="progress" style={{ marginTop: 28 }} aria-hidden="true">
-          <div className="progress__fill" style={{ width: `${progressPercent}%`, transition: 'width 0.1s linear' }} />
+        <div data-rise style={{ marginTop: 30 }}>
+          <button
+            ref={buttonRef}
+            type="button"
+            onClick={onComplete}
+            className="btn btn--ink btn--lg btn--block"
+            style={{ maxWidth: 400 }}
+          >
+            Répondre aux questions
+            <span className="btn__knob" aria-hidden="true"><ArrowRight size={18} strokeWidth={2.4} /></span>
+          </button>
+          <div className="welcome__timer" aria-hidden="true">
+            <div className="welcome__timer-fill" ref={timerRef} />
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={onComplete}
-          className="btn btn--filled btn--large btn--block"
-          style={{ marginTop: 20 }}
-        >
-          Répondre aux questions
-        </button>
       </div>
     </div>
   );

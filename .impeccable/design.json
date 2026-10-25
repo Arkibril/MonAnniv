@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "source": "src/index.css",
+  "shadows": {
+    "lift": "0 1px 2px rgba(11,11,12,.05), 0 6px 18px rgba(11,11,12,.06)",
+    "lift-2": "0 2px 4px rgba(11,11,12,.05), 0 14px 36px rgba(11,11,12,.10)",
+    "float": "0 10px 24px rgba(11,11,12,.22), 0 2px 6px rgba(11,11,12,.12)"
+  },
+  "motion": {
+    "ease": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "gsapEase": "expo.out",
+    "fast": "140ms",
+    "base": "260ms",
+    "remotion": { "mosaic": "480 frames @30fps, boucle", "welcome": "150 frames @30fps, une fois" }
+  },
+  "breakpoints": { "tablet": "720px", "login-split": "960px", "desktop": "1040px" },
+  "rules": [
+    "Fond blanc pur partout",
+    "Un seul accent violet, réservé au direct et à la sélection",
+    "Choisir, c'est encrer : l'option choisie devient une carte noire",
+    "Une pilule noire par écran pour l'action principale"
+  ],
+  "components": {
+    "button-primary": "<button class=\"btn btn--ink btn--lg\">Continuer <span class=\"btn__knob\">→</span></button>",
+    "chip": "<button class=\"chip\" aria-selected=\"true\">Invités · 3</button>",
+    "askbar": "<div class=\"askbar\"><input class=\"askbar__input\" placeholder=\"Ton prénom\"><button class=\"askbar__go\">→</button></div>",
+    "option": "<button class=\"option\" role=\"radio\" aria-checked=\"true\"><span class=\"option__emoji\">🎄</span><span class=\"option__body\"><span class=\"option__label\">Week-end du 25 Décembre</span></span><span class=\"option__check\">✓</span></button>"
+  }
+}

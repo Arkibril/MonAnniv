@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Check, Trash2, Download, RefreshCw, AlertCircle, Eye, EyeOff
+  Check, Trash2, Download, RefreshCw, AlertCircle, Eye, EyeOff, ChevronLeft, LockKeyhole, ArrowRight
 } from 'lucide-react';
 import { 
   adminVerifyPassword, 
@@ -207,69 +207,80 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
 
   if (!isAuthenticated) {
     return (
-      <div className="page page--center">
-        <div style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
-          <h1 className="title-1">Espace organisateur</h1>
-          <p className="subhead" style={{ marginTop: 8 }}>
+      <>
+        <div className="topbar">
+          <div className="topbar__inner">
+            <button type="button" className="round" onClick={onBackToSite} aria-label="Retour au site">
+              <ChevronLeft size={22} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+            <span className="topbar__spacer" />
+          </div>
+        </div>
+        <div className="page" style={{ paddingTop: 24 }}>
+          <h1 className="display">
+            <span className="display__pre">Espace</span>
+            organisateur.
+          </h1>
+          <p className="lede" style={{ marginTop: 14 }}>
             Gère la liste des invités et récupère leurs réponses.
           </p>
 
           <form onSubmit={handleLogin} noValidate style={{ marginTop: 32 }}>
-            <label htmlFor="admin-password-input" className="headline" style={{ display: 'block', padding: '0 4px 8px' }}>
-              Mot de passe
-            </label>
-            <div className="field-wrap">
+            <label htmlFor="admin-password-input" className="sr-only">Mot de passe</label>
+            <div className={`askbar ${authError ? 'askbar--invalid' : ''}`}>
+              <LockKeyhole size={20} className="askbar__icon" aria-hidden="true" />
               <input
                 id="admin-password-input"
+                className="askbar__input"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
+                placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (authError) setAuthError(''); }}
-                className={`field ${authError ? 'field--invalid' : ''}`}
                 aria-invalid={Boolean(authError)}
+                aria-describedby={authError ? 'admin-error' : undefined}
                 autoFocus
               />
               <button
                 type="button"
-                className="icon-btn field-wrap__action"
+                className="round round--ghost round--sm"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                style={{ color: 'var(--label-2)' }}
+                style={{ color: 'var(--ink-2)' }}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              <button
+                id="admin-login-btn"
+                type="submit"
+                className="askbar__go"
+                disabled={isVerifying || !password}
+                aria-label="Se connecter"
+              >
+                <ArrowRight size={22} strokeWidth={2.4} className={isVerifying ? 'animate-spin' : ''} aria-hidden="true" />
               </button>
             </div>
 
             {authError && (
-              <p className="field-error" role="alert">
+              <p id="admin-error" className="field-msg" role="alert">
                 <AlertCircle size={16} aria-hidden="true" />
                 <span>{authError}</span>
               </p>
             )}
-
-            <button
-              id="admin-login-btn"
-              type="submit"
-              disabled={isVerifying || !password}
-              className="btn btn--filled btn--large btn--block"
-              style={{ marginTop: 24 }}
-            >
-              {isVerifying ? 'Vérification…' : 'Se connecter'}
-            </button>
           </form>
 
           {!isSupabaseConfigured && (
-            <p className="footnote" style={{ marginTop: 20, padding: '0 4px' }}>
-              Mode démo : le mot de passe est <strong style={{ color: 'var(--label)' }}>anniv2026</strong>.
+            <p className="field-hint" style={{ marginTop: 18 }}>
+              Mode démo : le mot de passe est <strong style={{ color: 'var(--ink)' }}>anniv2026</strong>.
             </p>
           )}
         </div>
-      </div>
+      </>
     );
   }
 
   const tabs = [
-    { id: 'guests', label: `Invités (${guests.length})` },
+    { id: 'guests', label: `Invités · ${guests.length}` },
     { id: 'bulk', label: 'Importer' },
     { id: 'export', label: 'Exporter' },
     { id: 'security', label: 'Sécurité' }
@@ -277,40 +288,38 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
 
   return (
     <>
-      <header className="navbar">
-        <div className="navbar__inner">
-          <span className="navbar__title">Espace organisateur</span>
-          <div className="navbar__actions">
-            <button
-              type="button"
-              onClick={() => loadGuestList()}
-              className="icon-btn"
-              aria-label="Actualiser la liste"
-              disabled={isLoadingGuests}
-            >
-              <RefreshCw size={18} className={isLoadingGuests ? 'animate-spin' : ''} />
-            </button>
-            <button type="button" onClick={onBackToSite} className="btn btn--plain btn--small">
-              Voir le site
-            </button>
-          </div>
+      <div className="topbar">
+        <div className="topbar__inner">
+          <button type="button" className="round" onClick={onBackToSite} aria-label="Voir le site">
+            <ChevronLeft size={22} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+          <span className="topbar__title">Organisateur</span>
+          <button
+            type="button"
+            onClick={() => loadGuestList()}
+            className="round"
+            aria-label="Actualiser la liste"
+            disabled={isLoadingGuests}
+          >
+            <RefreshCw size={18} strokeWidth={2.2} className={isLoadingGuests ? 'animate-spin' : ''} aria-hidden="true" />
+          </button>
         </div>
-      </header>
+      </div>
 
-      <div className="page" style={{ paddingTop: 36 }}>
-        <h1 className="large-title">Invités.</h1>
-        <p className="lede" style={{ marginTop: 10 }}>
+      <div className="page" style={{ paddingTop: 16 }}>
+        <h1 className="display">Invités.</h1>
+        <p className="lede" style={{ marginTop: 12 }}>
           {answeredCount} sur {guests.length} {answeredCount > 1 ? 'ont' : 'a'} répondu.
         </p>
 
-        <div className="segmented" role="tablist" aria-label="Sections" style={{ marginTop: 28 }}>
+        <div className="chips chips--scroll" role="tablist" aria-label="Sections" style={{ marginTop: 22 }}>
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               role="tab"
               aria-selected={activeTab === t.id}
-              className="segmented__item"
+              className="chip"
               onClick={() => setActiveTab(t.id)}
             >
               {t.label}
@@ -319,19 +328,17 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
         </div>
 
         {activeTab === 'guests' && (
-          <div style={{ marginTop: 32 }}>
-            <form onSubmit={handleCreateGuest} noValidate>
-              <div className="section-header">
-                <h2 className="headline">Ajouter un invité</h2>
-              </div>
-              <div className="group add-guest">
+          <div style={{ marginTop: 22 }}>
+            <form onSubmit={handleCreateGuest} noValidate className="card">
+              <h2 className="headline" style={{ marginBottom: 14 }}>Ajouter un invité</h2>
+              <div className="add-row">
                 <label htmlFor="admin-guest-emoji" className="sr-only">Emoji</label>
                 <select
                   id="admin-guest-emoji"
                   value={emoji}
                   onChange={(e) => setEmoji(e.target.value)}
                   className="field"
-                  style={{ padding: '0 10px', fontSize: 22, textAlign: 'center', cursor: 'pointer' }}
+                  style={{ background: '#fff' }}
                 >
                   {EMOJI_OPTIONS.map(em => (
                     <option key={em} value={em}>{em}</option>
@@ -346,69 +353,73 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
                   value={firstName}
                   onChange={(e) => { setFirstName(e.target.value); if (formError) setFormError(''); }}
                   className={`field ${formError ? 'field--invalid' : ''}`}
+                  style={{ background: '#fff' }}
+                  aria-invalid={Boolean(formError)}
                 />
                 <button
                   id="admin-add-guest-btn"
                   type="submit"
                   disabled={isCreating || !firstName.trim()}
-                  className="btn btn--filled btn--large add-guest__submit"
+                  className="btn btn--ink btn--lg"
                 >
                   {isCreating ? 'Ajout…' : 'Ajouter'}
                 </button>
               </div>
               {formError ? (
-                <p className="field-error" role="alert">
+                <p className="field-msg" role="alert">
                   <AlertCircle size={16} aria-hidden="true" />
                   <span>{formError}</span>
                 </p>
               ) : (
-                <p className="section-footer">Le prénom sert de code d'accès.</p>
+                <p className="field-hint">Le prénom sert de code d'accès.</p>
               )}
             </form>
 
-            <section className="section" style={{ marginTop: 36 }}>
-              <div className="section-header">
-                <h2 className="headline">Liste des invités</h2>
-                <span className="section-header__meta">{guests.length}</span>
+            <section className="section" aria-labelledby="guest-list">
+              <div className="section__head">
+                <h2 id="guest-list" className="title-2">La liste</h2>
+                <span className="section__meta">{guests.length}</span>
               </div>
-              <div className="group">
-                {guests.length === 0 ? (
-                  <p className="empty">
-                    {isLoadingGuests ? 'Chargement…' : 'Aucun invité pour l\'instant. Ajoute le premier ci-dessus.'}
-                  </p>
-                ) : guests.map((g) => (
-                  <div key={g.id} className="row" style={{ '--row-inset': '70px' }}>
-                    <span className="avatar" aria-hidden="true">{g.emoji}</span>
-                    <span className="row__body">
-                      <span className="row__title" style={{ fontWeight: 600 }}>{g.first_name}</span>
-                      <span className="row__subtitle" style={g.answers_count > 0 ? { color: 'var(--green-text)' } : undefined}>
-                        {g.answers_count > 0 ? 'A répondu' : 'En attente'}
+              {guests.length === 0 ? (
+                <p className="card empty">
+                  {isLoadingGuests ? 'Chargement…' : 'Aucun invité pour l\'instant. Ajoute le premier ci-dessus.'}
+                </p>
+              ) : (
+                <ul className="list" role="list">
+                  {guests.map((g) => (
+                    <li key={g.id} className="list-row">
+                      <span className="avatar" aria-hidden="true">{g.emoji}</span>
+                      <span className="list-row__body">
+                        <span className="list-row__title" style={{ display: 'block' }}>{g.first_name}</span>
+                        <span className={`list-row__sub ${g.answers_count > 0 ? 'list-row__sub--ok' : ''}`}>
+                          {g.answers_count > 0 ? 'A répondu' : 'En attente'}
+                        </span>
                       </span>
-                    </span>
-                    <span className="row__trail" style={{ gap: 2 }}>
-                      <button
-                        type="button"
-                        onClick={() => copyInvitationMessage(g)}
-                        className="btn btn--tinted btn--small"
-                        aria-label={`Copier le message d'invitation pour ${g.first_name}`}
-                      >
-                        {copiedMsgId === g.id ? (
-                          <><Check size={15} strokeWidth={2.6} aria-hidden="true" /> Copié</>
-                        ) : 'Copier'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(g.id, g.first_name)}
-                        className="icon-btn icon-btn--danger"
-                        aria-label={`Supprimer ${g.first_name}`}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <p className="section-footer">
+                      <span className="list-row__actions">
+                        <button
+                          type="button"
+                          onClick={() => copyInvitationMessage(g)}
+                          className="btn btn--white btn--sm"
+                          aria-label={`Copier le message d'invitation pour ${g.first_name}`}
+                        >
+                          {copiedMsgId === g.id ? (
+                            <><Check size={15} strokeWidth={2.8} aria-hidden="true" /> Copié</>
+                          ) : 'Copier'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(g.id, g.first_name)}
+                          className="round round--ghost round--sm round--danger"
+                          aria-label={`Supprimer ${g.first_name}`}
+                        >
+                          <Trash2 size={17} aria-hidden="true" />
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="field-hint">
                 « Copier » copie le message d'invitation avec le lien du site et le prénom à saisir, prêt pour WhatsApp ou SMS.
               </p>
             </section>
@@ -416,10 +427,8 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
         )}
 
         {activeTab === 'bulk' && (
-          <form onSubmit={handleBulkCreate} noValidate style={{ marginTop: 32 }}>
-            <div className="section-header">
-              <h2 className="headline">Importer une liste</h2>
-            </div>
+          <form onSubmit={handleBulkCreate} noValidate className="card" style={{ marginTop: 22 }}>
+            <h2 className="headline" style={{ marginBottom: 14 }}>Importer une liste</h2>
             <label htmlFor="admin-bulk-input" className="sr-only">Liste de prénoms</label>
             <textarea
               id="admin-bulk-input"
@@ -428,20 +437,21 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
               value={bulkText}
               onChange={(e) => { setBulkText(e.target.value); if (bulkError) setBulkError(''); }}
               className={`field ${bulkError ? 'field--invalid' : ''}`}
+              style={{ background: '#fff' }}
             />
             {bulkError ? (
-              <p className="field-error" role="alert">
+              <p className="field-msg" role="alert">
                 <AlertCircle size={16} aria-hidden="true" />
                 <span>{bulkError}</span>
               </p>
             ) : (
-              <p className="section-footer">Un prénom par ligne, ou séparés par des virgules. Un emoji est choisi au hasard pour chacun.</p>
+              <p className="field-hint">Un prénom par ligne, ou séparés par des virgules. Un emoji est choisi au hasard pour chacun.</p>
             )}
             <button
               type="submit"
               disabled={isBulkCreating || !bulkText.trim()}
-              className="btn btn--filled btn--large btn--block"
-              style={{ marginTop: 20 }}
+              className="btn btn--ink btn--lg btn--block"
+              style={{ marginTop: 18 }}
             >
               {isBulkCreating ? 'Import…' : 'Importer les invités'}
             </button>
@@ -449,32 +459,21 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
         )}
 
         {activeTab === 'export' && (
-          <div style={{ marginTop: 32 }}>
-            <div className="section-header">
-              <h2 className="headline">Exporter les réponses</h2>
-            </div>
-            <div className="group" style={{ padding: '18px 16px' }}>
-              <p className="body-text" style={{ fontSize: 15, color: 'var(--label-2)' }}>
-                Un fichier CSV avec chaque invité, son code et toutes ses réponses. S'ouvre dans Numbers, Excel ou Google Sheets.
-              </p>
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="btn btn--filled"
-                style={{ marginTop: 16 }}
-              >
-                <Download size={17} aria-hidden="true" />
-                Télécharger le CSV
-              </button>
-            </div>
+          <div className="card" style={{ marginTop: 22 }}>
+            <h2 className="headline">Exporter les réponses</h2>
+            <p className="sub" style={{ marginTop: 6 }}>
+              Un fichier CSV avec chaque invité, son prénom d'accès et toutes ses réponses. S'ouvre dans Numbers, Excel ou Google Sheets.
+            </p>
+            <button type="button" onClick={handleExportCSV} className="btn btn--ink btn--lg" style={{ marginTop: 18 }}>
+              <Download size={18} aria-hidden="true" />
+              Télécharger le CSV
+            </button>
           </div>
         )}
 
         {activeTab === 'security' && (
-          <form onSubmit={handleChangePassword} noValidate style={{ marginTop: 32 }}>
-            <div className="section-header">
-              <h2 className="headline">Changer le mot de passe</h2>
-            </div>
+          <form onSubmit={handleChangePassword} noValidate className="card" style={{ marginTop: 22 }}>
+            <h2 className="headline" style={{ marginBottom: 14 }}>Changer le mot de passe</h2>
             <label htmlFor="admin-new-password" className="sr-only">Nouveau mot de passe</label>
             <input
               id="admin-new-password"
@@ -484,20 +483,20 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className={`field ${pwdFeedback.type === 'error' ? 'field--invalid' : ''}`}
+              style={{ background: '#fff' }}
             />
             {pwdFeedback.text ? (
               <p
-                className={pwdFeedback.type === 'error' ? 'field-error' : 'field-error'}
+                className={`field-msg ${pwdFeedback.type === 'success' ? 'field-msg--ok' : ''}`}
                 role={pwdFeedback.type === 'error' ? 'alert' : 'status'}
-                style={pwdFeedback.type === 'success' ? { color: 'var(--green-text)' } : undefined}
               >
                 {pwdFeedback.type === 'error' ? <AlertCircle size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
                 <span>{pwdFeedback.text}</span>
               </p>
             ) : (
-              <p className="section-footer">Au moins 4 caractères. Stocké chiffré (bcrypt) dans la base.</p>
+              <p className="field-hint">Au moins 4 caractères. Stocké chiffré (bcrypt) dans la base.</p>
             )}
-            <button type="submit" className="btn btn--filled btn--large btn--block" style={{ marginTop: 20 }}>
+            <button type="submit" className="btn btn--ink btn--lg btn--block" style={{ marginTop: 18 }}>
               Enregistrer
             </button>
           </form>

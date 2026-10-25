@@ -14,8 +14,8 @@ Les amis proches de Jibril, en France. Ils ouvrent le lien depuis WhatsApp ou SM
 - Espace organisateur.
 
 ## Brand commitments
-- Style demandé par Jibril : « clean, Apple style ». Interface claire, typographie système Apple (SF Pro), listes groupées façon iOS, bleu système comme seul accent.
+- Style demandé par Jibril : épuré, fond blanc pur obligatoire, inspiré de ses apps de référence (cartes grises arrondies, pilules noires, gros titres, navigation flottante), pas une copie d'Apple. Animations Remotion + GSAP.
 - Ton : tutoiement, chaleureux, un peu festif. Les emojis font partie du contenu des questions.
 
 ## Platform
-web (mobile-first, iPhone d'abord)
+web
