@@ -36,6 +36,8 @@ export const MISSIONS = [
 const MAX_LIVES = 3;
 const FOCUS_TIME = 2.8; // secondes réelles
 const FOCUS_SPEED = 0.2; // vitesse du monde pendant le FOCUS
+export const ITEMS_PER_FOCUS = 5;
+const ENERGY_PER_ITEM = 1 / ITEMS_PER_FOCUS;
 
 function buildLevel() {
   const r = seeded(42);
@@ -478,7 +480,8 @@ export function createGame(canvas, opts = {}) {
       if (Math.hypot(it.x - h.x, it.y - h.y) < 48) {
         it.got = true;
         state.score += 1;
-        state.energy = Math.min(1, state.energy + 0.34);
+        // recharge du pouvoir : 5 objets = 1 FOCUS, rien pendant le FOCUS lui-même
+        if (state.focus <= 0) state.energy = Math.min(1, state.energy + ENERGY_PER_ITEM);
         opts.onScore?.(state.score);
         popup('+1 ' + ITEM_EMOJI[it.kind], it.x, it.y - 30);
         burst(it.x, it.y, '#ffd400', 12, 300);

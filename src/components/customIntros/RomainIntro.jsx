@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
-import { createGame, MISSIONS } from '../../themes/comic/game/engine';
+import { createGame, MISSIONS, ITEMS_PER_FOCUS } from '../../themes/comic/game/engine';
 import {
   sfxHook, sfxRelease, sfxCollect, sfxFail, sfxMissionPassed, sfxHurt, sfxShoot, sfxBoom,
   sfxFocusIn, sfxFocusOut, sfxMission, setMuted, isMuted
@@ -297,7 +297,9 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
             disabled={screen !== 'game'}
           >
             <span className="rc-power-fill" aria-hidden="true" />
-            <span className="rc-power-label">⚡ FOCUS</span>
+            <span className="rc-power-label">
+              {hud.focus || hud.energy >= 1 ? '⚡ FOCUS' : `⚡ ${Math.round(hud.energy * ITEMS_PER_FOCUS)}/${ITEMS_PER_FOCUS}`}
+            </span>
           </button>
 
           {screen === 'game' && !started && (
@@ -306,7 +308,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
               <p>
                 <b>Maintiens</b> pour t'accrocher, <b>relâche</b> pour t'envoler !
                 <br />
-                <b>⚡ FOCUS</b> : le temps ralentit, touche les drones pour tirer.
+                <b>⚡ FOCUS</b> : le temps ralentit, touche les drones pour tirer. Recharge : {ITEMS_PER_FOCUS} objets.
               </p>
             </div>
           )}
