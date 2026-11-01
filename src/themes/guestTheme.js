@@ -8,5 +8,11 @@ export function getGuestTheme(guest) {
   if (!guest) return null;
   const name = normalize(guest.first_name);
   if (name.includes('alexia')) return 'heist';
+  if (name.trim() === 'eray') return 'kebab';
   return null;
+}
+
+// Langue de l'interface pour l'invité ('tr' pour Eray, 'fr' sinon)
+export function getGuestLang(guest) {
+  return getGuestTheme(guest) === 'kebab' ? 'tr' : 'fr';
 }

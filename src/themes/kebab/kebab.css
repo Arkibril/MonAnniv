@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Comic+Neue:wght@400;700&display=swap');
+
+/* ==========================================================================
+   Thème "kebab" : session d'Eray (quiz + tableau de bord) en rouge et blanc,
+   typo de forain et kebabs collés partout. Activé par <html data-theme="kebab">.
+   ========================================================================== */
+:root[data-theme='kebab'] {
+  --font: 'Comic Neue', 'Comic Sans MS', system-ui, sans-serif;
+  --kb-display: 'Bungee', 'Comic Neue', Impact, sans-serif;
+  --kb-red: #e30a17;
+
+  --bg: #fff7e8;
+  --card: #ffffff;
+  --card-strong: #fff0f0;
+  --ink: #1d0b0b;
+  --ink-2: #5a3a3a;
+  --ink-3: #8a6262;
+  --on-ink: #ffffff;
+  --on-ink-2: rgba(255, 255, 255, 0.8);
+  --line: rgba(29, 11, 11, 0.14);
+  --line-strong: rgba(29, 11, 11, 0.3);
+  --accent: var(--kb-red);
+  --accent-ink: #b0050f;
+  --accent-soft: #ffe3e5;
+
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 24px;
+  --lift: 4px 4px 0 var(--ink);
+  --lift-2: 5px 5px 0 var(--kb-red);
+}
+
+[data-theme='kebab'] body {
+  background: repeating-linear-gradient(45deg, #fff 0 22px, #fff7e8 22px 44px);
+}
+
+/* Kebabs collés derrière le contenu */
+.kb-stickers { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.kb-sticker { position: absolute; opacity: 0.95; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.15)); }
+.kb-sticker .kb-flag { border: 2px solid #1d0b0b; border-radius: 4px; }
+
+/* ---------- Typo ---------- */
+[data-theme='kebab'] .display,
+[data-theme='kebab'] .title,
+[data-theme='kebab'] .title-2,
+[data-theme='kebab'] .hero-vote__leader {
+  font-family: var(--kb-display);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--kb-red);
+  text-shadow: 2px 2px 0 #fff, 4px 4px 0 var(--ink);
+}
+[data-theme='kebab'] .title { font-size: clamp(24px, 6.4vw, 30px); line-height: 1.15; }
+[data-theme='kebab'] .hero-vote__leader { color: #fff; text-shadow: 3px 3px 0 var(--ink); }
+[data-theme='kebab'] .headline { font-weight: 700; }
+
+/* ---------- Barre du haut ---------- */
+[data-theme='kebab'] .topbar { background: rgba(255, 255, 255, 0.94); border-bottom: 4px solid var(--kb-red); }
+[data-theme='kebab'] .round { border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+[data-theme='kebab'] .dots__dot { background: rgba(227, 10, 23, 0.25); }
+[data-theme='kebab'] .dots__dot--done { background: var(--kb-red); }
+[data-theme='kebab'] .dots__dot--on { background: var(--kb-red); width: 26px; }
+
+/* ---------- Boutons ---------- */
+[data-theme='kebab'] .btn { font-family: var(--kb-display); font-weight: 400; letter-spacing: 0.01em; }
+[data-theme='kebab'] .btn--ink {
+  background: var(--kb-red);
+  color: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+[data-theme='kebab'] .btn--ink:hover:not(:disabled) { background: #c80812; }
+[data-theme='kebab'] .btn__knob { background: #fff; color: var(--kb-red); }
+[data-theme='kebab'] .cta-bar { background: linear-gradient(to top, #fff7e8 62%, rgba(255, 247, 232, 0)); }
+
+/* ---------- Options ---------- */
+[data-theme='kebab'] .option { border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+[data-theme='kebab'] .option:hover { background: #fff0f0; }
+[data-theme='kebab'] .option__emoji { background: #fff7e8; border: 2px solid var(--ink); }
+[data-theme='kebab'] .option__label { font-size: 17px; }
+[data-theme='kebab'] .option__tag { background: var(--kb-red); color: #fff; }
+[data-theme='kebab'] .option[aria-checked='true'] { background: var(--kb-red); color: #fff; box-shadow: 4px 4px 0 var(--ink); }
+[data-theme='kebab'] .option[aria-checked='true'] .option__emoji { background: rgba(255, 255, 255, 0.2); border-color: #fff; }
+[data-theme='kebab'] .option[aria-checked='true'] .option__check { color: var(--kb-red); }
+[data-theme='kebab'] .field { border: 3px solid var(--ink); background: #fff; border-radius: 16px; }
+
+/* ---------- Tableau de bord ---------- */
+[data-theme='kebab'] .card,
+[data-theme='kebab'] .note,
+[data-theme='kebab'] .stat,
+[data-theme='kebab'] .person {
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+[data-theme='kebab'] .card--ink { background: var(--kb-red); color: #fff; }
+[data-theme='kebab'] .card--ink .bar__track { background: rgba(255, 255, 255, 0.3); }
+[data-theme='kebab'] .card--ink .bar--lead .bar__fill { background: #fff; }
+[data-theme='kebab'] .bar__track { background: #ffe3e5; }
+[data-theme='kebab'] .bar--lead .bar__fill { background: var(--kb-red); }
+[data-theme='kebab'] .note--mine { background: var(--kb-red); color: #fff; }
+[data-theme='kebab'] .chip--soft { background: #ffe3e5 !important; }
+[data-theme='kebab'] .dock { background: var(--kb-red); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+[data-theme='kebab'] .dock__item { color: rgba(255, 255, 255, 0.85); font-family: var(--kb-display); font-weight: 400; }
+[data-theme='kebab'] .dock__item[aria-current='page'] { background: #fff; color: var(--kb-red); }

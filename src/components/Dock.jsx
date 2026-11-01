@@ -1,15 +1,17 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { BarChart3, PencilLine, Sparkles } from 'lucide-react';
+import { useT } from '../i18n';
 
 // Barre de navigation flottante en capsule noire, la vue active en pastille blanche
 export default function Dock({ active = 'votes', onVotes, onAnswers, onReplay }) {
   const ref = useRef(null);
+  const t = useT();
 
   const items = [
-    { id: 'votes', label: 'Votes', icon: BarChart3, onClick: onVotes },
-    { id: 'answers', label: 'Mes réponses', icon: PencilLine, onClick: onAnswers },
-    { id: 'replay', label: 'Mon intro', icon: Sparkles, onClick: onReplay },
+    { id: 'votes', label: t('Votes'), icon: BarChart3, onClick: onVotes },
+    { id: 'answers', label: t('Mes réponses'), icon: PencilLine, onClick: onAnswers },
+    { id: 'replay', label: t('Mon intro'), icon: Sparkles, onClick: onReplay },
   ];
 
   // La capsule remonte du bas de l'écran à l'arrivée sur la page

@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Comic+Neue:wght@400;700&display=swap');
+
+/* ==========================================================================
+   Intro troll d'Eray : rouge et blanc, typo de forain, kebabs partout
+   ========================================================================== */
+.kb-intro {
+  --kb-red: #e30a17;
+  --kb-red-dark: #a8050f;
+  --kb-cream: #fff7e8;
+  --kb-ink: #1d0b0b;
+  --kb-display: 'Bungee', 'Comic Neue', Impact, sans-serif;
+  --kb-body: 'Comic Neue', 'Comic Sans MS', system-ui, sans-serif;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(227, 10, 23, 0.08) 0 18%, transparent 19%),
+    radial-gradient(circle at 85% 80%, rgba(227, 10, 23, 0.08) 0 22%, transparent 23%),
+    repeating-linear-gradient(45deg, #fff 0 22px, var(--kb-cream) 22px 44px);
+  color: var(--kb-ink);
+  font-family: var(--kb-body);
+}
+
+/* ---------- Bandeau défilant ---------- */
+.kb-marquee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  overflow: hidden;
+  background: var(--kb-red);
+  color: #fff;
+  font-family: var(--kb-display);
+  font-size: 1rem;
+  line-height: 40px;
+  white-space: nowrap;
+  border-bottom: 4px solid #fff;
+  box-shadow: 0 4px 0 var(--kb-red);
+}
+.kb-marquee-track { display: inline-flex; animation: kb-marquee 26s linear infinite; }
+.kb-marquee-track span { padding-right: 0; }
+@keyframes kb-marquee { to { transform: translateX(-50%); } }
+
+/* ---------- Pluie de kebabs ---------- */
+.kb-rain { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.kb-drop {
+  position: absolute;
+  top: -160px;
+  animation: kb-fall linear infinite;
+  opacity: 0.9;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.18));
+}
+@keyframes kb-fall {
+  0% { transform: translateY(0) rotate(-20deg); }
+  100% { transform: translateY(calc(100vh + 220px)) rotate(340deg); }
+}
+
+/* ---------- Écrans ---------- */
+.kb-screen {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px 32px;
+  overflow-y: auto;
+}
+.kb-hero,
+.kb-passed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 560px;
+  text-align: center;
+}
+.kb-title {
+  margin: 0;
+  font-family: var(--kb-display);
+  font-weight: 400;
+  font-size: clamp(2.3rem, 11vw, 4.6rem);
+  line-height: 0.95;
+  color: var(--kb-red);
+  text-shadow: 3px 3px 0 #fff, 6px 6px 0 var(--kb-ink);
+  transform: rotate(-2deg);
+}
+.kb-text {
+  margin: 0;
+  padding: 14px 18px;
+  font-size: 1.15rem;
+  line-height: 1.45;
+  background: #fff;
+  border: 3px solid var(--kb-ink);
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 var(--kb-red);
+}
+.kb-text b { color: var(--kb-red); }
+.kb-spit { animation: kb-spin 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes kb-spin {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+}
+
+.kb-btn {
+  min-height: 58px;
+  padding: 0 28px;
+  border: 3px solid var(--kb-ink);
+  border-radius: 14px;
+  background: var(--kb-red);
+  color: #fff;
+  font-family: var(--kb-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  box-shadow: 5px 5px 0 var(--kb-ink);
+  cursor: pointer;
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), box-shadow 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+.kb-btn:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--kb-ink); }
+.kb-btn:focus-visible { outline: 3px solid var(--kb-ink); outline-offset: 4px; }
+
+.kb-stamp {
+  position: absolute;
+  z-index: 4;
+  right: clamp(10px, 6vw, 80px);
+  top: clamp(60px, 14vh, 140px);
+  padding: 8px 12px;
+  border: 4px double #1a7f3b;
+  border-radius: 10px;
+  color: #1a7f3b;
+  font-family: var(--kb-display);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: center;
+  transform: rotate(14deg);
+  background: rgba(255, 255, 255, 0.8);
+}
+.kb-deco { position: absolute; z-index: 2; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.15)); }
+.kb-deco--cay { left: 6%; bottom: 8%; transform: rotate(-12deg); }
+.kb-deco--nazar { left: 8%; top: 16%; transform: rotate(10deg); }
+.kb-deco--durum { right: 6%; bottom: 6%; transform: rotate(18deg); }
+@media (max-width: 520px) {
+  .kb-deco--cay, .kb-deco--durum { display: none; }
+  .kb-stamp { top: auto; bottom: 14px; right: 10px; font-size: 0.7rem; }
+}
+
+/* ---------- Faux quiz ---------- */
+.kb-q-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 26px 22px 28px;
+  background: #fff;
+  border: 4px solid var(--kb-ink);
+  border-radius: 22px;
+  box-shadow: 8px 8px 0 var(--kb-red);
+  text-align: center;
+}
+.kb-q-count {
+  margin: 0 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--kb-display);
+  font-size: 0.95rem;
+  color: var(--kb-red);
+}
+.kb-q-dots span { opacity: 0.25; font-size: 1.05rem; }
+.kb-q-dots span.is-on { opacity: 1; }
+.kb-q-title {
+  margin: 8px 0 26px;
+  font-family: var(--kb-display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 8.5vw, 2.9rem);
+  line-height: 1.05;
+  color: var(--kb-ink);
+}
+.kb-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.kb-btn--yes { background: #1a9b48; }
+.kb-btn--no { background: var(--kb-red); }
+.kb-reaction {
+  margin: 0;
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  font-family: var(--kb-display);
+  font-size: 1.25rem;
+  color: #1a7f3b;
+}
+
+/* ---------- La honte ---------- */
+.kb-intro[data-phase='shame'] { background: var(--kb-red); color: #fff; }
+.kb-shame { flex-direction: column; gap: 14px; text-align: center; }
+.kb-shame-title {
+  margin: 0;
+  font-family: var(--kb-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 13vw, 6rem);
+  line-height: 0.95;
+  color: #fff;
+  text-shadow: 5px 5px 0 var(--kb-ink);
+}
+.kb-shame-text { margin: 0; font-size: 1.35rem; font-weight: 700; }
+.kb-shame-count {
+  margin: 18px 0 0;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 1.1rem;
+}
+.kb-shame-count b { font-family: var(--kb-display); font-size: 1.6rem; }
+
+/* Drapeau qui flotte */
+.kb-flag { border: 3px solid var(--kb-ink, #1d0b0b); border-radius: 6px; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2); }
+.kb-flag--wave { animation: kb-wave 2.2s ease-in-out infinite; transform-origin: 0 50%; }
+@keyframes kb-wave {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(-3deg) scaleX(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-marquee-track, .kb-spit, .kb-flag--wave { animation: none; }
+  .kb-btn { transition: none; }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
-import { QUESTIONS } from '../config/questions';
+import { useQuestions, useT, usePlural, useLang } from '../i18n';
 import { fetchGuests, fetchAnswers, subscribeToAnswers, isSupabaseConfigured } from '../lib/supabase';
 
 const prefersReduced = () =>
@@ -9,7 +9,6 @@ const prefersReduced = () =>
 const cleanTag = (text = '') =>
   text.replace(/\p{Extended_Pictographic}|️/gu, '').replace(/\s*!+\s*$/, '').trim();
 
-const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 // Chiffre qui défile jusqu'à sa nouvelle valeur
 function CountUp({ value }) {
@@ -73,6 +72,10 @@ function Bar({ opt, isLeader, delay = 0 }) {
 }
 
 export default function Dashboard({ guest }) {
+  const QUESTIONS = useQuestions();
+  const t = useT();
+  const plural = usePlural();
+  const lang = useLang();
   const [guests, setGuests] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +148,7 @@ export default function Dashboard({ guest }) {
   const wallMessages = useMemo(() => answers
     .filter((a) => a.question_id === 'q_message' && typeof a.value === 'string' && a.value.trim().length > 0)
     .map((a) => {
-      const author = guestsMap[a.guest_id] || { first_name: 'Invité(e)', emoji: '✨' };
+      const author = guestsMap[a.guest_id] || { first_name: t('Invité(e)'), emoji: '✨' };
       return {
         id: a.id || `${a.guest_id}-msg`,
         text: a.value,
@@ -198,16 +201,18 @@ export default function Dashboard({ guest }) {
     <div className="page page--wide page--nav" ref={rootRef}>
       <header className="dash-top" style={{ marginTop: 8 }}>
         <div data-rise>
-          <h1 className="display">Les votes.</h1>
+          <h1 className="display">{t('Les votes.')}</h1>
           <p className="lede" style={{ marginTop: 14 }}>
             {loading
-              ? 'Chargement des réponses…'
-              : `${answered} invité${answered > 1 ? 's' : ''} sur ${guests.length} ${answered > 1 ? 'ont' : 'a'} répondu, ${plural(wallMessages.length, 'message')} sur le mur.`}
+              ? t('Chargement des réponses…')
+              : lang === 'tr'
+                ? `${guests.length} davetliden ${answered} kişi cevap verdi, duvarda ${plural(wallMessages.length, 'message')} var.`
+                : `${answered} invité${answered > 1 ? 's' : ''} sur ${guests.length} ${answered > 1 ? 'ont' : 'a'} répondu, ${plural(wallMessages.length, 'message')} sur le mur.`}
           </p>
           <div style={{ marginTop: 16 }}>
             <span className="live">
               <span className="live__dot" aria-hidden="true" />
-              {isSupabaseConfigured ? 'En direct' : 'Démo locale'}
+              {isSupabaseConfigured ? t('En direct') : t('Démo locale')}
             </span>
           </div>
         </div>
@@ -215,18 +220,18 @@ export default function Dashboard({ guest }) {
         {dateQuestion && dateStats && (
           <section className="card card--ink hero-vote" data-rise aria-labelledby="vote-weekend" style={{ marginTop: 28 }}>
             <div className="card__head" style={{ marginBottom: 0 }}>
-              <h2 id="vote-weekend" className="headline">Le week-end</h2>
+              <h2 id="vote-weekend" className="headline">{t('Le week-end')}</h2>
               <span className="card__meta">{plural(dateStats.totalVotes, 'vote')}</span>
             </div>
             <p className="hero-vote__leader">
               {dateStats.totalVotes === 0
-                ? 'Pas encore de vote'
+                ? t('Pas encore de vote')
                 : dateLeader
-                  ? dateLeader.label.replace(/^Week-end du /, '')
-                  : 'Égalité pour l\'instant'}
+                  ? dateLeader.label.replace(/^Week-end du /, '').replace(/ hafta sonu$/, '')
+                  : t("Égalité pour l'instant")}
             </p>
             <p className="hero-vote__note">
-              {dateLeader ? 'En tête pour le moment.' : 'Ton vote peut faire la différence.'}
+              {dateLeader ? t('En tête pour le moment.') : t('Ton vote peut faire la différence.')}
             </p>
             <div className="bars" style={{ marginTop: 22 }}>
               {dateStats.options.map((opt, i) => (
@@ -239,7 +244,7 @@ export default function Dashboard({ guest }) {
 
       <section className="section" style={{ marginTop: 44 }}>
         <div className="section__head" data-rise>
-          <h2 className="title-2">Le reste des votes</h2>
+          <h2 className="title-2">{t('Le reste des votes')}</h2>
         </div>
         <div className="results-grid">
           {otherQuestions.map((q, qi) => {
@@ -269,12 +274,12 @@ export default function Dashboard({ guest }) {
 
       <section className="section" style={{ marginTop: 44 }} aria-labelledby="wall">
         <div className="section__head" data-rise>
-          <h2 id="wall" className="title-2">Le mur des messages</h2>
+          <h2 id="wall" className="title-2">{t('Le mur des messages')}</h2>
           <span className="section__meta">{plural(wallMessages.length, 'message')}</span>
         </div>
         {wallMessages.length === 0 ? (
           <p className="card empty" data-rise>
-            Aucun message pour l'instant. Laisse le premier depuis « Mes réponses ».
+            {t("Aucun message pour l'instant. Laisse le premier depuis « Mes réponses ».")}
           </p>
         ) : (
           <div className="notes">
@@ -284,7 +289,7 @@ export default function Dashboard({ guest }) {
                 <figure key={msg.id} className={`note ${mine ? 'note--mine' : ''}`} data-rise style={{ margin: 0 }}>
                   <figcaption className="note__who">
                     <span className="avatar avatar--sm" aria-hidden="true">{msg.authorEmoji}</span>
-                    <span className="note__name">{mine ? 'Toi' : msg.authorName}</span>
+                    <span className="note__name">{mine ? t('Toi') : msg.authorName}</span>
                   </figcaption>
                   <blockquote className="note__text" style={{ margin: 0 }}>{msg.text}</blockquote>
                 </figure>
@@ -296,11 +301,11 @@ export default function Dashboard({ guest }) {
 
       <section className="section" style={{ marginTop: 44 }} aria-labelledby="people">
         <div className="section__head" data-rise>
-          <h2 id="people" className="title-2">Ils ont répondu</h2>
-          <span className="section__meta">{answered} sur {guests.length}</span>
+          <h2 id="people" className="title-2">{t('Ils ont répondu')}</h2>
+          <span className="section__meta">{lang === 'tr' ? `${answered} / ${guests.length}` : `${answered} sur ${guests.length}`}</span>
         </div>
         {answered === 0 ? (
-          <p className="card empty" data-rise>Personne n'a encore répondu. Les prénoms apparaîtront ici.</p>
+          <p className="card empty" data-rise>{t("Personne n'a encore répondu. Les prénoms apparaîtront ici.")}</p>
         ) : (
           <ul className="people" role="list" data-rise>
             {guestsWhoAnswered.map((g) => (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { ChevronLeft, Check, AlertCircle, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import gsap from 'gsap';
-import { QUESTIONS } from '../config/questions';
+import { useQuestions, useT } from '../i18n';
 import { saveAnswer } from '../lib/supabase';
 
 // Retire les emojis et la ponctuation finale d'un libellé d'étiquette
@@ -13,6 +13,8 @@ const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
+  const QUESTIONS = useQuestions();
+  const t = useT();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answersMap, setAnswersMap] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -67,7 +69,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
       savedTimerRef.current = setTimeout(() => setSavedFeedback(false), 1400);
     } catch (err) {
       console.error(err);
-      setErrorMsg('Ta réponse n\'a pas pu être enregistrée. Vérifie ta connexion et réessaie.');
+      setErrorMsg(t("Ta réponse n'a pas pu être enregistrée. Vérifie ta connexion et réessaie."));
     } finally {
       setIsSaving(false);
     }
@@ -116,7 +118,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
 
   const handleNext = () => {
     if (currentQ.required && (currentVal === undefined || currentVal === '')) {
-      setErrorMsg('Choisis une réponse pour continuer.');
+      setErrorMsg(t('Choisis une réponse pour continuer.'));
       return;
     }
     setErrorMsg('');
@@ -144,7 +146,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
     }
   };
 
-  const status = savedFeedback ? 'Enregistré' : isSaving ? 'Enregistrement…' : '';
+  const status = savedFeedback ? t('Enregistré') : isSaving ? t('Enregistrement…') : '';
 
   return (
     <>
@@ -155,7 +157,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
             onClick={handlePrev}
             className="round"
             disabled={currentIndex === 0}
-            aria-label="Question précédente"
+            aria-label={t('Question précédente')}
           >
             <ChevronLeft size={22} strokeWidth={2.2} aria-hidden="true" />
           </button>
@@ -164,7 +166,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
             <div
               className="dots"
               role="progressbar"
-              aria-label="Progression du questionnaire"
+              aria-label={t('Progression du questionnaire')}
               aria-valuemin={1}
               aria-valuemax={totalQuestions}
               aria-valuenow={currentIndex + 1}
@@ -199,7 +201,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
           <div style={{ marginTop: 26 }}>
             {isMulti && (
               <p className="caption" data-rise style={{ padding: '0 4px 10px' }}>
-                Plusieurs choix possibles{currentQ.required ? '' : ' · facultatif'}
+                {t('Plusieurs choix possibles')}{currentQ.required ? '' : t(' · facultatif')}
               </p>
             )}
 
@@ -243,19 +245,19 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
                   rows={5}
                   className="field"
                   maxLength={currentQ.maxLength || 250}
-                  placeholder={currentQ.placeholder || 'Écris ton message ici…'}
+                  placeholder={currentQ.placeholder || t('Écris ton message ici…')}
                   value={currentVal || ''}
                   onChange={(e) => handleSaveValue(e.target.value)}
                 />
                 <div className="field-hint" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <span>Visible par tous sur le mur des messages · facultatif</span>
+                  <span>{t('Visible par tous sur le mur des messages · facultatif')}</span>
                   <span className="tabular">{(currentVal || '').length}/{currentQ.maxLength || 250}</span>
                 </div>
               </div>
             )}
 
             {!currentQ.required && currentQ.type === 'single_choice' && (
-              <p className="field-hint" data-rise>Facultatif, tu peux passer.</p>
+              <p className="field-hint" data-rise>{t('Facultatif, tu peux passer.')}</p>
             )}
           </div>
 
@@ -276,7 +278,7 @@ export default function Onboarding({ guest, initialAnswers = {}, onFinish }) {
             onClick={handleNext}
             className="btn btn--ink btn--lg btn--block"
           >
-            {isLast ? 'Voir les résultats' : 'Continuer'}
+            {isLast ? t('Voir les résultats') : t('Continuer')}
             <span className="btn__knob" aria-hidden="true"><ArrowRight size={18} strokeWidth={2.4} /></span>
           </button>
         </div>

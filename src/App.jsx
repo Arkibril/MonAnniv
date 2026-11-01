@@ -8,7 +8,12 @@ import ConfigBanner from './components/ConfigBanner';
 import Dock from './components/Dock';
 import { LogOut } from 'lucide-react';
 import { loginWithCode, fetchAnswers } from './lib/supabase';
-import { getGuestTheme } from './themes/guestTheme';
+import { getGuestTheme, getGuestLang } from './themes/guestTheme';
+import { LangProvider } from './i18n';
+import { TR_STRINGS } from './i18n/tr';
+import KebabStickers from './themes/kebab/KebabStickers';
+import { trollPassedKey } from './components/customIntros/ErayIntro';
+import './themes/kebab/kebab.css';
 import MissionPassed from './themes/heist/MissionPassed';
 import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';
@@ -71,6 +76,17 @@ export default function App() {
           if (parsed && parsed.code) {
             setCurrentGuest(parsed);
             loadGuestAnswers(parsed.id);
+            // Eray doit d'abord réussir le faux quiz (même s'il revient de Google)
+            let trollOk = true;
+            try {
+              trollOk = getGuestTheme(parsed) !== 'kebab' || Boolean(localStorage.getItem(trollPassedKey(parsed)));
+            } catch {
+              /* stockage indisponible */
+            }
+            if (!trollOk) {
+              setIntroIsReplay(false);
+              setShowIntro(true);
+            }
             // Les codes sont désormais les prénoms : on rafraîchit la session
             // (une ancienne session avec un code type LNAK-4821 est mise à jour).
             loginWithCode(parsed.first_name)
@@ -178,10 +194,13 @@ export default function App() {
   const showGuestChrome = currentGuest && activeView === 'dashboard' && !showIntro;
 
   const hour = new Date().getHours();
-  const hello = hour >= 18 || hour < 5 ? 'Bonsoir,' : 'Salut,';
+  const lang = getGuestLang(currentGuest);
+  const tt = (fr) => (lang === 'tr' ? TR_STRINGS[fr] ?? fr : fr);
+  const hello = tt(hour >= 18 || hour < 5 ? 'Bonsoir,' : 'Salut,');
 
   return (
-    <>
+    <LangProvider value={lang}>
+      {guestTheme === 'kebab' && !showIntro && <KebabStickers />}
       <ConfigBanner />
 
       {/* Animation d'entrée plein écran personnalisée */}
@@ -201,7 +220,7 @@ export default function App() {
                 <span className="greet__name">{currentGuest.first_name}</span>
               </span>
             </div>
-            <button type="button" className="round" onClick={handleLogout} aria-label="Se déconnecter">
+            <button type="button" className="round" onClick={handleLogout} aria-label={tt('Se déconnecter')}>
               <LogOut size={19} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </div>
@@ -240,10 +259,10 @@ export default function App() {
             className="btn btn--link btn--sm"
             onClick={() => handleNavigate(activeView === 'admin' ? (currentGuest ? 'dashboard' : 'login') : 'admin')}
           >
-            {activeView === 'admin' ? 'Retour au site' : 'Espace organisateur'}
+            {activeView === 'admin' ? tt('Retour au site') : tt('Espace organisateur')}
           </button>
         </footer>
       )}
-    </>
+    </LangProvider>
   );
 }

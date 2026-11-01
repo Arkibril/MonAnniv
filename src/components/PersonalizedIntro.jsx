@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { EVENT_CONFIG } from '../config/event';
 import LenaikIntro from './customIntros/LenaikIntro';
 import AlexiaIntro from './customIntros/AlexiaIntro';
+import ErayIntro from './customIntros/ErayIntro';
 import { getGuestTheme } from '../themes/guestTheme';
 import { WelcomeComposition, WELCOME_SIZE } from '../motion/WelcomeComposition';
 import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
@@ -18,6 +19,9 @@ export default function PersonalizedIntro({ guest, onComplete, isReplay = false 
 
   if (isLenaik) {
     return <LenaikIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
+  }
+  if (getGuestTheme(guest) === 'kebab') {
+    return <ErayIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }
   if (getGuestTheme(guest) === 'heist') {
     return <AlexiaIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
