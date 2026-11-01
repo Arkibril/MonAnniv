@@ -1,8 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Récupération des variables d'environnement
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Base Supabase du site : projet « MonAnniv ! » (compte Arkibril's Org).
+// Fixée ici pour que le site en ligne utilise toujours cette base, quelles
+// que soient les variables d'environnement restées sur Vercel.
+// La clé "publishable" est faite pour être publique (elle est de toute façon
+// visible dans le navigateur) : la sécurité repose sur RLS + les fonctions RPC.
+const SUPABASE_URL = 'https://oysnxklsnegdngbnynvb.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_0Jotx83jd-4sF2y-hwDYtw_hXyxFNJN';
+
+// Mode démo local possible avec VITE_SUPABASE_URL=demo dans .env.local
+const demoMode = import.meta.env.VITE_SUPABASE_URL === 'demo';
+const supabaseUrl = demoMode ? '' : SUPABASE_URL;
+const supabaseAnonKey = demoMode ? '' : SUPABASE_PUBLISHABLE_KEY;
 
 // Vérification si Supabase est configuré avec des vraies clés
 export const isSupabaseConfigured = Boolean(
