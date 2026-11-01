@@ -1,684 +1,560 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
-import confetti from 'canvas-confetti';
-import { startRealisticExplosion } from '../../utils/realisticExplosion';
+import { ArrowRight, RotateCcw, Volume2 } from 'lucide-react';
+import { startRealisticExplosion, warmUpExplosion } from '../../utils/realisticExplosion';
+import { EVENT_CONFIG } from '../../config/event';
+import { QUESTIONS } from '../../config/questions';
+import './LenaikIntro.css';
 
-export default function LenaikIntro({ onComplete }) {
-  // 3 étapes :
-  // 1. 'blank' : Tout blanc pur pendant 1.2s de suspense
-  // 2. 'tease' : Animations GSAP complètes des lettres et du prompt
-  // 3. 'party' : Animations GSAP cinématiques, puis explosion 100% EN CODE physique à la 5ème seconde pour propulser vers le quiz
-  const [step, setStep] = useState('blank');
-  const containerRef = useRef(null);
+// =============================================================================
+// Intro sur-mesure de Lénaïk
+// -----------------------------------------------------------------------------
+// 1. Accroche  : page blanche, "FUCK YOU / BRO." imprimé comme le T-shirt.
+// 2. Ouverture : au clic, le son démarre et la page se fend en deux portes
+//                (la typo se déchire) pour révéler la photo.
+// 3. Montée    : titre en masques, lent travelling avant sur Lénaïk.
+// 4. Anticipation (silence de la réplique, 4,3 → 4,78 s) : viseur + roquette.
+// 5. Impact à 4,78 s (début du "boom" dans le son) : explosion temps réel,
+//    titre soufflé, tremblement caméra, la fumée envahit l'écran.
+// 6. Pont      : la fumée devient blanche, écran calme qui annonce le quiz
+//                (même barre de progression que l'écran suivant).
+// La chronologie 2→5 suit l'horloge du fichier audio pour rester synchro.
+// =============================================================================
+
+const AUDIO_SRC = '/lenaik/Raze%20Ultimate%20Voice%20Line.mp3';
+const PHOTO_SRC = '/lenaik/IMG_3534.jpg';
+const PHOTO_W = 2160;
+const PHOTO_H = 2880;
+const PHOTO_POS = { x: 0.5, y: 0.3 }; // object-position de la photo
+const TARGET = { x: 0.47, y: 0.47 }; // poitrine de Lénaïk sur la photo (fractions)
+const IMPACT_AT = 4.78; // s : début du "boom" dans la réplique de Raze
+const PRINT_1 = 'Fuck you';
+const PRINT_2 = 'Bro.';
+
+// Position à l'écran d'un point de la photo affichée en object-fit: cover
+function coverPoint(boxW, boxH) {
+  const scale = Math.max(boxW / PHOTO_W, boxH / PHOTO_H);
+  const w = PHOTO_W * scale;
+  const h = PHOTO_H * scale;
+  return {
+    x: (boxW - w) * PHOTO_POS.x + TARGET.x * w,
+    y: (boxH - h) * PHOTO_POS.y + TARGET.y * h
+  };
+}
+
+function PrintType({ hidden }) {
+  return (
+    <div className="lx-print" aria-hidden={hidden || undefined}>
+      <span className="lx-print-line lx-print-line--1">
+        {PRINT_1.split('').map((c, i) => (
+          <span key={i} className="lx-char" data-i={i} style={c === ' ' ? { width: '0.28em' } : undefined}>
+            {c === ' ' ? ' ' : c}
+          </span>
+        ))}
+      </span>
+      <span className="lx-print-line lx-print-line--2">
+        {PRINT_2.split('').map((c, i) => (
+          <span key={i} className="lx-char" data-i={i}>
+            {c}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+export default function LenaikIntro({ guest, onComplete, isReplay = false }) {
+  const [runId, setRunId] = useState(0);
+  const doneRef = useRef(false);
+
+  // onComplete ne doit partir qu'une seule fois, quoi qu'il arrive
+  const finish = useCallback(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    onComplete?.();
+  }, [onComplete]);
+
+  return (
+    <IntroRun
+      key={runId}
+      guest={guest}
+      isReplay={isReplay}
+      autoStart={runId > 0}
+      onFinish={finish}
+      onReplay={() => setRunId((n) => n + 1)}
+    />
+  );
+}
+
+function IntroRun({ guest, isReplay, autoStart, onFinish, onReplay }) {
+  const rootRef = useRef(null);
+  const stageRef = useRef(null);
+  const canvasRef = useRef(null);
   const audioRef = useRef(null);
-  const explosionCanvasRef = useRef(null);
-  const isExplodingRef = useRef(false);
+  const ctaRef = useRef(null);
+  const bridgeBtnRef = useRef(null);
+  const phaseRef = useRef('tease');
+  const showTlRef = useRef(null);
+  const postTlRef = useRef(null);
+  const tickRef = useRef(null);
+  const stopExplosionRef = useRef(() => {});
+  const targetRef = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
-    // Préchargement de l'audio de Raze dès l'initialisation pour lecture instantanée
-    try {
-      const audio = new Audio('/lenaik/Raze%20Ultimate%20Voice%20Line.mp3');
-      audio.preload = 'auto';
-      audio.volume = 1;
-      audioRef.current = audio;
-    } catch (e) {
-      console.warn('Audio init error:', e);
-    }
+  const [phase, setPhase] = useState('tease');
+  const [target, setTarget] = useState({ x: 0, y: 0 });
 
-    // 1.2 seconde de blanc pur total au début
-    const timerBlank = setTimeout(() => {
-      setStep('tease');
-    }, 1200);
+  const reduced = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
 
-    return () => clearTimeout(timerBlank);
+  const name = guest?.first_name || 'Lénaïk';
+  const host = EVENT_CONFIG.hostName || 'Jibril';
+  const total = QUESTIONS.length;
+
+  const goPhase = useCallback((p) => {
+    phaseRef.current = p;
+    setPhase(p);
   }, []);
 
-  // Déclenchement de l'explosion 100% EN CODE (Canvas physique, ondes de choc, boules de feu, étincelles)
-  const triggerExplosion = () => {
-    if (isExplodingRef.current) return;
-    isExplodingRef.current = true;
+  // --- Point d'impact (suit le redimensionnement) ---------------------------
+  useLayoutEffect(() => {
+    const measure = () => {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const p = coverPoint(r.width, r.height);
+      targetRef.current = p;
+      setTarget(p);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
-    // 1. Lancement du moteur de physique d'explosion Canvas (100% pur code, ultra-réaliste)
-    if (explosionCanvasRef.current) {
-      startRealisticExplosion(
-        explosionCanvasRef.current,
-        // Callback au pic de la détonation
-        () => {
-          gsap.to('.detonation-flash', {
-            opacity: 1,
-            duration: 0.22,
-            ease: 'expo.in',
-            onComplete: () => {
-              setTimeout(onComplete, 220);
-            }
-          });
-        },
-        // Callback à la fin
-        () => {
-          onComplete();
-        }
+  // --- Audio ----------------------------------------------------------------
+  useEffect(() => {
+    const audio = new Audio(AUDIO_SRC);
+    audio.preload = 'auto';
+    audioRef.current = audio;
+    // Textures de l'explosion pré-calculées pendant l'accroche
+    const warm = setTimeout(warmUpExplosion, 900);
+    return () => {
+      clearTimeout(warm);
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    };
+  }, []);
+
+  // --- Nettoyage global -----------------------------------------------------
+  useEffect(() => {
+    return () => {
+      if (tickRef.current) gsap.ticker.remove(tickRef.current);
+      showTlRef.current?.kill();
+      postTlRef.current?.kill();
+      stopExplosionRef.current();
+    };
+  }, []);
+
+  // --- 1. Accroche ----------------------------------------------------------
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // États de départ des éléments révélés plus tard
+      gsap.set('.lx-line-inner', { yPercent: 108 });
+      gsap.set('.lx-sub', { autoAlpha: 0 });
+
+      if (autoStart) return; // "Revoir l'intro" : on enchaîne directement
+
+      if (reduced) {
+        gsap.from(['.lx-print', '.lx-tease-cta'], { autoAlpha: 0, duration: 0.3, ease: 'power1.out' });
+        return;
+      }
+
+      const byIndex = (step) => (i, el) => Number(el.dataset.i) * step;
+      const tl = gsap.timeline({ delay: 0.35 });
+      tl.from('.lx-print-line--1 .lx-char', {
+        autoAlpha: 0,
+        scale: 1.45,
+        filter: 'blur(6px)',
+        duration: 0.32,
+        ease: 'power3.out',
+        stagger: byIndex(0.045)
+      })
+        .from(
+          '.lx-print-line--2 .lx-char',
+          { autoAlpha: 0, scale: 2.3, duration: 0.3, ease: 'power4.out', stagger: byIndex(0.06) },
+          '-=0.04'
+        )
+        // l'impact de "BRO." secoue un peu la page
+        .from('.lx-door-inner', { y: 14, duration: 0.45, ease: 'power3.out' }, '-=0.1')
+        .from(
+          '.lx-tease-cta > *',
+          { autoAlpha: 0, y: 14, duration: 0.55, ease: 'expo.out', stagger: 0.08 },
+          '-=0.25'
+        );
+    }, rootRef);
+
+    const focusTimer = setTimeout(() => ctaRef.current?.focus({ preventScroll: true }), reduced ? 300 : 1700);
+    return () => {
+      clearTimeout(focusTimer);
+      ctx.revert();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // --- 6. Écran-pont vers le quiz ---------------------------------------------
+  const showBridge = useCallback(() => {
+    if (phaseRef.current === 'bridge') return;
+    goPhase('bridge');
+    stopExplosionRef.current();
+    const q = (s) => rootRef.current?.querySelectorAll(s);
+    gsap.set(q('.lx-whiteout'), { autoAlpha: 1 });
+    gsap.set([stageRef.current, ...q('.lx-door'), ...q('.lx-skip')], { autoAlpha: 0 });
+    gsap.set(q('.lx-bridge'), { autoAlpha: 1 });
+    gsap.fromTo(
+      q('.lx-bridge .lx-reveal'),
+      { autoAlpha: 0, y: reduced ? 0 : 16 },
+      { autoAlpha: 1, y: 0, duration: reduced ? 0.25 : 0.7, ease: 'expo.out', stagger: reduced ? 0 : 0.07 }
+    );
+    gsap.fromTo(
+      q('.lx-preview-on'),
+      { width: 6 },
+      { width: 22, duration: reduced ? 0 : 0.6, ease: 'expo.out', delay: reduced ? 0 : 0.45 }
+    );
+    setTimeout(() => bridgeBtnRef.current?.focus({ preventScroll: true }), 450);
+  }, [goPhase, reduced]);
+
+  // --- 5. Impact --------------------------------------------------------------
+  const impact = useCallback(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const q = (s) => root.querySelectorAll(s);
+    const t = targetRef.current;
+    gsap.set([...q('.lx-reticle'), ...q('.lx-rocket')], { autoAlpha: 0 });
+
+    const post = gsap.timeline();
+    postTlRef.current = post;
+
+    if (reduced) {
+      post.to(q('.lx-whiteout'), { autoAlpha: 1, duration: 0.4, ease: 'power1.inOut' }, 0.1);
+      post.add(showBridge, 0.6);
+      return;
+    }
+
+    stopExplosionRef.current = startRealisticExplosion(canvasRef.current, {
+      x: t.x,
+      y: t.y,
+      onFrame: ({ shakeX, shakeY, shakeRot }) => {
+        if (stageRef.current) gsap.set(stageRef.current, { x: shakeX, y: shakeY, rotation: shakeRot });
+      }
+    });
+
+    // Le titre est soufflé dans la direction opposée à l'impact
+    const blast = (axis) => (i, el) => {
+      const r = el.getBoundingClientRect();
+      const dx = r.left + r.width / 2 - t.x;
+      const dy = r.top + r.height / 2 - t.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const force = 260 + i * 60;
+      return axis === 'x' ? (dx / len) * force : (dy / len) * force;
+    };
+    post.to(
+      q('.lx-line-inner'),
+      {
+        x: blast('x'),
+        y: blast('y'),
+        rotate: (i) => (i % 2 ? 9 : -7),
+        autoAlpha: 0,
+        filter: 'blur(10px)',
+        duration: 0.75,
+        ease: 'expo.out'
+      },
+      0
+    );
+    post.to(q('.lx-sub'), { autoAlpha: 0, y: 40, duration: 0.5, ease: 'expo.out' }, 0);
+    // Coup de poing dans la caméra puis retour
+    post.to(q('.lx-photo'), { scale: 1.14, duration: 0.1, ease: 'power4.out' }, 0);
+    post.to(q('.lx-photo'), { scale: 1.09, duration: 1.4, ease: 'expo.out' }, 0.1);
+    // La scène s'assombrit sous la fumée
+    post.to(q('.lx-tint--dim'), { opacity: 0.6, duration: 1.6, ease: 'power2.out' }, 0.15);
+    post.to(q('.lx-skip'), { autoAlpha: 0, duration: 0.2 }, 1.4);
+    // La fumée vire au blanc : on rejoint le blanc du site
+    post.to(q('.lx-whiteout'), { autoAlpha: 1, duration: 0.95, ease: 'power2.inOut' }, 1.8);
+    post.add(showBridge, 2.8);
+  }, [reduced, showBridge]);
+
+  // --- 2→4. Ouverture synchronisée sur le son -------------------------------
+  const start = useCallback(() => {
+    if (phaseRef.current !== 'tease') return;
+    goPhase('show');
+    const root = rootRef.current;
+    const q = (s) => root.querySelectorAll(s);
+    const t = targetRef.current;
+
+    const audio = audioRef.current;
+    if (audio) {
+      try {
+        audio.currentTime = 0;
+        const p = audio.play();
+        if (p?.catch) p.catch(() => {}); // son bloqué : l'horloge interne prend le relais
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const tl = gsap.timeline({ paused: true });
+    showTlRef.current = tl;
+
+    tl.to(q('.lx-tease-cta'), { autoAlpha: 0, y: 8, duration: 0.18, ease: 'power2.in' }, 0);
+
+    if (reduced) {
+      tl.to(q('.lx-door'), { autoAlpha: 0, duration: 0.4, ease: 'power1.inOut' }, 0.05);
+      tl.set(q('.lx-line-inner'), { yPercent: 0 }, 0);
+      tl.fromTo(q('.lx-title'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 }, 0.5);
+      tl.to(q('.lx-sub'), { autoAlpha: 1, duration: 0.4 }, 0.8);
+      tl.to(q('.lx-skip'), { autoAlpha: 1, duration: 0.2 }, 0.6);
+    } else {
+      // Les portes s'ouvrent : la typo du T-shirt se déchire en deux
+      tl.to(q('.lx-door--l'), { xPercent: -102, duration: 1.05, ease: 'power4.inOut' }, 0.08);
+      tl.to(q('.lx-door--r'), { xPercent: 102, duration: 1.05, ease: 'power4.inOut' }, 0.08);
+      tl.fromTo(q('.lx-photo'), { scale: 1.16 }, { scale: 1, duration: 1.6, ease: 'expo.out' }, 0.1);
+      tl.fromTo(q('.lx-tint--dim'), { opacity: 0.65 }, { opacity: 0, duration: 1.3, ease: 'power2.out' }, 0.1);
+      // Lent travelling avant sur Lénaïk jusqu'à l'impact
+      tl.to(q('.lx-photo'), { scale: 1.075, duration: IMPACT_AT - 1.7, ease: 'sine.inOut' }, 1.7);
+      // Titre : chaque ligne sort de son masque
+      tl.fromTo(
+        q('.lx-line-inner'),
+        { yPercent: 108, rotate: 4 },
+        { yPercent: 0, rotate: 0, duration: 0.95, ease: 'expo.out', stagger: 0.12 },
+        0.8
+      );
+      tl.fromTo(q('.lx-sub'), { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'expo.out' }, 1.35);
+      tl.to(q('.lx-skip'), { autoAlpha: 1, duration: 0.3, ease: 'power1.out' }, 1.1);
+
+      // Le viseur se verrouille sur Lénaïk : il apparaît au pic de la voix,
+      // large, puis se resserre lentement jusqu'au silence avant l'impact.
+      tl.fromTo(
+        q('.lx-reticle'),
+        { autoAlpha: 0, scale: 3.4, rotate: -90 },
+        { autoAlpha: 0.9, duration: 0.35, ease: 'power1.out' },
+        2.85
+      );
+      tl.to(q('.lx-reticle'), { scale: 1, rotate: 0, duration: 4.35 - 2.85, ease: 'power2.inOut' }, 2.85);
+      tl.to(q('.lx-reticle'), { autoAlpha: 1, scale: 0.92, duration: 0.12, ease: 'power2.out' }, 4.35);
+      tl.to(q('.lx-tint--dim'), { opacity: 0.3, duration: 0.5, ease: 'power2.inOut' }, 4.25);
+      tl.to(q('.lx-title'), { scale: 0.985, transformOrigin: '0% 100%', duration: 0.5, ease: 'power2.inOut' }, 4.25);
+
+      // La roquette arrive du coin haut-gauche et accélère vers la cible
+      const sx = -60;
+      const sy = Math.max(-60, t.y - (t.x + 60) * 0.62);
+      const angle = (Math.atan2(t.y - sy, t.x - sx) * 180) / Math.PI;
+      tl.fromTo(
+        q('.lx-rocket'),
+        { autoAlpha: 1, x: sx, y: sy, rotation: angle },
+        { x: t.x, y: t.y, duration: IMPACT_AT - 4.2, ease: 'power2.in' },
+        4.2
       );
     }
 
-    // 2. Tremblement d'écran violent (Screen Shake GSAP multi-axes)
-    if (containerRef.current) {
-      gsap.to(containerRef.current, {
-        x: '+=32',
-        y: '-=24',
-        duration: 0.032,
-        repeat: 22,
-        yoyo: true,
-        ease: 'none',
-        onComplete: () => {
-          gsap.set(containerRef.current, { x: 0, y: 0 });
-        }
-      });
-    }
-
-    // 3. Salve pyrotechnique d'éclats et de braises
-    confetti({
-      particleCount: 180,
-      spread: 160,
-      startVelocity: 62,
-      origin: { x: 0.5, y: 0.5 },
-      colors: ['#ff2200', '#ff6600', '#ffea00', '#ffffff', '#ff0055']
-    });
-
-    setTimeout(() => {
-      confetti({
-        particleCount: 120,
-        spread: 360,
-        startVelocity: 45,
-        origin: { x: 0.5, y: 0.5 },
-        colors: ['#ff3300', '#ff9900', '#ffffff', '#18181b']
-      });
-    }, 100);
-
-    // 4. Éclatement et dissolution cinématique de l'image de fond et des textes
-    const tlExp = gsap.timeline();
-
-    tlExp.to('.party-bg-img, .party-word, .party-subtitle, .party-cta-btn', {
-      scale: 1.9,
-      filter: 'blur(45px) brightness(4.5)',
-      opacity: 0,
-      duration: 0.45,
-      ease: 'power3.in'
-    }, 0);
-
-    // Onde de choc supersonique extérieure
-    tlExp.fromTo('.shockwave-ring', {
-      scale: 0.05,
-      opacity: 1
-    }, {
-      scale: 6.5,
-      opacity: 0,
-      duration: 0.55,
-      ease: 'expo.out'
-    }, 0);
-
-    // 5. Sécurité de transition vers le quiz après l'impact
-    setTimeout(() => {
-      onComplete();
-    }, 650);
-  };
-
-  const handleProceedToParty = (e) => {
-    if (e && e.stopPropagation) {
-      e.stopPropagation();
-    }
-    if (step === 'tease') {
-      setStep('party');
-      // Le son démarre instantanément dès le clic sur continuer
-      try {
-        let aud = audioRef.current;
-        if (!aud) {
-          aud = new Audio('/lenaik/Raze%20Ultimate%20Voice%20Line.mp3');
-          audioRef.current = aud;
-        }
-        aud.currentTime = 0;
-        aud.play().catch(err => {
-          console.log('Audio play error, falling back:', err);
-          const fallback = new Audio('/lenaik/Raze%20Ultimate%20Voice%20Line.mp3');
-          fallback.play().catch(e2 => console.log(e2));
-        });
-
-        // ====================================================================
-        // DÉCLENCHEMENT DE L'EXPLOSION À LA 5ÈME SECONDE DU SON
-        // ====================================================================
-        const onTimeUpdate = () => {
-          if (aud.currentTime >= 5.0) {
-            aud.removeEventListener('timeupdate', onTimeUpdate);
-            triggerExplosion();
-          }
-        };
-        aud.addEventListener('timeupdate', onTimeUpdate);
-
-        // Timer de sécurité calibré à 5 secondes pile
-        setTimeout(() => {
-          aud.removeEventListener('timeupdate', onTimeUpdate);
-          triggerExplosion();
-        }, 5000);
-      } catch (err) {
-        console.error(err);
-        setTimeout(triggerExplosion, 5000);
+    // Horloge : on suit le fichier audio quand il joue, sinon le temps réel.
+    // Petit rattrapage progressif pour absorber la latence de démarrage du son.
+    let clock = 0;
+    let last = performance.now();
+    let impacted = false;
+    const tick = () => {
+      const now = performance.now();
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const a = audioRef.current;
+      const audioLive = a && !a.paused && !a.ended && a.currentTime > 0;
+      if (audioLive) {
+        const diff = clock - a.currentTime;
+        const rate = diff > 0.03 ? 0.8 : diff < -0.03 ? 1.25 : 1;
+        clock += dt * rate;
+        if (Math.abs(clock - a.currentTime) > 0.5) clock = a.currentTime;
+      } else {
+        clock += dt;
       }
-    }
-  };
+      tl.time(Math.min(clock, IMPACT_AT));
+      if (!impacted && clock >= IMPACT_AT) {
+        impacted = true;
+        gsap.ticker.remove(tick);
+        tickRef.current = null;
+        impact();
+      }
+    };
+    tickRef.current = tick;
+    gsap.ticker.add(tick);
+  }, [goPhase, impact, reduced]);
 
-  // ==========================================================================
-  // GSAP TIMELINE POUR LA PHASE 2 (TEASE : FUCK YOU BRO + BOUTON)
-  // ==========================================================================
+  // "Revoir l'intro" : démarrage immédiat
   useEffect(() => {
-    if (step === 'tease') {
-      const ctx = gsap.context(() => {
-        const tl = gsap.timeline();
-
-        // État initial invisible pour un départ ultra-net sans saut
-        gsap.set('.char-line1', {
-          opacity: 0,
-          y: -90,
-          scale: 0.55,
-          rotateX: -85,
-          filter: 'blur(10px)',
-          transformOrigin: '50% 100% -40px'
-        });
-
-        gsap.set('.char-line2', {
-          opacity: 0,
-          scale: 3.2,
-          y: 45,
-          rotateZ: () => gsap.utils.random(-15, 15),
-          filter: 'blur(14px)'
-        });
-
-        gsap.set('.tease-prompt-btn', {
-          opacity: 0,
-          y: 35,
-          scale: 0.75
-        });
-
-        // 1. Ligne 1 : "Fuck you" lettre par lettre avec élasticité 3D
-        tl.to('.char-line1', {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotateX: 0,
-          filter: 'blur(0px)',
-          duration: 0.65,
-          stagger: 0.045,
-          ease: 'back.out(2)'
-        })
-          // 2. Ligne 2 : "BRO." impact puissant lettre par lettre
-          .to('.char-line2', {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            rotateZ: 0,
-            filter: 'blur(0px)',
-            duration: 0.75,
-            stagger: 0.08,
-            ease: 'elastic.out(1.15, 0.45)'
-          }, '-=0.25')
-          // 3. Bouton "Appuyez pour continuer" surgit avec rebond
-          .to('.tease-prompt-btn', {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.6,
-            ease: 'back.out(2.2)',
-            onComplete: () => {
-              // Pulsation continue GSAP
-              gsap.to('.tease-prompt-btn', {
-                scale: 1.05,
-                repeat: -1,
-                yoyo: true,
-                duration: 1.2,
-                ease: 'sine.inOut'
-              });
-              // Mouvement de la flèche
-              gsap.to('.prompt-arrow', {
-                x: 5,
-                repeat: -1,
-                yoyo: true,
-                duration: 0.7,
-                ease: 'power1.inOut'
-              });
-            }
-          }, '+=0.15');
-      }, containerRef);
-
-      return () => ctx.revert();
+    if (autoStart) {
+      gsap.set(rootRef.current.querySelectorAll('.lx-tease-cta'), { autoAlpha: 0 });
+      start();
     }
-  }, [step]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ==========================================================================
-  // GSAP TIMELINE POUR LA PHASE 3 (PARTY : IMAGE ZOOM + TITRE MOT PAR MOT)
-  // ==========================================================================
-  useEffect(() => {
-    if (step === 'party') {
-      const ctx = gsap.context(() => {
-        const tl = gsap.timeline();
+  // --- Passer ----------------------------------------------------------------
+  const skip = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      if (phaseRef.current === 'bridge') return;
+      if (tickRef.current) gsap.ticker.remove(tickRef.current);
+      tickRef.current = null;
+      showTlRef.current?.pause();
+      postTlRef.current?.kill();
+      audioRef.current?.pause();
+      gsap.to(rootRef.current.querySelectorAll('.lx-whiteout'), {
+        autoAlpha: 1,
+        duration: reduced ? 0 : 0.3,
+        ease: 'power2.out',
+        onComplete: showBridge
+      });
+    },
+    [reduced, showBridge]
+  );
 
-        // 1. Flash blanc à l'impact
-        tl.fromTo('.party-flash', {
-          opacity: 0.95
-        }, {
-          opacity: 0,
-          duration: 0.65,
-          ease: 'power2.out'
-        });
-
-        // 2. Animation GSAP de l'image de fond : zoom cinématique + transition flou vers net
-        tl.fromTo('.party-bg-img', {
-          scale: 1.45,
-          filter: 'blur(20px)',
-          opacity: 0
-        }, {
-          scale: 1.0,
-          filter: 'blur(0px)',
-          opacity: 1,
-          duration: 1.7,
-          ease: 'expo.out'
-        }, 0);
-
-        // 3. Voile sombre pour le contraste
-        tl.fromTo('.party-vignette', {
-          opacity: 0
-        }, {
-          opacity: 1,
-          duration: 1.1,
-          ease: 'power1.out'
-        }, 0.2);
-
-        // 4. Grand Titre : chaque mot arrive individuellement en GSAP
-        tl.fromTo('.party-word', {
-          opacity: 0,
-          y: -95,
-          scale: 0.5,
-          rotateX: -65,
-          filter: 'blur(10px)',
-          transformOrigin: '50% 50% -40px'
-        }, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotateX: 0,
-          filter: 'blur(0px)',
-          duration: 0.8,
-          stagger: 0.08,
-          ease: 'back.out(2.2)'
-        }, 0.3);
-
-        // Effet de mise en valeur sur le dernier mot ("PARTY !")
-        tl.to('.party-word-last', {
-          scale: 1.12,
-          textShadow: '0 0 25px rgba(255, 255, 255, 0.95), 0 4px 20px rgba(0, 0, 0, 0.9)',
-          duration: 0.35,
-          yoyo: true,
-          repeat: 1,
-          ease: 'power2.inOut'
-        }, '-=0.15');
-
-        // 5. Sous-titre date
-        tl.fromTo('.party-subtitle', {
-          opacity: 0,
-          y: 45,
-          scale: 0.9,
-          filter: 'blur(5px)'
-        }, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          filter: 'blur(0px)',
-          duration: 0.75,
-          ease: 'back.out(1.6)'
-        }, '-=0.35');
-
-        // 6. Bouton vers le questionnaire
-        tl.fromTo('.party-cta-btn', {
-          opacity: 0,
-          scale: 0.6,
-          y: 35
-        }, {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'elastic.out(1.2, 0.4)'
-        }, '-=0.3');
-
-        // Mouvement continu subtil de la caméra sur l'image (effet Ken Burns vivant)
-        gsap.to('.party-bg-img', {
-          scale: 1.06,
-          x: -12,
-          y: -8,
-          duration: 15,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          delay: 1.7
-        });
-      }, containerRef);
-
-      return () => ctx.revert();
-    }
-  }, [step]);
-
-  const line1 = "Fuck you";
-  const line2 = "NIGGY.";
-  const titleWords = ["TU", "ES", "CONVIÉ", "À", "LA", "PARTY !"];
+  // --- Vers le quiz ------------------------------------------------------------
+  const proceed = useCallback(() => {
+    gsap.to(rootRef.current.querySelectorAll('.lx-bridge-card'), {
+      autoAlpha: 0,
+      y: reduced ? 0 : -10,
+      duration: reduced ? 0.1 : 0.22,
+      ease: 'power2.in',
+      onComplete: onFinish
+    });
+  }, [onFinish, reduced]);
 
   return (
     <div
-      ref={containerRef}
-      onClick={step === 'tease' ? handleProceedToParty : undefined}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        backgroundColor: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        userSelect: 'none',
-        cursor: step === 'tease' ? 'pointer' : 'default',
-        perspective: '1200px'
-      }}
+      ref={rootRef}
+      className="lx-root"
+      data-phase={phase}
+      onClick={phase === 'tease' ? start : undefined}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Message pour ${name}`}
     >
-      {/* ====================================================================
-          ÉTAPE 1 : BLANC PUR TOTAL (Suspense 1.2s)
-          ==================================================================== */}
-      {step === 'blank' && (
-        <div style={{ width: '100%', height: '100%', background: '#ffffff' }} />
-      )}
-
-      {/* ====================================================================
-          ÉTAPE 2 : TOUT ANIME PAR GSAP (LETTRE PAR LETTRE + BOUTON)
-          ==================================================================== */}
-      {step === 'tease' && (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          padding: '24px',
-          perspective: '1000px'
-        }}>
-          <div style={{
-            fontFamily: "'Outfit', -apple-system, sans-serif",
-            fontWeight: 900,
-            lineHeight: 0.95,
-            letterSpacing: '-0.04em',
-            marginBottom: '40px'
-          }}>
-            {/* Ligne 1 : "Fuck you" animé lettre par lettre avec GSAP */}
-            <div style={{
-              fontSize: 'clamp(3.8rem, 13vw, 7.2rem)',
-              color: '#000000',
-              display: 'flex',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
-            }}>
-              {line1.split('').map((char, index) => (
-                <span
-                  key={index}
-                  className="char-line1"
-                  style={{
-                    display: 'inline-block',
-                    whiteSpace: char === ' ' ? 'pre' : 'normal'
-                  }}
-                >
-                  {char}
-                </span>
-              ))}
-            </div>
-
-            {/* Ligne 2 : "BRO." animé lettre par lettre avec GSAP */}
-            <div style={{
-              fontSize: 'clamp(4.2rem, 15vw, 8.2rem)',
-              color: '#000000',
-              textTransform: 'uppercase',
-              display: 'flex',
-              justifyContent: 'center',
-              marginTop: '4px'
-            }}>
-              {line2.split('').map((char, index) => (
-                <span
-                  key={index}
-                  className="char-line2"
-                  style={{
-                    display: 'inline-block'
-                  }}
-                >
-                  {char}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Bouton d'action animé par GSAP */}
-          <div
-            className="tease-prompt-btn"
-            onClick={handleProceedToParty}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '14px 28px',
-              borderRadius: '9999px',
-              background: '#09090b',
-              color: '#ffffff',
-              fontSize: '1rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.22)'
-            }}
-          >
-            <span>Appuyez pour continuer</span>
-            <ChevronRight size={18} className="prompt-arrow" />
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          ÉTAPE 3 : ANIMATION GSAP CINÉMATIQUE SUR L'IMAGE & TOUS LES TEXTES
-          ==================================================================== */}
-      {step === 'party' && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          overflow: 'hidden'
-        }}>
-          {/* 1. L'IMAGE EN FOND : Zoom cinématique & respiration GSAP */}
+      {/* ------------------- Scène : photo, titre, viseur, explosion ------------------- */}
+      <div ref={stageRef} className="lx-stage" aria-hidden={phase === 'bridge' || undefined}>
+        <div className="lx-stage-inner">
           <img
-            src="/lenaik/IMG_3534.jpg"
-            alt="Lénaïk"
-            className="party-bg-img"
+            className="lx-photo"
+            src={PHOTO_SRC}
+            alt={`${name}, de nuit à Strasbourg`}
             style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-              zIndex: 1
+              objectPosition: `${PHOTO_POS.x * 100}% ${PHOTO_POS.y * 100}%`,
+              transformOrigin: `${target.x}px ${target.y}px`
             }}
+            draggable={false}
           />
+          <div className="lx-tint lx-tint--base" />
+          <div className="lx-tint lx-tint--dim" />
 
-          {/* 2. VOILE NOIR DÉGRADÉ : Fondu GSAP pour lisibilité absolue */}
-          <div
-            className="party-vignette"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.80) 0%, rgba(0, 0, 0, 0.10) 42%, rgba(0, 0, 0, 0.85) 100%)',
-              zIndex: 2,
-              pointerEvents: 'none'
-            }}
-          />
+          <div className="lx-title-wrap">
+            <h1 className="lx-title">
+              <span className="lx-line">
+                <span className="lx-line-inner">Tu es convié</span>
+              </span>
+              <span className="lx-line">
+                <span className="lx-line-inner">à la party.</span>
+              </span>
+            </h1>
+            <p className="lx-sub">L'anniversaire de {host}</p>
+          </div>
 
-          {/* 3. FLASH BLANC INITIAL */}
-          <div
-            className="party-flash"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: '#ffffff',
-              zIndex: 3,
-              pointerEvents: 'none'
-            }}
-          />
+          <div className="lx-reticle" style={{ left: target.x, top: target.y }} aria-hidden="true">
+            <span className="lx-reticle-dot" />
+          </div>
+          <div className="lx-rocket" aria-hidden="true">
+            <span className="lx-rocket-trail" />
+            <span className="lx-rocket-head" />
+          </div>
 
-          {/* 4. ONDE DE CHOC DE L'EXPLOSION (5ÈME SECONDE) */}
-          <div
-            className="shockwave-ring"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '400px',
-              height: '400px',
-              marginTop: '-200px',
-              marginLeft: '-200px',
-              borderRadius: '50%',
-              border: '14px solid #ff4400',
-              boxShadow: '0 0 100px #ff2200, inset 0 0 80px #ffe600',
-              zIndex: 35,
-              pointerEvents: 'none',
-              opacity: 0,
-              transform: 'scale(0.05)'
-            }}
-          />
+          <canvas ref={canvasRef} className="lx-canvas" aria-hidden="true" />
+        </div>
+      </div>
 
-          {/* 5. FLASH TOTAL DE DÉTONATION (5ÈME SECONDE) */}
-          <div
-            className="detonation-flash"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at center, #ffffff 15%, #ff8800 65%, #ff2200 100%)',
-              zIndex: 40,
-              pointerEvents: 'none',
-              opacity: 0
-            }}
-          />
+      {/* ------------------- Accroche : deux portes blanches ------------------- */}
+      <div className="lx-door lx-door--l">
+        <div className="lx-door-inner">
+          <PrintType />
+        </div>
+      </div>
+      <div className="lx-door lx-door--r" aria-hidden="true">
+        <div className="lx-door-inner">
+          <PrintType hidden />
+        </div>
+      </div>
 
-          {/* 6. CANVAS PARTICULES D'EXPLOSION PHOTORÉALISTE (Feu, fumée volumétrique, étincelles à haute vélocité) */}
-          <canvas
-            ref={explosionCanvasRef}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: 45,
-              pointerEvents: 'none'
-            }}
-          />
+      <div className="lx-tease-cta">
+        <p className="lx-tease-msg">
+          <strong>{name}</strong>, {host} t'a laissé un message. Monte le son.
+        </p>
+        <button
+          ref={ctaRef}
+          type="button"
+          className="lx-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            start();
+          }}
+        >
+          <Volume2 size={18} aria-hidden="true" />
+          <span>Écouter le message</span>
+        </button>
+      </div>
 
-          {/* 6. CONTENU TEXTUEL : CHAQUE MOT ARRIVE EN GSAP */}
-          <div style={{
-            position: 'relative',
-            zIndex: 10,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '48px 20px 36px',
-            boxSizing: 'border-box',
-            textAlign: 'center'
-          }}>
-            {/* Titre : Mot par mot animé avec GSAP */}
-            <div style={{
-              maxWidth: '860px',
-              marginTop: '12px',
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: '12px 18px',
-              perspective: '800px'
-            }}>
-              {titleWords.map((word, idx) => {
-                const isLast = idx === titleWords.length - 1;
-                return (
-                  <span
-                    key={idx}
-                    className={`party-word ${isLast ? 'party-word-last' : ''}`}
-                    style={{
-                      display: 'inline-block',
-                      fontSize: 'clamp(2.4rem, 8vw, 4.4rem)',
-                      fontWeight: 900,
-                      lineHeight: 1.05,
-                      letterSpacing: '-0.035em',
-                      textTransform: 'uppercase',
-                      color: '#ffffff',
-                      textShadow: '0 4px 24px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.9)'
-                    }}
-                  >
-                    {word}
-                  </span>
-                );
-              })}
-            </div>
+      <button type="button" className="lx-skip" onClick={skip}>
+        Passer l'intro
+      </button>
 
-            {/* Bas : Sous-titre et Bouton animés par GSAP */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '18px',
-              maxWidth: '600px',
-              width: '100%'
-            }}>
-              {/* Titre événement SANS DATE (soumis au vote dans le quiz) */}
-              <div
-                className="party-subtitle"
-                style={{
-                  fontSize: 'clamp(1.15rem, 4vw, 1.6rem)',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  textShadow: '0 2px 16px rgba(0, 0, 0, 0.95)',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                L'Anniversaire de Jibril 🎂
+      {/* ------------------- Pont vers le quiz ------------------- */}
+      <div className="lx-whiteout" />
+      <div className="lx-bridge" onClick={(e) => e.stopPropagation()}>
+        <div className="lx-bridge-card">
+          {isReplay ? (
+            <>
+              <h2 className="lx-bridge-title lx-reveal">Toujours aussi efficace.</h2>
+              <p className="lx-bridge-text lx-reveal">
+                Tes réponses sont bien enregistrées. Tu peux les modifier quand tu veux depuis le tableau de bord.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="lx-bridge-title lx-reveal">Maintenant, le sérieux.</h2>
+              <p className="lx-bridge-text lx-reveal">
+                {total} questions rapides pour caler la date, la ville et le thème. Compte une minute : chaque
+                réponse s'enregistre toute seule.
+              </p>
+              <div className="lx-preview lx-reveal" aria-hidden="true">
+                <div className="lx-preview-head">
+                  <div className="dots">
+                    {QUESTIONS.map((q, i) => (
+                      <span key={q.id} className={`dots__dot ${i === 0 ? 'dots__dot--on lx-preview-on' : ''}`} />
+                    ))}
+                  </div>
+                  <span className="lx-preview-count tabular">1/{total}</span>
+                </div>
+                <p className="lx-preview-q">{QUESTIONS[0]?.title}</p>
               </div>
+            </>
+          )}
 
-              {/* Bouton : Déclenche l'explosion immédiatement au clic ou laisse le son détoner à 5s */}
-              <button
-                onClick={triggerExplosion}
-                className="btn party-cta-btn"
-                onMouseEnter={(e) => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.2, ease: 'power2.out' })}
-                onMouseLeave={(e) => gsap.to(e.currentTarget, { scale: 1, duration: 0.2, ease: 'power2.out' })}
-                style={{
-                  padding: '14px 34px',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  background: '#ffffff',
-                  color: '#09090b',
-                  border: 'none',
-                  boxShadow: '0 10px 35px rgba(0, 0, 0, 0.65)'
-                }}
-              >
-                <span>Passer au questionnaire</span>
-                <ArrowRight size={17} />
-              </button>
-            </div>
+          <div className="lx-bridge-actions lx-reveal">
+            <button ref={bridgeBtnRef} type="button" className="btn btn--ink btn--lg" onClick={proceed}>
+              <span>{isReplay ? 'Revenir au tableau de bord' : 'Commencer le quiz'}</span>
+              <ArrowRight size={17} aria-hidden="true" />
+            </button>
+            <button type="button" className="btn btn--link" onClick={onReplay}>
+              <RotateCcw size={16} aria-hidden="true" />
+              <span>Revoir l'intro</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

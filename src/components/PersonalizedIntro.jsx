@@ -9,13 +9,13 @@ import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
 
 const AUTO_ADVANCE_S = 8;
 
-export default function PersonalizedIntro({ guest, onComplete }) {
+export default function PersonalizedIntro({ guest, onComplete, isReplay = false }) {
   // Intro sur-mesure pour Lénaïk : on n'y touche pas
   const normalizedName = (guest?.first_name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const isLenaik = normalizedName.includes('lenaik') || (guest?.code || '').startsWith('LNAK');
 
   if (isLenaik) {
-    return <LenaikIntro onComplete={onComplete} />;
+    return <LenaikIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }
   return <WelcomeIntro guest={guest} onComplete={onComplete} />;
 }

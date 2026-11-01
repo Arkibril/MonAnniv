@@ -16,6 +16,8 @@ export default function App() {
   const [guestAnswers, setGuestAnswers] = useState({});
   const [activeView, setActiveView] = useState('home'); // 'home', 'onboarding', 'dashboard', 'admin'
   const [showIntro, setShowIntro] = useState(false);
+  // true quand l'invité rejoue l'intro depuis le tableau de bord : on l'y ramène ensuite
+  const [introIsReplay, setIntroIsReplay] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Initialisation au chargement
@@ -101,6 +103,7 @@ export default function App() {
       const answersMap = await loadGuestAnswers(guestData.id);
 
       // Lance toujours l'animation personnalisée d'entrée après connexion
+      setIntroIsReplay(false);
       setShowIntro(true);
       // Le quiz s'affiche TOUJOURS immédiatement après l'animation personnalisée
       setActiveView('onboarding');
@@ -109,12 +112,13 @@ export default function App() {
     }
   };
 
-  // Fin de l'animation d'entrée : mène TOUJOURS au quizz
+  // Fin de l'animation d'entrée : mène au quiz après la connexion,
+  // ou ramène au tableau de bord si l'invité rejouait simplement l'intro.
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
-    setActiveView('onboarding');
+    setActiveView(introIsReplay ? 'dashboard' : 'onboarding');
     window.scrollTo({ top: 0 });
-  }, []);
+  }, [introIsReplay]);
 
   // Fin du questionnaire d'onboarding
   const handleFinishOnboarding = () => {
@@ -124,6 +128,7 @@ export default function App() {
 
   // Rejouer l'animation personnalisée
   const handleReplayAnimation = () => {
+    setIntroIsReplay(true);
     setShowIntro(true);
   };
 
@@ -163,7 +168,7 @@ export default function App() {
 
       {/* Animation d'entrée plein écran personnalisée */}
       {showIntro && currentGuest && (
-        <PersonalizedIntro guest={currentGuest} onComplete={handleIntroComplete} />
+        <PersonalizedIntro guest={currentGuest} onComplete={handleIntroComplete} isReplay={introIsReplay} />
       )}
 
       {showGuestChrome && (
@@ -183,6 +188,9 @@ export default function App() {
         </header>
       )}
 
+      {/* Pendant l'intro, rien n'est monté dessous : le quiz (et son animation
+          d'entrée) démarre seulement quand l'intro se termine. */}
+      {!showIntro && (
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {activeView === 'admin' ? (
           <AdminPortal onBackToSite={() => handleNavigate(currentGuest ? 'dashboard' : 'login')} />
@@ -194,6 +202,7 @@ export default function App() {
           <Dashboard guest={currentGuest} />
         )}
       </main>
+      )}
 
       {showGuestChrome && (
         <Dock
