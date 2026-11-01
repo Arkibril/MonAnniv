@@ -1,0 +1,302 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
+
+/* ==========================================================================
+   Thème "heist" : toute la session d'Alexia façon menu de jeu (création
+   originale). Activé par <html data-theme="heist">. Les composants restent
+   les mêmes : on change les variables du système visuel, puis on ajuste
+   les éléments qui avaient des couleurs codées en dur.
+   ========================================================================== */
+:root[data-theme='heist'] {
+  --font: 'Barlow', 'Manrope Variable', system-ui, sans-serif;
+  --hx-ui: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --hx-display: 'Anton', 'Barlow Condensed', Impact, sans-serif;
+  --hx-accent: #ff5c9a;
+  --hx-cash: #72d572;
+  --hx-panel: rgba(6, 8, 12, 0.8);
+  --hx-panel-hover: rgba(30, 34, 42, 0.9);
+
+  --bg: #07090d;
+  --card: var(--hx-panel);
+  --card-strong: var(--hx-panel-hover);
+  --ink: #f4f4f4;
+  --ink-2: rgba(244, 244, 244, 0.7);
+  --ink-3: rgba(244, 244, 244, 0.5);
+  --on-ink: #000;
+  --on-ink-2: rgba(0, 0, 0, 0.62);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.24);
+  --accent: var(--hx-accent);
+  --accent-ink: #ff8ab7;
+  --accent-soft: rgba(255, 92, 154, 0.16);
+  --success: var(--hx-cash);
+
+  --r-sm: 2px;
+  --r-md: 2px;
+  --r-lg: 3px;
+  --r-xl: 3px;
+  --lift: none;
+  --lift-2: none;
+  --float: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+[data-theme='heist'] body {
+  background:
+    radial-gradient(110% 60% at 75% 115%, rgba(255, 92, 154, 0.22), transparent 60%),
+    radial-gradient(90% 50% at 0% -10%, rgba(70, 110, 255, 0.16), transparent 60%),
+    #07090d;
+  background-attachment: fixed;
+}
+[data-theme='heist'] ::-webkit-scrollbar-thumb { border-color: #07090d; }
+
+/* ---------- Typo : titres en condensé majuscule ---------- */
+[data-theme='heist'] .display,
+[data-theme='heist'] .hero-vote__leader {
+  font-family: var(--hx-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+}
+[data-theme='heist'] .title,
+[data-theme='heist'] .title-2,
+[data-theme='heist'] .headline,
+[data-theme='heist'] .greet__name {
+  font-family: var(--hx-ui);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.015em;
+}
+[data-theme='heist'] .title { font-size: clamp(30px, 8vw, 40px); line-height: 1.02; }
+[data-theme='heist'] .title-2 { font-size: 26px; }
+[data-theme='heist'] .headline { font-size: 19px; }
+[data-theme='heist'] .caption,
+[data-theme='heist'] .card__meta,
+[data-theme='heist'] .section__meta,
+[data-theme='heist'] .greet__hello {
+  font-family: var(--hx-ui);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ---------- Barre du haut ---------- */
+[data-theme='heist'] .topbar {
+  background: rgba(7, 9, 13, 0.88);
+  border-bottom: 3px solid var(--hx-accent);
+}
+[data-theme='heist'] .round,
+[data-theme='heist'] .avatar--white {
+  background: var(--hx-panel);
+  color: #fff;
+  border-radius: 2px;
+  box-shadow: none;
+}
+[data-theme='heist'] .round:hover:not(:disabled) { background: #fff; color: #000; }
+[data-theme='heist'] .avatar { border-radius: 2px; background: rgba(255, 255, 255, 0.08); }
+
+/* Progression : étoiles qui se remplissent au fil des questions */
+[data-theme='heist'] .dots { gap: 4px; }
+[data-theme='heist'] .dots__dot,
+[data-theme='heist'] .dots__dot--on {
+  width: 16px;
+  height: 16px;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.22);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+[data-theme='heist'] .dots__dot--done { background: #fff; }
+[data-theme='heist'] .dots__dot--on { background: var(--hx-accent); }
+
+/* ---------- Boutons ---------- */
+[data-theme='heist'] .btn {
+  border-radius: 2px;
+  font-family: var(--hx-ui);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme='heist'] .btn--ink { background: #fff; color: #000; }
+[data-theme='heist'] .btn--ink:hover:not(:disabled) { background: #e9e9e9; }
+[data-theme='heist'] .btn__knob { background: #000; color: #fff; border-radius: 50%; }
+[data-theme='heist'] .btn--soft { background: var(--hx-panel); color: #fff; }
+[data-theme='heist'] .btn--white { background: #fff; color: #000; }
+[data-theme='heist'] .cta-bar { background: linear-gradient(to top, #07090d 62%, rgba(7, 9, 13, 0)); }
+
+/* ---------- Options du quiz : lignes de menu ---------- */
+[data-theme='heist'] .options { gap: 3px; }
+[data-theme='heist'] .option {
+  min-height: 66px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 0;
+  background: var(--hx-panel);
+  color: #fff;
+}
+[data-theme='heist'] .option:hover { background: var(--hx-panel-hover); }
+[data-theme='heist'] .option__emoji {
+  width: 44px;
+  height: 44px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  font-size: 22px;
+}
+[data-theme='heist'] .option__label {
+  font-family: var(--hx-ui);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+[data-theme='heist'] .option__tag {
+  border-radius: 2px;
+  background: var(--hx-accent);
+  color: #fff;
+  font-family: var(--hx-ui);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+[data-theme='heist'] .option__check { border-radius: 2px; border-color: rgba(255, 255, 255, 0.35); }
+[data-theme='heist'] .option[aria-checked='true'] {
+  background: #fff;
+  color: #000;
+  box-shadow: inset 5px 0 0 var(--hx-accent);
+}
+[data-theme='heist'] .option[aria-checked='true'] .option__sub { color: rgba(0, 0, 0, 0.62); }
+[data-theme='heist'] .option[aria-checked='true'] .option__emoji { background: rgba(0, 0, 0, 0.06); }
+[data-theme='heist'] .option[aria-checked='true'] .option__tag { background: #000; color: #fff; }
+[data-theme='heist'] .option[aria-checked='true'] .option__check { background: #000; border-color: #000; color: #fff; }
+
+[data-theme='heist'] .field {
+  border-radius: 2px;
+  background: var(--hx-panel);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+[data-theme='heist'] .field:hover { background: var(--hx-panel-hover); }
+[data-theme='heist'] .field:focus { border-color: var(--hx-accent); }
+
+/* ---------- Tableau de bord ---------- */
+[data-theme='heist'] .card,
+[data-theme='heist'] .stat,
+[data-theme='heist'] .note,
+[data-theme='heist'] .person,
+[data-theme='heist'] .list-row {
+  background: var(--hx-panel);
+  border-radius: 0;
+}
+[data-theme='heist'] .card { border-top: 3px solid rgba(255, 255, 255, 0.85); }
+[data-theme='heist'] .card--ink {
+  background: rgba(6, 8, 12, 0.9);
+  color: #fff;
+  border-top: 4px solid var(--hx-accent);
+}
+[data-theme='heist'] .card--ink .card__meta,
+[data-theme='heist'] .hero-vote__note { color: rgba(255, 255, 255, 0.66); }
+[data-theme='heist'] .bar__label,
+[data-theme='heist'] .bar__count { font-family: var(--hx-ui); font-size: 16px; letter-spacing: 0.02em; }
+[data-theme='heist'] .bar__track,
+[data-theme='heist'] .card--ink .bar__track { height: 8px; border-radius: 0; background: rgba(255, 255, 255, 0.1); }
+[data-theme='heist'] .bar__fill,
+[data-theme='heist'] .card--ink .bar__fill { border-radius: 0; background: rgba(255, 255, 255, 0.4); }
+[data-theme='heist'] .bar--lead .bar__fill,
+[data-theme='heist'] .card--ink .bar--lead .bar__fill { background: var(--hx-accent); }
+[data-theme='heist'] .bar--lead .bar__pct,
+[data-theme='heist'] .card--ink .bar--lead .bar__pct { color: #fff; }
+[data-theme='heist'] .chip { border-radius: 2px; background: rgba(255, 255, 255, 0.08); color: #fff; }
+[data-theme='heist'] .chip--soft { background: rgba(255, 255, 255, 0.08) !important; }
+[data-theme='heist'] .note--mine { background: #fff; color: #000; box-shadow: inset 5px 0 0 var(--hx-accent); }
+[data-theme='heist'] .note--mine .avatar { background: rgba(0, 0, 0, 0.06); }
+[data-theme='heist'] .person { padding-right: 14px; }
+[data-theme='heist'] .person .avatar { background: rgba(255, 255, 255, 0.08); }
+[data-theme='heist'] .stat__n { font-family: var(--hx-display); font-weight: 400; color: var(--hx-cash); }
+[data-theme='heist'] .live { border-radius: 2px; font-family: var(--hx-ui); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Navigation du bas : barre de menu */
+[data-theme='heist'] .dock {
+  border-radius: 0;
+  background: rgba(6, 8, 12, 0.92);
+  border-top: 3px solid var(--hx-accent);
+  gap: 2px;
+  padding: 4px;
+}
+[data-theme='heist'] .dock__item {
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--hx-ui);
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme='heist'] .dock__item[aria-current='page'] { background: #fff; color: #000; }
+
+/* ==========================================================================
+   Écran "Mission réussie"
+   ========================================================================== */
+.hx-passed {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  text-align: center;
+}
+.hx-passed-band {
+  width: 100%;
+  padding: 26px 16px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.82) 22%, rgba(0, 0, 0, 0.82) 78%, rgba(0, 0, 0, 0) 100%);
+}
+.hx-passed-title {
+  margin: 0;
+  font-family: 'Anton', 'Barlow Condensed', Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(3rem, 13vw, 7rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: #f2c230;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.75), 0 0 30px rgba(242, 194, 48, 0.35);
+}
+.hx-passed-sub {
+  margin: 0;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.1rem, 4vw, 1.5rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.hx-passed-cash {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  letter-spacing: 0.03em;
+  color: #72d572;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+.hx-passed-hint {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-height: 44px;
+}

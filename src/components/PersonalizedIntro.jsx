@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { ArrowRight } from 'lucide-react';
 import { EVENT_CONFIG } from '../config/event';
 import LenaikIntro from './customIntros/LenaikIntro';
+import AlexiaIntro from './customIntros/AlexiaIntro';
+import { getGuestTheme } from '../themes/guestTheme';
 import { WelcomeComposition, WELCOME_SIZE } from '../motion/WelcomeComposition';
 import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
 
@@ -16,6 +18,9 @@ export default function PersonalizedIntro({ guest, onComplete, isReplay = false 
 
   if (isLenaik) {
     return <LenaikIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
+  }
+  if (getGuestTheme(guest) === 'heist') {
+    return <AlexiaIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }
   return <WelcomeIntro guest={guest} onComplete={onComplete} />;
 }

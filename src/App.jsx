@@ -8,6 +8,9 @@ import ConfigBanner from './components/ConfigBanner';
 import Dock from './components/Dock';
 import { LogOut } from 'lucide-react';
 import { loginWithCode, fetchAnswers } from './lib/supabase';
+import { getGuestTheme } from './themes/guestTheme';
+import MissionPassed from './themes/heist/MissionPassed';
+import './themes/heist/heist.css';
 
 const STORAGE_KEY_GUEST = 'monanniv_current_guest';
 
@@ -19,6 +22,18 @@ export default function App() {
   // true quand l'invité rejoue l'intro depuis le tableau de bord : on l'y ramène ensuite
   const [introIsReplay, setIntroIsReplay] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showMissionPassed, setShowMissionPassed] = useState(false);
+
+  // Thème propre à l'invité (ex. Alexia : toute la session en mode jeu)
+  const guestTheme = getGuestTheme(currentGuest);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (guestTheme) root.dataset.theme = guestTheme;
+    else delete root.dataset.theme;
+    return () => {
+      delete root.dataset.theme;
+    };
+  }, [guestTheme]);
 
   // Initialisation au chargement
   useEffect(() => {
@@ -122,6 +137,7 @@ export default function App() {
 
   // Fin du questionnaire d'onboarding
   const handleFinishOnboarding = () => {
+    if (guestTheme === 'heist') setShowMissionPassed(true);
     setActiveView('dashboard');
     window.scrollTo({ top: 0 });
   };
@@ -170,6 +186,8 @@ export default function App() {
       {showIntro && currentGuest && (
         <PersonalizedIntro guest={currentGuest} onComplete={handleIntroComplete} isReplay={introIsReplay} />
       )}
+
+      {showMissionPassed && !showIntro && <MissionPassed onDone={() => setShowMissionPassed(false)} />}
 
       {showGuestChrome && (
         <header className="topbar topbar--wide">
