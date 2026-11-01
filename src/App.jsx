@@ -10,6 +10,7 @@ import { LogOut } from 'lucide-react';
 import { loginWithCode, fetchAnswers } from './lib/supabase';
 import { getGuestTheme } from './themes/guestTheme';
 import MissionPassed from './themes/heist/MissionPassed';
+import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';
 
 const STORAGE_KEY_GUEST = 'monanniv_current_guest';
@@ -32,6 +33,7 @@ export default function App() {
     else delete root.dataset.theme;
     return () => {
       delete root.dataset.theme;
+      stopMusic(); // la musique d'Alexia s'arrête à la déconnexion
     };
   }, [guestTheme]);
 

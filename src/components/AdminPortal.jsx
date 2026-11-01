@@ -140,7 +140,7 @@ export default function AdminPortal({ onBackToSite }) {
 Tu es invité(e) à mon anniversaire (${EVENT_CONFIG.datesProposed}) !
 
 Rends-toi sur : ${siteUrl}
-Connecte-toi simplement avec ton prénom : ${guest.code}
+Pour entrer, tape juste ton prénom : ${guest.first_name.split(/\s*[&+,/]\s*|\s+et\s+/i).join(' ou ')}
 
 Tu pourras y découvrir ton animation personnalisée et voter pour la date ! 🎉`;
 
@@ -153,14 +153,13 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
     try {
       const answers = await fetchAnswers();
       const csvRows = [];
-      const headers = ['Prénom', 'Code', 'Date de création', ...QUESTIONS.map(q => q.title)];
+      const headers = ['Prénom', 'Date de création', ...QUESTIONS.map(q => q.title)];
       csvRows.push(headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
 
       guests.forEach(g => {
         const guestAnswers = answers.filter(a => a.guest_id === g.id);
         const row = [
           g.first_name,
-          g.code,
           new Date(g.created_at).toLocaleDateString(),
           ...QUESTIONS.map(q => {
             const ans = guestAnswers.find(a => a.question_id === q.id);
@@ -371,7 +370,7 @@ Tu pourras y découvrir ton animation personnalisée et voter pour la date ! �
                   <span>{formError}</span>
                 </p>
               ) : (
-                <p className="field-hint">Le prénom sert de code d'accès.</p>
+                <p className="field-hint">L'invité se connecte en tapant simplement son prénom.</p>
               )}
             </form>
 

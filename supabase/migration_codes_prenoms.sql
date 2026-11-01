@@ -85,7 +85,7 @@ BEGIN
     LIMIT 1;
 
     IF v_guest_id IS NULL THEN
-        RAISE EXCEPTION 'Code invalide ou session expiree.';
+        RAISE EXCEPTION 'Prenom introuvable, reconnecte-toi avec ton prenom.';
     END IF;
 
     -- Upsert de la réponse

@@ -6,7 +6,7 @@ import HeistPoster from '../../themes/heist/HeistPoster';
 import FranceMap from '../../themes/heist/FranceMap';
 import {
   sfxMove, sfxTab, sfxSelect, sfxBack, sfxMissionStart,
-  startAmbience, stopAmbience, setMuted, isMuted
+  startAmbience, stopAmbience, setMuted, isMuted, startMusic, isMusicPlaying
 } from '../../themes/heist/sound';
 import './AlexiaIntro.css';
 
@@ -88,7 +88,10 @@ export default function AlexiaIntro({ guest, onComplete, isReplay = false }) {
   const enterMenu = useCallback(() => {
     if (phase !== 'loading' || !loaded) return;
     sfxSelect();
-    startAmbience();
+    // Musique de fond si le fichier existe, sinon nappe synthétisée
+    startMusic().then((ok) => {
+      if (!ok) startAmbience();
+    });
     setPhase('menu');
   }, [phase, loaded]);
 
@@ -243,7 +246,9 @@ export default function AlexiaIntro({ guest, onComplete, isReplay = false }) {
           <h2 className="hx-panel-title">Réglages</h2>
           <p className="hx-panel-text">
             {current?.id === 'sound'
-              ? 'Les sons du menu sont créés en direct par ton navigateur. Coupe-les si tu es en public.'
+              ? isMusicPlaying()
+                ? 'Coupe la musique et les sons du menu si tu es en public.'
+                : 'Les sons du menu sont créés en direct par ton navigateur. Coupe-les si tu es en public.'
               : 'Relance l\'écran de chargement depuis le début.'}
           </p>
         </div>

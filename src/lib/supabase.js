@@ -69,7 +69,7 @@ const getMockAnswers = () => {
 // ============================================================================
 
 /**
- * Connexion d'un invité via son code secret
+ * Connexion d'un invité avec son prénom
  */
 // Normalise un prénom : minuscules, sans accents, sans espaces ni ponctuation
 export const normalizeName = (str) =>
@@ -101,7 +101,7 @@ export async function loginWithCode(code) {
   });
 
   if (error) {
-    throw new Error(error.message || 'Code invalide ou expiré.');
+    throw new Error(error.message || 'Prénom introuvable. Vérifie l\'orthographe.');
   }
 
   return data;
@@ -116,7 +116,7 @@ export async function saveAnswer(code, questionId, value) {
   if (!isSupabaseConfigured) {
     const guests = getMockGuests();
     const guest = guests.find(g => normalizeName(g.code) === normalizeName(cleanCode));
-    if (!guest) throw new Error('Session expirée ou code invalide.');
+    if (!guest) throw new Error('Prénom introuvable, reconnecte-toi avec ton prénom.');
 
     const answers = getMockAnswers();
     const existingIndex = answers.findIndex(a => a.guest_id === guest.id && a.question_id === questionId);

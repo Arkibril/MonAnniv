@@ -25,6 +25,7 @@ function audio() {
 export function setMuted(value) {
   muted = value;
   if (master && ctx) master.gain.setTargetAtTime(value ? 0 : 0.55, ctx.currentTime, 0.05);
+  if (music) music.muted = value;
 }
 export const isMuted = () => muted;
 
@@ -167,4 +168,71 @@ export function stopAmbience() {
     lfo.stop();
   }, 700);
   ambience = null;
+}
+
+// -----------------------------------------------------------------------------
+// Musique de fond optionnelle : fichier fourni par l'organisateur dans
+// public/alexia/musique.mp3. Jouée en boucle, volume doux, sur toute la
+// session d'Alexia. Sans fichier, on garde la nappe synthétisée.
+// -----------------------------------------------------------------------------
+export const MUSIC_SRC = '/alexia/musique.mp3';
+const MUSIC_VOLUME = 0.18;
+let music = null;
+let musicFade = null;
+
+function fadeMusic(to, ms, done) {
+  clearInterval(musicFade);
+  if (!music) return;
+  const from = music.volume;
+  const start = performance.now();
+  musicFade = setInterval(() => {
+    const k = Math.min(1, (performance.now() - start) / ms);
+    if (music) music.volume = from + (to - from) * k;
+    if (k >= 1) {
+      clearInterval(musicFade);
+      done?.();
+    }
+  }, 40);
+}
+
+const onVisibility = () => {
+  if (!music) return;
+  if (document.hidden) music.pause();
+  else music.play().catch(() => {});
+};
+
+// Renvoie une promesse : true si la musique joue, false sinon (fichier absent…)
+export function startMusic() {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (music) return Promise.resolve(true);
+  const el = new Audio(MUSIC_SRC);
+  el.loop = true;
+  el.volume = 0;
+  el.muted = muted;
+  music = el;
+  return el
+    .play()
+    .then(() => {
+      fadeMusic(MUSIC_VOLUME, 2500);
+      document.addEventListener('visibilitychange', onVisibility);
+      return true;
+    })
+    .catch(() => {
+      if (music === el) music = null;
+      return false;
+    });
+}
+
+export const isMusicPlaying = () => Boolean(music);
+
+export function stopMusic() {
+  if (!music) return;
+  const el = music;
+  document.removeEventListener('visibilitychange', onVisibility);
+  fadeMusic(0, 600, () => {
+    el.pause();
+    el.removeAttribute('src');
+    el.load();
+  });
+  music = null;
 }

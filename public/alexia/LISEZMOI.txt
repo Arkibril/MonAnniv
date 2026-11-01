@@ -1,0 +1,6 @@
+Musique de fond de la session d'Alexia
+---------------------------------------
+Dépose ici un fichier audio nommé exactement : musique.mp3
+Il sera joué en boucle, à volume doux, dès qu'Alexia ouvre le menu,
+puis pendant le quiz et le tableau de bord. Coupable dans Réglages.
+Sans fichier, une ambiance synthétisée est utilisée à la place.
