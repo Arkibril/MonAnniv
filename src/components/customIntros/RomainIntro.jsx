@@ -17,6 +17,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
   const rootRef = useRef(null);
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
+  const shotPressRef = useRef(false);
   const doneRef = useRef(false);
   const [screen, setScreen] = useState('cover'); // cover | game | fail | win
   const [score, setScore] = useState(0);
@@ -99,14 +100,26 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
       g.power();
       return;
     }
-    if (g.isFocus()) {
+    // FOCUS : on tire s'il reste des ennemis à l'écran ; sinon on quitte le
+    // ralenti et l'appui sert à s'accrocher comme d'habitude
+    if (g.isFocus() && g.hasTargets()) {
+      shotPressRef.current = true;
       g.shoot(e.clientX, e.clientY);
       return;
     }
+    if (g.isFocus()) g.endFocus();
+    shotPressRef.current = false;
     setStarted(true);
     g.press();
   }, []);
-  const up = useCallback(() => gameRef.current?.release(), []);
+  // un appui qui a servi à tirer ne doit pas lâcher le grappin en se relevant
+  const up = useCallback(() => {
+    if (shotPressRef.current) {
+      shotPressRef.current = false;
+      return;
+    }
+    gameRef.current?.release();
+  }, []);
 
   useEffect(() => {
     if (screen !== 'game') return undefined;
@@ -119,15 +132,25 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
         g.shoot(); // tir automatique sur la cible la plus proche
       } else if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        if (g.isFocus()) {
+        if (g.isFocus() && g.hasTargets()) {
+          shotPressRef.current = true;
           g.shoot();
           return;
         }
+        if (g.isFocus()) g.endFocus();
+        shotPressRef.current = false;
         setStarted(true);
         g.press();
       }
     };
-    const ku = (e) => e.code === 'Space' && gameRef.current?.release();
+    const ku = (e) => {
+      if (e.code !== 'Space') return;
+      if (shotPressRef.current) {
+        shotPressRef.current = false;
+        return;
+      }
+      gameRef.current?.release();
+    };
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
     return () => {

@@ -323,6 +323,19 @@ export function createGame(canvas, opts = {}) {
     return true;
   }
 
+  // Cibles encore vivantes et visibles à l'écran
+  function targetsInView() {
+    const minX = state.cam.x - 40;
+    const maxX = state.cam.x + W + 40;
+    return [...level.enemies, ...level.mines].filter((e) => e.alive && e.x > minX && e.x < maxX);
+  }
+
+  function endFocus() {
+    if (state.focus <= 0) return;
+    state.focus = 0;
+    sfx.focusOut?.();
+  }
+
   function toWorld(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const px = (clientX - rect.left) * dpr;
@@ -393,6 +406,7 @@ export function createGame(canvas, opts = {}) {
       }
     }
     state.shots = state.shots.filter((b) => b.t < 0.5);
+    if (state.focus > 0 && state.shots.length === 0 && targetsInView().length === 0) endFocus();
   }
 
   function stepPhysics(dt) {
@@ -1175,6 +1189,8 @@ export function createGame(canvas, opts = {}) {
     power,
     shoot,
     isFocus: () => state.focus > 0,
+    hasTargets: () => targetsInView().length > 0,
+    endFocus,
     setGod: (v) => (state.god = v),
     get mode() {
       return state.mode;
