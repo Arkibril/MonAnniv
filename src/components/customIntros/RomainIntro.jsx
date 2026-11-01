@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
-import { createGame } from '../../themes/comic/game/engine';
-import { sfxHook, sfxRelease, sfxCollect, sfxFail, sfxMissionPassed, setMuted, isMuted } from '../../themes/heist/sound';
+import { createGame, MISSIONS } from '../../themes/comic/game/engine';
+import {
+  sfxHook, sfxRelease, sfxCollect, sfxFail, sfxMissionPassed, sfxHurt, sfxShoot, sfxBoom,
+  sfxFocusIn, sfxFocusOut, sfxMission, setMuted, isMuted
+} from '../../themes/heist/sound';
 import './RomainIntro.css';
 
 // =============================================================================
@@ -21,6 +24,9 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
   const [fails, setFails] = useState(0);
   const [started, setStarted] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
+  const [hud, setHud] = useState({ lives: 3, maxLives: 3, energy: 1, focus: false, kills: 0, score: 0 });
+  const [result, setResult] = useState(null);
+  const [failReason, setFailReason] = useState('chute');
   const name = (guest?.first_name || 'Romain').toUpperCase();
 
   const finish = useCallback(() => {
@@ -50,12 +56,20 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
       name,
       onScore: setScore,
       onProgress: setProgress,
-      onFail: () => {
+      onHud: setHud,
+      onFail: (reason) => {
+        setFailReason(reason);
         setFails((f) => f + 1);
         setScreen('fail');
       },
-      onWin: () => setScreen('win'),
-      sfx: { hook: sfxHook, release: sfxRelease, collect: sfxCollect, fail: sfxFail, win: sfxMissionPassed }
+      onWin: (res) => {
+        setResult(res);
+        setScreen('win');
+      },
+      sfx: {
+        hook: sfxHook, release: sfxRelease, collect: sfxCollect, fail: sfxFail, win: sfxMissionPassed,
+        hurt: sfxHurt, shoot: sfxShoot, boom: sfxBoom, focus: sfxFocusIn, focusOut: sfxFocusOut, mission: sfxMission
+      }
     });
     gameRef.current = game;
     // pour les tests automatiques
@@ -79,18 +93,38 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
   const down = useCallback((e) => {
     if (e.target.closest?.('button')) return;
     e.preventDefault?.();
+    const g = gameRef.current;
+    if (!g) return;
+    if (e.button === 2) {
+      g.power();
+      return;
+    }
+    if (g.isFocus()) {
+      g.shoot(e.clientX, e.clientY);
+      return;
+    }
     setStarted(true);
-    gameRef.current?.press();
+    g.press();
   }, []);
   const up = useCallback(() => gameRef.current?.release(), []);
 
   useEffect(() => {
     if (screen !== 'game') return undefined;
     const kd = (e) => {
-      if (e.code === 'Space' && !e.repeat) {
+      const g = gameRef.current;
+      if (!g) return;
+      if ((e.code === 'KeyF' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
+        g.power();
+      } else if (e.code === 'Enter' && g.isFocus()) {
+        g.shoot(); // tir automatique sur la cible la plus proche
+      } else if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
+        if (g.isFocus()) {
+          g.shoot();
+          return;
+        }
         setStarted(true);
-        gameRef.current?.press();
+        g.press();
       }
     };
     const ku = (e) => e.code === 'Space' && gameRef.current?.release();
@@ -105,8 +139,16 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
   const retry = () => {
     gameRef.current?.restart();
     setStarted(false);
+    setResult(null);
     setScreen('game');
   };
+
+  const missionDone = (id) => {
+    if (id === 'reach') return screen === 'win';
+    if (id === 'kills') return hud.kills >= 5;
+    return hud.score >= 10;
+  };
+  const missionCount = (m) => (m.id === 'kills' ? `${Math.min(hud.kills, 5)}/5` : m.id === 'cakes' ? `${Math.min(hud.score, 10)}/10` : '');
 
   return (
     <div ref={rootRef} className="rc-intro" role="dialog" aria-modal="true" aria-label={`Mini-jeu de ${name}`}>
@@ -156,8 +198,14 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
               <span className="rc-pow rc-pow--2">WHOOSH !</span>
             </div>
             <p className="rc-cover-text">
-              Accroche-toi aux drones, ramasse les parts de gâteau et rejoins la fête de Jibril sans tomber.
+              Des drones casse-fête veulent gâcher l'anniversaire. Balance-toi jusqu'à la fête, évite les lasers et les
+              mines, et active ton pouvoir <b>FOCUS ⚡</b> pour ralentir le temps et les dégommer.
             </p>
+            <ul className="rc-missions-list">
+              {MISSIONS.map((m) => (
+                <li key={m.id}>★ {m.label}</li>
+              ))}
+            </ul>
             <button type="button" className="rc-btn rc-cover-cta" onClick={() => setScreen('game')} autoFocus>
               JOUER ▶
             </button>
@@ -181,7 +229,12 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
         >
           <canvas ref={canvasRef} className="rc-canvas" />
           <div className="rc-hud">
-            <span className="rc-score" aria-live="polite">🎂 × {score}</span>
+            <span className="rc-lives" aria-label={`${hud.lives} vies`}>
+              {Array.from({ length: hud.maxLives }, (_, i) => (
+                <span key={i} className={i < hud.lives ? '' : 'is-lost'}>❤️</span>
+              ))}
+            </span>
+            <span className="rc-score" aria-live="polite">🎂 {score}</span>
             <div className="rc-progress" aria-label="Distance jusqu'à la fête">
               <div className="rc-progress-fill" style={{ transform: `scaleX(${progress})` }} />
               <span className="rc-progress-goal" aria-hidden="true">🎉</span>
@@ -200,11 +253,37 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
             </button>
           </div>
 
+          <ul className="rc-missions" aria-label="Missions">
+            {MISSIONS.map((m) => (
+              <li key={m.id} className={missionDone(m.id) ? 'is-done' : ''}>
+                {missionDone(m.id) ? '✔' : '★'} {m.id === 'reach' ? 'Fête' : m.id === 'kills' ? 'Drones' : 'Objets'}{' '}
+                <b>{missionCount(m)}</b>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            className={`rc-power ${hud.energy >= 1 ? 'is-ready' : ''} ${hud.focus ? 'is-active' : ''}`}
+            style={{ '--charge': hud.focus ? 1 : hud.energy }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              gameRef.current?.power();
+            }}
+            aria-label="Activer le pouvoir FOCUS"
+            disabled={screen !== 'game'}
+          >
+            <span className="rc-power-fill" aria-hidden="true" />
+            <span className="rc-power-label">⚡ FOCUS</span>
+          </button>
+
           {screen === 'game' && !started && (
             <div className="rc-tuto" aria-live="polite">
               <span className="rc-hand" aria-hidden="true">👆</span>
               <p>
                 <b>Maintiens</b> pour t'accrocher, <b>relâche</b> pour t'envoler !
+                <br />
+                <b>⚡ FOCUS</b> : le temps ralentit, touche les drones pour tirer.
               </p>
             </div>
           )}
@@ -218,8 +297,10 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
               <div className="rc-card rc-card--fail">
                 <p className="rc-card-big">OUPS !</p>
                 <p>
-                  Tu es tombé à {Math.round(progress * 100)} % de la fête. <br />
-                  {score > 0 && `${score} part${score > 1 ? 's' : ''} de gâteau récupérée${score > 1 ? 's' : ''}.`}
+                  {failReason === 'vies' ? 'Les casse-fête ont eu ta peau' : 'Tu es tombé'} à {Math.round(progress * 100)} % de
+                  la fête.
+                  <br />
+                  {hud.kills} drone{hud.kills > 1 ? 's' : ''} détruit{hud.kills > 1 ? 's' : ''}, {score} objet{score > 1 ? 's' : ''}.
                 </p>
                 <button type="button" className="rc-btn" onClick={retry} autoFocus>
                   RÉESSAYER ↻
@@ -232,14 +313,25 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
             <div className="rc-overlay">
               <div className="rc-card">
                 <p className="rc-card-big">BRAVO {name} !</p>
-                <p>
-                  Tu es arrivé à la fête avec <b>{score} part{score > 1 ? 's' : ''} de gâteau</b>. Mission accomplie.
+                <p className="rc-stars" aria-label={`${result?.stars || 1} étoiles sur 3`}>
+                  {[1, 2, 3].map((n) => (
+                    <span key={n} className={n <= (result?.stars || 1) ? 'is-on' : ''}>★</span>
+                  ))}
                 </p>
+                <ul className="rc-results">
+                  <li className="is-done">✔ Fête atteinte</li>
+                  <li className={(result?.kills || 0) >= 5 ? 'is-done' : ''}>
+                    {(result?.kills || 0) >= 5 ? '✔' : '✘'} Drones détruits : {result?.kills || 0}/5
+                  </li>
+                  <li className={(result?.score || 0) >= 10 ? 'is-done' : ''}>
+                    {(result?.score || 0) >= 10 ? '✔' : '✘'} Objets ramassés : {result?.score || 0}/10
+                  </li>
+                </ul>
                 <button type="button" className="rc-btn" onClick={finish} autoFocus>
                   {isReplay ? 'REVENIR AU TABLEAU DE BORD' : 'PASSER AU QUIZ ▶'}
                 </button>
                 <button type="button" className="rc-link" onClick={retry}>
-                  Rejouer pour battre mon score
+                  {(result?.stars || 1) < 3 ? 'Rejouer pour les 3 étoiles' : 'Rejouer pour le fun'}
                 </button>
               </div>
             </div>

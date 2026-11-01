@@ -5,6 +5,10 @@
 // d'un crochet à l'autre avec son grappin jusqu'à la fête de Jibril.
 // Contrôle : maintenir = s'accrocher au crochet le plus proche devant,
 //            relâcher = se lâcher et voler.
+// Danger   : barrières laser, mines flottantes, drones "casse-fête" (3 vies).
+// Pouvoir  : FOCUS = le temps ralentit, chaque appui tire un éclair sur
+//            l'endroit visé (énergie rechargée en ramassant des objets).
+// Missions : atteindre la fête, détruire 5 drones, ramasser 10 objets.
 // Monde logique : 800 unités de haut, mis à l'échelle de l'écran.
 // Indépendant du framerate (pas fixe de 1/120 s).
 // =============================================================================
@@ -23,6 +27,15 @@ function seeded(seed) {
     return s / 4294967296;
   };
 }
+
+export const MISSIONS = [
+  { id: 'reach', label: 'Atteindre la fête de Jibril' },
+  { id: 'kills', label: 'Détruire 5 drones casse-fête', goal: 5 },
+  { id: 'cakes', label: 'Ramasser 10 objets de fête', goal: 10 }
+];
+const MAX_LIVES = 3;
+const FOCUS_TIME = 2.8; // secondes réelles
+const FOCUS_SPEED = 0.2; // vitesse du monde pendant le FOCUS
 
 function buildLevel() {
   const r = seeded(42);
@@ -55,7 +68,26 @@ function buildLevel() {
     bx += w + 14 + r() * 30;
   }
   const stars = Array.from({ length: 90 }, () => ({ x: r(), y: r() * 0.55, s: 0.5 + r() * 1.6 }));
-  return { anchors, items, finishX, far, near, stars };
+
+  // Obstacles : barrières laser (basses ou hautes) et mines flottantes
+  const lasers = [];
+  const mines = [];
+  for (let i = 2; i < anchors.length - 1; i++) {
+    const a = anchors[i];
+    const b = anchors[i + 1];
+    const mx = (a.x + b.x) / 2;
+    if (i % 3 === 0) lasers.push({ x: mx + 30, y1: 575, y2: GROUND, ph: r() * TAU });
+    else if (i % 3 === 1) lasers.push({ x: mx - 10, y1: -400, y2: 230, ph: r() * TAU });
+    if (i % 4 === 2) mines.push({ x: mx - 60, y: Math.max(a.y, b.y) + 150, ph: r() * TAU, alive: true });
+  }
+  // Ennemis : drones "casse-fête" qui chassent le héros
+  const enemies = [];
+  for (let i = 1; i < anchors.length; i++) {
+    if (i % 2 === 1 || i > anchors.length - 4) {
+      enemies.push({ x0: anchors[i].x + 140, y0: 300 + r() * 230, x: anchors[i].x + 140, y: 400, ph: r() * TAU, alive: true, t: 0, chase: 0 });
+    }
+  }
+  return { anchors, items, finishX, far, near, stars, lasers, mines, enemies };
 }
 
 const ITEM_EMOJI = ['🎂', '🎈', '🥂'];
@@ -86,7 +118,19 @@ export function createGame(canvas, opts = {}) {
     particles: [],
     shake: 0,
     time: 0,
-    slowmo: 0
+    slowmo: 0,
+    lives: MAX_LIVES,
+    invuln: 0,
+    energy: 1,
+    focus: 0,
+    shots: [],
+    lastShot: 0,
+    kills: 0,
+    aim: null,
+    god: false,
+    done: { kills: false, cakes: false },
+    banner: null,
+    hudKey: ''
   };
 
   function resize() {
@@ -116,6 +160,22 @@ export function createGame(canvas, opts = {}) {
       it.got = false;
       it.t = 0;
     });
+    level.mines.forEach((m) => (m.alive = true));
+    level.enemies.forEach((e) => {
+      e.alive = true;
+      e.x = e.x0;
+      e.y = e.y0;
+      e.chase = 0;
+    });
+    state.lives = MAX_LIVES;
+    state.invuln = 0;
+    state.energy = 1;
+    state.focus = 0;
+    state.shots = [];
+    state.kills = 0;
+    state.done = { kills: false, cakes: false };
+    state.banner = null;
+    state.hudKey = '';
     opts.onScore?.(0);
     opts.onProgress?.(0);
   }
@@ -188,6 +248,153 @@ export function createGame(canvas, opts = {}) {
     }
   }
 
+  function laserOn(L) {
+    return Math.sin(state.time * 1.7 + L.ph) > -0.55;
+  }
+
+  function hurt(word) {
+    if (state.invuln > 0 || state.god || state.mode !== 'play') return;
+    state.lives -= 1;
+    state.invuln = 1.8;
+    state.shake = 0.4;
+    popup(word, state.hero.x, state.hero.y - 70, '#ff5a36');
+    sfx.hurt?.();
+    if (state.lives <= 0) {
+      state.mode = 'fail';
+      state.rope = null;
+      state.focus = 0;
+      burst(state.hero.x, state.hero.y, '#ffffff', 24, 420);
+      sfx.fail?.();
+      setTimeout(() => opts.onFail?.('vies'), 700);
+    }
+  }
+
+  function updateEnemies(dt) {
+    const h = state.hero;
+    for (const e of level.enemies) {
+      if (!e.alive) continue;
+      e.t += dt;
+      const dx = h.x - e.x;
+      // il repère le héros quand il approche, puis fonce vers lui
+      if (dx > -260 && dx < 520 && state.mode === 'play') e.chase = Math.min(1, e.chase + dt * 0.8);
+      const baseX = e.x0 + Math.sin(e.t * 1.2 + e.ph) * 70;
+      const baseY = e.y0 + Math.sin(e.t * 2.1 + e.ph) * 55;
+      const tx = baseX + (h.x - baseX) * e.chase * 0.42;
+      const ty = baseY + (h.y - baseY) * e.chase * 0.42;
+      e.x += (tx - e.x) * Math.min(1, dt * 1.6);
+      e.y += (ty - e.y) * Math.min(1, dt * 1.6);
+    }
+  }
+
+  function checkMissions() {
+    if (!state.done.kills && state.kills >= 5) {
+      state.done.kills = true;
+      state.banner = { text: 'MISSION : 5 DRONES DÉTRUITS ✔', t: 0 };
+      sfx.mission?.();
+    }
+    if (!state.done.cakes && state.score >= 10) {
+      state.done.cakes = true;
+      state.banner = { text: 'MISSION : 10 OBJETS RAMASSÉS ✔', t: 0 };
+      sfx.mission?.();
+    }
+  }
+
+  function emitHud() {
+    const key = [state.lives, Math.round(state.energy * 20), state.focus > 0, state.kills, state.score].join('|');
+    if (key === state.hudKey) return;
+    state.hudKey = key;
+    opts.onHud?.({
+      lives: state.lives,
+      maxLives: MAX_LIVES,
+      energy: state.energy,
+      focus: state.focus > 0,
+      kills: state.kills,
+      score: state.score
+    });
+  }
+
+  function power() {
+    if (state.mode !== 'play' || state.focus > 0 || state.energy < 1) return false;
+    state.energy = 0;
+    state.focus = FOCUS_TIME;
+    state.shake = 0.15;
+    popup('FOCUS !', state.hero.x, state.hero.y - 80, '#13b5a6');
+    sfx.focus?.();
+    return true;
+  }
+
+  function toWorld(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const px = (clientX - rect.left) * dpr;
+    const py = (clientY - rect.top) * dpr;
+    return { x: px / scale + state.cam.x, y: py / scale - offY };
+  }
+
+  function nearestTarget() {
+    const h = state.hero;
+    let best = null;
+    let bd = 900;
+    for (const e of [...level.enemies, ...level.mines]) {
+      if (!e.alive) continue;
+      const ey = e.y0 !== undefined ? e.y : e.y + Math.sin(state.time * 2 + e.ph) * 10;
+      const d = Math.hypot(e.x - h.x, ey - h.y);
+      if (d < bd && e.x > h.x - 200) {
+        bd = d;
+        best = { x: e.x, y: ey };
+      }
+    }
+    return best;
+  }
+
+  // Tir : vers un point de l'écran, ou vers la cible la plus proche
+  function shoot(clientX, clientY) {
+    if (state.mode !== 'play' || state.focus <= 0) return;
+    const now = performance.now();
+    if (now - state.lastShot < 110) return;
+    state.lastShot = now;
+    const h = state.hero;
+    const target = clientX === undefined ? nearestTarget() : toWorld(clientX, clientY);
+    if (!target) return;
+    state.aim = target;
+    const ox = h.x + 10;
+    const oy = h.y - 8;
+    const d = Math.hypot(target.x - ox, target.y - oy) || 1;
+    state.shots.push({ x: ox, y: oy, vx: ((target.x - ox) / d) * 2600, vy: ((target.y - oy) / d) * 2600, t: 0, px: ox, py: oy });
+    burst(ox, oy, '#ffd400', 6, 220);
+    sfx.shoot?.();
+  }
+
+  function updateShots(dt) {
+    for (const b of state.shots) {
+      b.px = b.x;
+      b.py = b.y;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.t += dt;
+      for (const e of level.enemies) {
+        if (!e.alive || Math.hypot(e.x - b.x, e.y - b.y) > 38) continue;
+        e.alive = false;
+        b.t = 99;
+        state.kills += 1;
+        burst(e.x, e.y, '#b06cff', 26, 520);
+        burst(e.x, e.y, '#ffd400', 14, 380);
+        popup(['POW !', 'BAM !', 'KRAK !', 'ZAP !'][state.kills % 4], e.x, e.y - 30, '#ffd400');
+        sfx.boom?.();
+      }
+      for (const m of level.mines) {
+        if (!m.alive) continue;
+        const my = m.y + Math.sin(state.time * 2 + m.ph) * 10;
+        if (Math.hypot(m.x - b.x, my - b.y) > 34) continue;
+        m.alive = false;
+        b.t = 99;
+        burst(m.x, my, '#ff5a36', 26, 520);
+        popup('BOUM !', m.x, my - 30, '#ff5a36');
+        sfx.boom?.();
+      }
+    }
+    state.shots = state.shots.filter((b) => b.t < 0.5);
+  }
+
   function stepPhysics(dt) {
     const h = state.hero;
     if (state.mode === 'ready') {
@@ -257,12 +464,36 @@ export function createGame(canvas, opts = {}) {
       if (Math.hypot(it.x - h.x, it.y - h.y) < 48) {
         it.got = true;
         state.score += 1;
+        state.energy = Math.min(1, state.energy + 0.34);
         opts.onScore?.(state.score);
         popup('+1 ' + ITEM_EMOJI[it.kind], it.x, it.y - 30);
         burst(it.x, it.y, '#ffd400', 12, 300);
         sfx.collect?.();
       }
     }
+
+    // dangers
+    for (const L of level.lasers) {
+      if (laserOn(L) && Math.abs(h.x - L.x) < 14 && h.y > L.y1 && h.y < L.y2) hurt('ZZZT !');
+    }
+    for (const m of level.mines) {
+      if (!m.alive) continue;
+      const my = m.y + Math.sin(state.time * 2 + m.ph) * 10;
+      if (Math.hypot(m.x - h.x, my - h.y) < 40) {
+        m.alive = false;
+        burst(m.x, my, '#ff5a36', 26, 520);
+        hurt('BOUM !');
+      }
+    }
+    for (const e of level.enemies) {
+      if (!e.alive) continue;
+      if (Math.hypot(e.x - h.x, e.y - h.y) < 44) {
+        e.alive = false;
+        burst(e.x, e.y, '#b06cff', 20, 420);
+        hurt('AÏE !');
+      }
+    }
+    if (state.mode !== 'play') return;
 
     opts.onProgress?.(Math.max(0, Math.min(1, (h.x - 150) / (level.finishX - 150))));
 
@@ -280,7 +511,8 @@ export function createGame(canvas, opts = {}) {
       popup('BRAVO !', h.x, h.y - 80, '#ffd400');
       state.shake = 0.5;
       sfx.win?.();
-      setTimeout(() => opts.onWin?.(state.score), 900);
+      const stars = 1 + (state.kills >= 5 ? 1 : 0) + (state.score >= 10 ? 1 : 0);
+      setTimeout(() => opts.onWin?.({ score: state.score, kills: state.kills, lives: state.lives, stars }), 900);
       return;
     }
     // chute
@@ -292,16 +524,31 @@ export function createGame(canvas, opts = {}) {
       popup('OUPS !', h.x, h.y - 90, '#ff5a36');
       state.shake = 0.45;
       sfx.fail?.();
-      setTimeout(() => opts.onFail?.(), 700);
+      setTimeout(() => opts.onFail?.('chute'), 700);
     }
   }
 
   function update(dt) {
-    state.time += dt;
-    if (state.slowmo > 0) {
+    const realDt = dt;
+    // FOCUS : le monde ralentit fortement, les tirs restent à vitesse réelle
+    if (state.focus > 0) {
+      state.focus = Math.max(0, state.focus - realDt);
+      if (state.focus === 0) sfx.focusOut?.();
+      dt *= FOCUS_SPEED;
+    } else if (state.slowmo > 0) {
       state.slowmo -= dt;
       dt *= 0.45;
     }
+    state.time += dt;
+    state.invuln = Math.max(0, state.invuln - realDt);
+    updateEnemies(dt);
+    updateShots(realDt);
+    checkMissions();
+    if (state.banner) {
+      state.banner.t += realDt;
+      if (state.banner.t > 2.2) state.banner = null;
+    }
+    emitHud();
     let acc = dt;
     while (acc > 0) {
       const s = Math.min(STEP, acc);
@@ -605,6 +852,196 @@ export function createGame(canvas, opts = {}) {
     });
   }
 
+  function drawLaser(L) {
+    const on = laserOn(L);
+    const top = Math.max(L.y1, -offY);
+    ctx.fillStyle = '#2a2140';
+    ctx.strokeStyle = '#141018';
+    ctx.lineWidth = 3;
+    // bornes émettrices
+    [top, L.y2 - 14].forEach((y) => {
+      ctx.fillRect(L.x - 12, y, 24, 14);
+      ctx.strokeRect(L.x - 12, y, 24, 14);
+    });
+    if (on) {
+      ctx.save();
+      ctx.shadowColor = '#ff2a4a';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = 'rgba(255,42,74,0.9)';
+      ctx.fillRect(L.x - 4, top + 14, 8, L.y2 - top - 28);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(L.x - 1.5, top + 14, 3, L.y2 - top - 28);
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = 'rgba(255,42,74,0.35)';
+      ctx.setLineDash([6, 10]);
+      ctx.beginPath();
+      ctx.moveTo(L.x, top + 14);
+      ctx.lineTo(L.x, L.y2 - 14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawMine(m) {
+    const y = m.y + Math.sin(state.time * 2 + m.ph) * 10;
+    ctx.save();
+    ctx.translate(m.x, y);
+    ctx.rotate(state.time * 0.8);
+    ctx.fillStyle = '#1d1b22';
+    ctx.strokeStyle = '#141018';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      ctx.rotate(TAU / 8);
+      ctx.beginPath();
+      ctx.moveTo(-5, -18);
+      ctx.lineTo(0, -30);
+      ctx.lineTo(5, -18);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 20, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = Math.sin(state.time * 8) > 0 ? '#ff2a4a' : '#7a1020';
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawEnemy(e) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.rotate(Math.sin(e.t * 3) * 0.15);
+    // hélices
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    const sp = Math.sin(state.time * 45) * 12;
+    ctx.fillRect(-34 - sp / 2, -30, 20 + sp, 3);
+    ctx.fillRect(14 - sp / 2, -30, 20 + sp, 3);
+    ctx.strokeStyle = '#141018';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-24, -28);
+    ctx.lineTo(-14, -14);
+    ctx.moveTo(24, -28);
+    ctx.lineTo(14, -14);
+    ctx.stroke();
+    // corps violet
+    ctx.fillStyle = '#7a3fd1';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    // visière et œil rouge furieux
+    ctx.fillStyle = '#141018';
+    ctx.beginPath();
+    ctx.ellipse(2, -2, 15, 9, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ff2a4a';
+    ctx.beginPath();
+    ctx.arc(4 - Math.sign(e.x - state.hero.x) * 4, -2, 5, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#141018';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-12, -14);
+    ctx.lineTo(8, -9);
+    ctx.stroke();
+    // chapeau de fête volé
+    ctx.fillStyle = '#ffd400';
+    ctx.beginPath();
+    ctx.moveTo(-8, -20);
+    ctx.lineTo(0, -40);
+    ctx.lineTo(8, -20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+    // cible pendant le FOCUS
+    if (state.focus > 0) {
+      ctx.strokeStyle = '#13b5a6';
+      ctx.lineWidth = 3;
+      const r = 34 + Math.sin(state.time * 30) * 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.x - r - 8, e.y);
+      ctx.lineTo(e.x - r + 6, e.y);
+      ctx.moveTo(e.x + r - 6, e.y);
+      ctx.lineTo(e.x + r + 8, e.y);
+      ctx.stroke();
+    }
+  }
+
+  function drawShots() {
+    for (const b of state.shots) {
+      ctx.save();
+      ctx.shadowColor = '#ffd400';
+      ctx.shadowBlur = 16;
+      ctx.strokeStyle = '#ffd400';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.vx * 0.03, b.y - b.vy * 0.03);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Habillage du FOCUS : teinte, bandes noires façon cinéma, viseur
+  function drawFocusOverlay() {
+    const vh = H + offY;
+    const k = Math.min(1, state.focus / 0.25, (FOCUS_TIME - state.focus) / 0.15 + 0.2);
+    ctx.save();
+    ctx.globalAlpha = 0.42 * k;
+    ctx.fillStyle = '#2a0f5c';
+    ctx.fillRect(0, -offY, W, vh);
+    ctx.globalAlpha = 1;
+    const bar = vh * 0.07 * k;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, -offY, W, bar);
+    ctx.fillRect(0, H - bar, W, bar + 10);
+    // jauge de temps restant
+    ctx.fillStyle = '#13b5a6';
+    ctx.fillRect(W * 0.2, -offY + (H + offY) * 0.17 + 40, W * 0.6 * (state.focus / FOCUS_TIME), 6);
+    ctx.font = `${Math.round(34)}px Bangers, Impact, system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#141018';
+    const ty = -offY + (H + offY) * 0.17 + 20;
+    ctx.strokeText('FOCUS : TOUCHE LES DRONES !', W / 2, ty, W - 30);
+    ctx.fillStyle = '#ffd400';
+    ctx.fillText('FOCUS : TOUCHE LES DRONES !', W / 2, ty, W - 30);
+    ctx.restore();
+  }
+
+  function drawBanner() {
+    const b = state.banner;
+    const a = b.t < 0.2 ? b.t / 0.2 : b.t > 1.9 ? Math.max(0, 1 - (b.t - 1.9) / 0.3) : 1;
+    ctx.save();
+    ctx.globalAlpha = a;
+    const y = -offY + (H + offY) * 0.24;
+    ctx.fillStyle = '#ffd400';
+    ctx.strokeStyle = '#141018';
+    ctx.lineWidth = 5;
+    const w = Math.min(W - 40, 520);
+    ctx.fillRect(W / 2 - w / 2, y - 30, w, 54);
+    ctx.strokeRect(W / 2 - w / 2, y - 30, w, 54);
+    ctx.fillStyle = '#141018';
+    ctx.font = '30px Bangers, Impact, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(b.text, W / 2, y - 2, w - 24);
+    ctx.restore();
+  }
+
   function drawComicText(text, x, y, size, color, t) {
     const s = t < 0.15 ? 0.6 + (t / 0.15) * 0.6 : 1.2 - Math.min(0.2, (t - 0.15) * 0.5);
     const alpha = t > 0.8 ? Math.max(0, 1 - (t - 0.8) / 0.3) : 1;
@@ -650,6 +1087,10 @@ export function createGame(canvas, opts = {}) {
       if (a.x < state.cam.x - 80 || a.x > state.cam.x + W + 80) continue;
       drawAnchor(a);
     }
+    const inView = (x) => x > state.cam.x - 100 && x < state.cam.x + W + 100;
+    level.lasers.forEach((L) => inView(L.x) && drawLaser(L));
+    level.mines.forEach((m) => m.alive && inView(m.x) && drawMine(m));
+    level.enemies.forEach((e) => e.alive && inView(e.x) && drawEnemy(e));
 
     // objets
     ctx.font = '40px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
@@ -685,8 +1126,9 @@ export function createGame(canvas, opts = {}) {
       ctx.stroke();
     }
 
-    drawHero(h);
+    if (!(state.invuln > 0 && Math.floor(state.time * 20) % 2)) drawHero(h);
     if (state.mode === 'win') drawVictory(h);
+    drawShots();
 
     // particules
     for (const p of state.particles) {
@@ -706,6 +1148,8 @@ export function createGame(canvas, opts = {}) {
     ctx.fillRect(0, GROUND, W, H - GROUND + 40);
     ctx.fillStyle = 'rgba(255,90,54,0.5)';
     ctx.fillRect(0, GROUND, W, 3);
+    if (state.focus > 0) drawFocusOverlay();
+    if (state.banner) drawBanner();
   }
 
   let raf = 0;
@@ -728,11 +1172,15 @@ export function createGame(canvas, opts = {}) {
     press,
     release,
     restart: reset,
+    power,
+    shoot,
+    isFocus: () => state.focus > 0,
+    setGod: (v) => (state.god = v),
     get mode() {
       return state.mode;
     },
     // pour les tests automatiques
-    debug: () => ({ ...state.hero, mode: state.mode, rope: Boolean(state.rope), score: state.score, finishX: level.finishX }),
+    debug: () => ({ ...state.hero, mode: state.mode, rope: Boolean(state.rope), score: state.score, finishX: level.finishX, lives: state.lives, kills: state.kills, energy: state.energy, focus: state.focus }),
     destroy() {
       running = false;
       cancelAnimationFrame(raf);

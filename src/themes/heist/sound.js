@@ -329,3 +329,26 @@ export function sfxCollect() {
 export function sfxFail() {
   tone({ freq: 420, type: 'sawtooth', dur: 0.5, vol: 0.08, to: 110, filter: 1400 });
 }
+export function sfxHurt() {
+  tone({ freq: 300, type: 'square', dur: 0.18, vol: 0.08, to: 140, filter: 1600 });
+  noiseHit({ dur: 0.08, vol: 0.1, freq: 900 });
+}
+export function sfxShoot() {
+  tone({ freq: 1600, type: 'sawtooth', dur: 0.12, vol: 0.05, to: 400, filter: 3500 });
+}
+export function sfxBoom() {
+  tone({ freq: 160, type: 'sine', dur: 0.35, vol: 0.32, to: 45, filter: 700 });
+  noiseHit({ dur: 0.3, vol: 0.16, freq: 700 });
+}
+export function sfxFocusIn() {
+  tone({ freq: 600, type: 'sine', dur: 0.55, vol: 0.18, to: 90, filter: 1200 });
+  noiseHit({ dur: 0.4, vol: 0.06, freq: 400 });
+}
+export function sfxFocusOut() {
+  tone({ freq: 90, type: 'sine', dur: 0.4, vol: 0.14, to: 520, filter: 1400 });
+}
+export function sfxMission() {
+  tone({ freq: 784, type: 'square', dur: 0.09, vol: 0.05, filter: 3000 });
+  tone({ freq: 988, type: 'square', start: 0.09, dur: 0.09, vol: 0.05, filter: 3000 });
+  tone({ freq: 1319, type: 'square', start: 0.18, dur: 0.22, vol: 0.05, filter: 3000 });
+}
