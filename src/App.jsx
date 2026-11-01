@@ -14,6 +14,7 @@ import { TR_STRINGS } from './i18n/tr';
 import KebabStickers from './themes/kebab/KebabStickers';
 import { trollPassedKey } from './components/customIntros/ErayIntro';
 import './themes/kebab/kebab.css';
+import './themes/comic/comic.css';
 import MissionPassed from './themes/heist/MissionPassed';
 import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';

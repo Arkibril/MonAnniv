@@ -266,6 +266,10 @@ export function sfxClick(theme) {
   if (muted) return;
   if (theme === 'heist') {
     tone({ freq: 1250, type: 'triangle', dur: 0.045, vol: 0.08, filter: 6000 });
+  } else if (theme === 'comic') {
+    // "pow" : coup sourd + claquement
+    tone({ freq: 260, type: 'sine', dur: 0.1, vol: 0.28, to: 120, filter: 1200 });
+    noiseHit({ dur: 0.04, vol: 0.08, freq: 2400 });
   } else if (theme === 'kebab') {
     // "düm" grave + "tek" sec, façon darbuka
     tone({ freq: 190, type: 'sine', dur: 0.14, vol: 0.32, to: 85, filter: 900 });
@@ -273,6 +277,19 @@ export function sfxClick(theme) {
   } else {
     tone({ freq: 540, type: 'sine', dur: 0.07, vol: 0.12, to: 860, filter: 5000 });
   }
+}
+
+const BURST_WORDS = ['POW !', 'BAM !', 'ZAP !', 'BOUM !', 'WOW !', 'CLAC !'];
+function comicBurst(x, y) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const b = document.createElement('span');
+  b.className = 'cm-burst';
+  b.textContent = BURST_WORDS[Math.floor(Math.random() * BURST_WORDS.length)];
+  b.style.left = `${x || window.innerWidth / 2}px`;
+  b.style.top = `${y || window.innerHeight / 2}px`;
+  b.style.setProperty('--rot', `${Math.round(Math.random() * 24 - 12)}deg`);
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 700);
 }
 
 let clicksInstalled = false;
@@ -286,8 +303,29 @@ export function installClickSounds() {
       if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return;
       // Le menu d'Alexia a déjà ses propres sons
       if (el.closest('.hx-intro')) return;
-      sfxClick(document.documentElement.dataset.theme);
+      const theme = document.documentElement.dataset.theme;
+      sfxClick(theme);
+      // Session de Romain : éclat de BD à l'endroit du clic
+      if (theme === 'comic' && !el.closest('.rc-intro')) comicBurst(e.clientX, e.clientY);
     },
     true
   );
+}
+
+// -----------------------------------------------------------------------------
+// Sons du mini-jeu de Romain (synthétisés)
+// -----------------------------------------------------------------------------
+export function sfxHook() {
+  tone({ freq: 1800, type: 'square', dur: 0.03, vol: 0.05, filter: 5000 });
+  tone({ freq: 700, type: 'triangle', start: 0.02, dur: 0.08, vol: 0.09, to: 420 });
+}
+export function sfxRelease() {
+  noiseHit({ dur: 0.22, vol: 0.12, freq: 1200 });
+}
+export function sfxCollect() {
+  tone({ freq: 988, type: 'square', dur: 0.06, vol: 0.05, filter: 4000 });
+  tone({ freq: 1319, type: 'square', start: 0.06, dur: 0.1, vol: 0.05, filter: 4000 });
+}
+export function sfxFail() {
+  tone({ freq: 420, type: 'sawtooth', dur: 0.5, vol: 0.08, to: 110, filter: 1400 });
 }

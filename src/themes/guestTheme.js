@@ -9,6 +9,7 @@ export function getGuestTheme(guest) {
   const name = normalize(guest.first_name);
   if (name.includes('alexia')) return 'heist';
   if (name.trim() === 'eray') return 'kebab';
+  if (name.trim() === 'romain') return 'comic';
   return null;
 }
 
