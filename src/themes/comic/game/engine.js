@@ -316,8 +316,9 @@ export function createGame(canvas, opts = {}) {
   }
 
   function power() {
-    if (state.mode !== 'play' || state.focus > 0 || state.energy < 1) return false;
-    state.energy = 0;
+    // FOCUS illimité : disponible à tout moment, sans recharge
+    if (state.mode !== 'play' || state.focus > 0) return false;
+    state.energy = 1;
     state.focus = FOCUS_TIME;
     state.shake = 0.15;
     popup('FOCUS !', state.hero.x, state.hero.y - 80, '#13b5a6');

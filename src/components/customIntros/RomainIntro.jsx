@@ -308,7 +308,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
               <p>
                 <b>Maintiens</b> pour t'accrocher, <b>relâche</b> pour t'envoler !
                 <br />
-                <b>⚡ FOCUS</b> : le temps ralentit, touche les drones pour tirer. Recharge : {ITEMS_PER_FOCUS} objets.
+                <b>⚡ FOCUS</b> (illimité) : le temps ralentit, touche les drones pour tirer.
               </p>
             </div>
           )}
