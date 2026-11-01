@@ -237,3 +237,57 @@ export function stopMusic() {
   });
   music = null;
 }
+
+// -----------------------------------------------------------------------------
+// Sons au clic sur les boutons, pour tous les invités (synthétisés).
+// Le timbre suit le thème de l'invité : pop doux par défaut, tic de menu pour
+// Alexia, coup de darbuka pour Eray.
+// -----------------------------------------------------------------------------
+function noiseHit({ start = 0, dur = 0.03, vol = 0.05, freq = 3000 }) {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime + start;
+  const len = Math.max(1, Math.floor(ac.sampleRate * dur));
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = freq;
+  const g = ac.createGain();
+  g.gain.value = vol;
+  src.connect(bp).connect(g).connect(master);
+  src.start(t);
+}
+
+export function sfxClick(theme) {
+  if (muted) return;
+  if (theme === 'heist') {
+    tone({ freq: 1250, type: 'triangle', dur: 0.045, vol: 0.08, filter: 6000 });
+  } else if (theme === 'kebab') {
+    // "düm" grave + "tek" sec, façon darbuka
+    tone({ freq: 190, type: 'sine', dur: 0.14, vol: 0.32, to: 85, filter: 900 });
+    noiseHit({ start: 0.005, dur: 0.025, vol: 0.09, freq: 3800 });
+  } else {
+    tone({ freq: 540, type: 'sine', dur: 0.07, vol: 0.12, to: 860, filter: 5000 });
+  }
+}
+
+let clicksInstalled = false;
+export function installClickSounds() {
+  if (clicksInstalled || typeof document === 'undefined') return;
+  clicksInstalled = true;
+  document.addEventListener(
+    'click',
+    (e) => {
+      const el = e.target instanceof Element ? e.target.closest('button, [role="button"], a.btn') : null;
+      if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return;
+      // Le menu d'Alexia a déjà ses propres sons
+      if (el.closest('.hx-intro')) return;
+      sfxClick(document.documentElement.dataset.theme);
+    },
+    true
+  );
+}
