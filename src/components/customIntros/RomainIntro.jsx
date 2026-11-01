@@ -6,6 +6,7 @@ import {
   sfxHook, sfxRelease, sfxCollect, sfxFail, sfxMissionPassed, sfxHurt, sfxShoot, sfxBoom,
   sfxFocusIn, sfxFocusOut, sfxMission, setMuted, isMuted
 } from '../../themes/heist/sound';
+import RomainEmblem from '../../themes/comic/RomainEmblem';
 import './RomainIntro.css';
 
 // =============================================================================
@@ -178,6 +179,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
       {screen === 'cover' && (
         <div className="rc-cover">
           <div className="rc-cover-panel">
+            <RomainEmblem size={78} className="rc-cover-emblem" />
             <div className="rc-cover-top">
               <span className="rc-issue">N°1</span>
               <span className="rc-edition">Édition anniversaire</span>
@@ -197,7 +199,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
                 <path d="M158,-10 L100,64" stroke="#141018" strokeWidth="7" />
                 <path d="M158,-10 L100,64" stroke="#e8e2d4" strokeWidth="3" />
                 {/* cape */}
-                <path d="M72,70 Q26,80 12,114 L58,102 Z" fill="#ff6a1a" stroke="#141018" strokeWidth="5" strokeLinejoin="round" />
+                <path d="M72,70 Q26,80 12,114 L58,102 Z" fill="#e5212e" stroke="#141018" strokeWidth="5" strokeLinejoin="round" />
                 {/* cheveux longs */}
                 <path d="M62,30 Q40,52 36,92 Q60,96 92,74 Q114,52 104,26 Z" fill="#5a3a22" stroke="#141018" strokeWidth="4" strokeLinejoin="round" />
                 {/* polaire beige, côtés noirs */}
@@ -206,7 +208,8 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
                 <path d="M103,84 Q105,100 100,116" stroke="#1d1b22" strokeWidth="6" fill="none" />
                 <path d="M68,70 L80,82 L92,70 L88,66 L72,66 Z" fill="#1d1b22" />
                 <path d="M80,82 L80,104" stroke="#8a8470" strokeWidth="2" />
-                <polygon points="93,88 96,95 104,95 98,99 100,107 93,103 86,107 88,99 82,95 90,95" fill="#ffd400" stroke="#141018" strokeWidth="1.5" />
+                <polygon points="93,85 102,90 102,100 93,105 84,100 84,90" fill="#0d0d10" stroke="#e5212e" strokeWidth="2" />
+                <path d="M88,90 L92,100 L94,100 L98,90 L96,90 L93,97 L90,90 Z" fill="#fff" />
                 {/* bras vers le grappin */}
                 <path d="M92,74 L102,62" stroke="#141018" strokeWidth="13" strokeLinecap="round" />
                 <path d="M92,74 L102,62" stroke="#d8d1b4" strokeWidth="8" strokeLinecap="round" />
@@ -218,7 +221,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
                 <circle cx="84" cy="44" r="27" fill="none" stroke="#141018" strokeWidth="5" />
               </svg>
               <span className="rc-pow rc-pow--1">BAM !</span>
-              <span className="rc-pow rc-pow--2">WHOOSH !</span>
+              <span className="rc-pow rc-pow--2">✌️ WHOOSH !</span>
             </div>
             <p className="rc-cover-text">
               Des drones casse-fête veulent gâcher l'anniversaire. Balance-toi jusqu'à la fête, évite les lasers et les

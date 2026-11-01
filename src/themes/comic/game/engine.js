@@ -321,7 +321,7 @@ export function createGame(canvas, opts = {}) {
     state.energy = 1;
     state.focus = FOCUS_TIME;
     state.shake = 0.15;
-    popup('FOCUS !', state.hero.x, state.hero.y - 80, '#13b5a6');
+    if (!state.popups.some((p) => p.text === 'FOCUS !')) popup('FOCUS !', state.hero.x, state.hero.y - 80, '#ffd21a');
     sfx.focus?.();
     return true;
   }
@@ -599,9 +599,9 @@ export function createGame(canvas, opts = {}) {
   // ---------------------------------------------------------------- Dessin
   function drawBackground() {
     const g = ctx.createLinearGradient(0, -offY, 0, H);
-    g.addColorStop(0, '#1b1446');
-    g.addColorStop(0.55, '#3d1f6e');
-    g.addColorStop(1, '#ff7a59');
+    g.addColorStop(0, '#08080b');
+    g.addColorStop(0.55, '#24090f');
+    g.addColorStop(1, '#a3121d');
     ctx.fillStyle = g;
     ctx.fillRect(0, -offY, W, H + offY);
     // étoiles
@@ -650,8 +650,8 @@ export function createGame(canvas, opts = {}) {
     ctx.rotate(h.rot);
     const flap = Math.sin(state.time * 18) * 6;
     const speed = Math.min(1, Math.hypot(h.vx, h.vy) / 1200);
-    // cape orange
-    ctx.fillStyle = '#ff6a1a';
+    // cape rouge
+    ctx.fillStyle = '#e5212e';
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -710,24 +710,32 @@ export function createGame(canvas, opts = {}) {
     ctx.beginPath();
     ctx.arc(0, -20, 8, 0.2, Math.PI - 0.2);
     ctx.stroke();
-    // emblème de héros : étoile jaune avec un R
-    ctx.fillStyle = '#ffd400';
-    ctx.strokeStyle = '#141018';
-    ctx.lineWidth = 1.5;
+    // emblème personnel : le geste ✌️ en "V" avec un éclair, sur un blason
+    ctx.save();
+    ctx.translate(9, 2);
+    ctx.fillStyle = '#0d0d10';
+    ctx.strokeStyle = '#e5212e';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const rr = i % 2 ? 3.6 : 8;
-      const a = -Math.PI / 2 + (i * Math.PI) / 5;
-      ctx.lineTo(9 + Math.cos(a) * rr, 2 + Math.sin(a) * rr);
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 3;
+      ctx.lineTo(Math.cos(a) * 8, Math.sin(a) * 8);
     }
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#141018';
-    ctx.font = 'bold 7px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('R', 9, 3);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(-4.5, -4);
+    ctx.lineTo(-0.8, 4);
+    ctx.lineTo(0.8, 4);
+    ctx.lineTo(4.5, -4);
+    ctx.lineTo(2.6, -4);
+    ctx.lineTo(0, 2);
+    ctx.lineTo(-2.6, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
     // bras (vers le crochet si accroché), manches beiges
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 11;
@@ -834,7 +842,7 @@ export function createGame(canvas, opts = {}) {
   function drawFinish() {
     const x = level.finishX;
     // immeuble de la fête
-    ctx.fillStyle = '#251a3c';
+    ctx.fillStyle = '#1c1014';
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 5;
     ctx.fillRect(x - 40, 470, 380, 400);
@@ -979,7 +987,7 @@ export function createGame(canvas, opts = {}) {
     ctx.restore();
     // cible pendant le FOCUS
     if (state.focus > 0) {
-      ctx.strokeStyle = '#13b5a6';
+      ctx.strokeStyle = '#ffd21a';
       ctx.lineWidth = 3;
       const r = 34 + Math.sin(state.time * 30) * 3;
       ctx.beginPath();
@@ -1019,7 +1027,7 @@ export function createGame(canvas, opts = {}) {
     const k = Math.min(1, state.focus / 0.25, (FOCUS_TIME - state.focus) / 0.15 + 0.2);
     ctx.save();
     ctx.globalAlpha = 0.42 * k;
-    ctx.fillStyle = '#2a0f5c';
+    ctx.fillStyle = '#4a0008';
     ctx.fillRect(0, -offY, W, vh);
     ctx.globalAlpha = 1;
     const bar = vh * 0.07 * k;
@@ -1027,7 +1035,7 @@ export function createGame(canvas, opts = {}) {
     ctx.fillRect(0, -offY, W, bar);
     ctx.fillRect(0, H - bar, W, bar + 10);
     // jauge de temps restant
-    ctx.fillStyle = '#13b5a6';
+    ctx.fillStyle = '#ffd21a';
     ctx.fillRect(W * 0.2, -offY + (H + offY) * 0.17 + 40, W * 0.6 * (state.focus / FOCUS_TIME), 6);
     ctx.font = `${Math.round(34)}px Bangers, Impact, system-ui, sans-serif`;
     ctx.textAlign = 'center';
@@ -1085,8 +1093,8 @@ export function createGame(canvas, opts = {}) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(scale, 0, 0, scale, 0, offY * scale);
     drawBackground();
-    drawCity(level.far, 0.25, '#2b1d52', 'rgba(255,214,120,0.35)', 690);
-    drawCity(level.near, 0.55, '#1f1538', 'rgba(255,214,120,0.55)', 740);
+    drawCity(level.far, 0.25, '#1a0c10', 'rgba(255,90,98,0.35)', 690);
+    drawCity(level.near, 0.55, '#0f0a0d', 'rgba(255,214,120,0.55)', 740);
 
     const sx = state.shake > 0 ? (Math.random() - 0.5) * 18 * state.shake : 0;
     const sy = state.shake > 0 ? (Math.random() - 0.5) * 18 * state.shake : 0;
@@ -1094,7 +1102,7 @@ export function createGame(canvas, opts = {}) {
     ctx.translate(-state.cam.x + sx, sy);
 
     // immeuble de départ
-    ctx.fillStyle = '#251a3c';
+    ctx.fillStyle = '#1c1014';
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 5;
     ctx.fillRect(40, 600, 230, 260);
