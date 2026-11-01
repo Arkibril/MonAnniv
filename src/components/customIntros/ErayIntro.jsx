@@ -3,6 +3,10 @@ import gsap from 'gsap';
 import confetti from 'canvas-confetti';
 import { TROLL_QUESTIONS } from '../../config/erayTroll';
 import { Flag, Doner, Durum, Nazar, Cay } from '../../themes/kebab/art';
+import { startMusic, setMuted, isMuted } from '../../themes/heist/sound';
+
+// Musique de fond optionnelle d'Eray : fichier déposé dans public/eray/musique.mp3
+const ERAY_MUSIC = '/eray/musique.mp3';
 import './ErayIntro.css';
 
 // =============================================================================
@@ -31,6 +35,8 @@ export default function ErayIntro({ guest, onComplete, isReplay = false }) {
   const [reaction, setReaction] = useState('');
   const [countdown, setCountdown] = useState(5);
   const [shameQ, setShameQ] = useState(null);
+  const [musicOn, setMusicOn] = useState(false);
+  const [muted, setMutedState] = useState(isMuted());
   const lockRef = useRef(false);
   const reduced = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
@@ -132,6 +138,21 @@ export default function ErayIntro({ guest, onComplete, isReplay = false }) {
         </div>
       </div>
 
+      {musicOn && (
+        <button
+          type="button"
+          className="kb-mute"
+          aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
+          onClick={() => {
+            const next = !isMuted();
+            setMuted(next);
+            setMutedState(next);
+          }}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
+      )}
+
       {/* Pluie de kebabs */}
       {!reduced && phase !== 'shame' && (
         <div className="kb-rain" aria-hidden="true">
@@ -164,7 +185,16 @@ export default function ErayIntro({ guest, onComplete, isReplay = false }) {
               <br />
               Önce Türklük testini geçmen lazım kanka.
             </p>
-            <button type="button" className="kb-btn" onClick={() => setPhase('quiz')} autoFocus>
+            <button
+              type="button"
+              className="kb-btn"
+              onClick={() => {
+                // le clic autorise le son : musique de fond si le fichier existe
+                startMusic(ERAY_MUSIC).then(setMusicOn);
+                setPhase('quiz');
+              }}
+              autoFocus
+            >
               TESTE BAŞLA 🥙
             </button>
           </div>

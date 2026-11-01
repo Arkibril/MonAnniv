@@ -1,0 +1,7 @@
+Musique de fond de la session d'Eray
+------------------------------------
+Dépose ici un fichier audio nommé exactement : musique.mp3
+Il démarre quand Eray clique sur « TESTE BAŞLA », tourne en boucle à
+volume doux pendant le faux quiz, le vrai quiz et le tableau de bord,
+et s'arrête à la déconnexion. Bouton 🔊 pour couper pendant le test.
+Sans fichier : pas de musique.

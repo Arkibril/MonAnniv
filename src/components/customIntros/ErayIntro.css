@@ -213,6 +213,22 @@
 }
 .kb-shame-count b { font-family: var(--kb-display); font-size: 1.6rem; }
 
+/* Bouton son */
+.kb-mute {
+  position: absolute;
+  z-index: 6;
+  top: 52px;
+  right: 12px;
+  width: 46px;
+  height: 46px;
+  border: 3px solid var(--kb-ink);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 1.3rem;
+  box-shadow: 3px 3px 0 var(--kb-ink);
+  cursor: pointer;
+}
+
 /* Drapeau qui flotte */
 .kb-flag { border: 3px solid var(--kb-ink, #1d0b0b); border-radius: 6px; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2); }
 .kb-flag--wave { animation: kb-wave 2.2s ease-in-out infinite; transform-origin: 0 50%; }

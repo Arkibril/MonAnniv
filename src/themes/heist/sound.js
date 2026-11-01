@@ -202,10 +202,11 @@ const onVisibility = () => {
 };
 
 // Renvoie une promesse : true si la musique joue, false sinon (fichier absent…)
-export function startMusic() {
+// src : fichier à jouer (par défaut la musique d'Alexia)
+export function startMusic(src = MUSIC_SRC) {
   if (typeof window === 'undefined') return Promise.resolve(false);
   if (music) return Promise.resolve(true);
-  const el = new Audio(MUSIC_SRC);
+  const el = new Audio(src);
   el.loop = true;
   el.volume = 0;
   el.muted = muted;
