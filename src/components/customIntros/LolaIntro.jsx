@@ -8,8 +8,13 @@ import {
   isMuted,
   sfxProjector,
   sfxTicket,
-  sfxCurtain
+  sfxCurtain,
+  startMusic
 } from '../../themes/heist/sound';
+
+// Musique de fond de Lola : fichier déposé dans public/lola/musique.mp3.
+// Elle continue pendant le quiz. Sans fichier, petite musique synthétisée.
+const LOLA_MUSIC = '/lola/musique.mp3';
 import './LolaIntro.css';
 
 // =============================================================================
@@ -195,7 +200,9 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
 
   // ---------------------------------------------------------------- bande-annonce
   const startTrailer = () => {
-    startRomance();
+    startMusic(LOLA_MUSIC).then((ok) => {
+      if (!ok) startRomance();
+    });
     sfxProjector();
     const root = rootRef.current;
     if (reduced || !root) {

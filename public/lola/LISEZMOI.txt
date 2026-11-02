@@ -1,0 +1,6 @@
+Musique de fond de Lola
+=======================
+Dépose ici ton fichier audio sous le nom exact : musique.mp3
+Il démarre quand Lola clique sur « Lancer la bande-annonce », tourne en boucle
+et continue pendant le quiz. S'il n'y a pas de fichier, une petite musique
+synthétisée joue à la place pendant l'intro.
