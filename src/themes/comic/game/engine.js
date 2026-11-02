@@ -61,15 +61,16 @@ function buildLevel() {
   const near = [];
   for (let bx = -200; bx < finishX + 1600; ) {
     const w = 70 + r() * 90;
-    far.push({ x: bx, w, h: 160 + r() * 260, lit: r() });
+    far.push({ x: bx, w, h: 160 + r() * 260, lit: r(), tone: Math.floor(r() * 4), roof: Math.floor(r() * 4) });
     bx += w + 6;
   }
   for (let bx = -200; bx < finishX + 1600; ) {
     const w = 90 + r() * 120;
-    near.push({ x: bx, w, h: 90 + r() * 200, lit: r() });
+    near.push({ x: bx, w, h: 90 + r() * 200, lit: r(), tone: Math.floor(r() * 5), roof: Math.floor(r() * 4) });
     bx += w + 14 + r() * 30;
   }
   const stars = Array.from({ length: 90 }, () => ({ x: r(), y: r() * 0.55, s: 0.5 + r() * 1.6 }));
+  const clouds = Array.from({ length: 9 }, (_, i) => ({ x: i * 520 + r() * 300, y: 60 + r() * 220, s: 0.7 + r() * 0.8 }));
 
   // Obstacles : barrières laser (basses ou hautes) et mines flottantes
   const lasers = [];
@@ -89,7 +90,7 @@ function buildLevel() {
       enemies.push({ x0: anchors[i].x + 140, y0: 300 + r() * 230, x: anchors[i].x + 140, y: 400, ph: r() * TAU, alive: true, t: 0, chase: 0 });
     }
   }
-  return { anchors, items, finishX, far, near, stars, lasers, mines, enemies };
+  return { anchors, items, finishX, far, near, stars, clouds, lasers, mines, enemies };
 }
 
 const ITEM_EMOJI = ['🎂', '🎈', '🥂'];
@@ -597,44 +598,117 @@ export function createGame(canvas, opts = {}) {
   }
 
   // ---------------------------------------------------------------- Dessin
+  // Ciel bleu de journée, soleil et nuages
   function drawBackground() {
     const g = ctx.createLinearGradient(0, -offY, 0, H);
-    g.addColorStop(0, '#08080b');
-    g.addColorStop(0.55, '#24090f');
-    g.addColorStop(1, '#a3121d');
+    g.addColorStop(0, '#3d8fe6');
+    g.addColorStop(0.6, '#8cc6f5');
+    g.addColorStop(1, '#d6ecfb');
     ctx.fillStyle = g;
     ctx.fillRect(0, -offY, W, H + offY);
-    // étoiles
-    ctx.fillStyle = '#fff';
-    for (const s of level.stars) {
-      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(state.time * 2 + s.x * 40);
-      ctx.fillRect(s.x * W, s.y * (H + offY) - offY, s.s, s.s);
+    // soleil
+    ctx.fillStyle = 'rgba(255,244,200,0.35)';
+    ctx.beginPath();
+    ctx.arc(W * 0.82, 110, 95, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#fff6cf';
+    ctx.beginPath();
+    ctx.arc(W * 0.82, 110, 52, 0, TAU);
+    ctx.fill();
+    // nuages (parallaxe lente)
+    const span = 9 * 520;
+    for (const c of level.clouds) {
+      let x = (c.x - state.cam.x * 0.12) % span;
+      if (x < -300) x += span;
+      if (x > W + 300) continue;
+      drawCloud(x, c.y, c.s);
     }
-    ctx.globalAlpha = 1;
-    // lune
-    ctx.fillStyle = '#ffe9b0';
-    ctx.beginPath();
-    ctx.arc(W * 0.8, 130, 54, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,233,176,0.18)';
-    ctx.beginPath();
-    ctx.arc(W * 0.8, 130, 90, 0, TAU);
-    ctx.fill();
   }
 
-  function drawCity(list, parallax, color, winColor, base) {
+  function drawCloud(x, y, sc) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sc, sc);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    [[0, 0, 34], [36, -14, 40], [78, 0, 32], [40, 10, 34], [-30, 8, 24], [108, 10, 22]].forEach(([cx, cy, r]) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, TAU);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  // Immeubles réalistes : façades de couleurs différentes, corniches,
+  // grilles de fenêtres avec reflets, éléments de toit
+  const FACADES_FAR = ['#a9b6c4', '#b7aea0', '#9fb0bf', '#c1b6a6'];
+  const FACADES_NEAR = ['#b5714f', '#8e9aa6', '#d2c2a2', '#6f8aa3', '#a65e4a'];
+
+  function drawRoof(x, top, w, kind, dark) {
+    ctx.fillStyle = dark;
+    if (kind === 0) {
+      // château d'eau sur pieds
+      const cx = x + w * 0.7;
+      ctx.fillRect(cx - 2, top - 16, 3, 16);
+      ctx.fillRect(cx + 14, top - 16, 3, 16);
+      ctx.fillStyle = '#8a5a3a';
+      ctx.fillRect(cx - 4, top - 40, 24, 26);
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, top - 40);
+      ctx.lineTo(cx + 8, top - 52);
+      ctx.lineTo(cx + 22, top - 40);
+      ctx.fill();
+    } else if (kind === 1) {
+      // antenne
+      ctx.fillRect(x + w * 0.3, top - 34, 3, 34);
+      ctx.fillRect(x + w * 0.3 - 8, top - 26, 19, 2);
+    } else if (kind === 2) {
+      // blocs de clim
+      ctx.fillRect(x + 10, top - 10, 18, 10);
+      ctx.fillRect(x + 32, top - 8, 14, 8);
+    } else {
+      // cage d'escalier
+      ctx.fillRect(x + w * 0.15, top - 18, Math.min(34, w * 0.35), 18);
+    }
+  }
+
+  function drawCity(list, parallax, near, base) {
     const ox = -state.cam.x * parallax;
+    const facades = near ? FACADES_NEAR : FACADES_FAR;
     for (const b of list) {
       const x = b.x + ox;
-      if (x + b.w < -50 || x > W + 50) continue;
-      ctx.fillStyle = color;
-      ctx.fillRect(x, base - b.h, b.w, b.h + 40);
-      ctx.fillStyle = winColor;
-      for (let wy = base - b.h + 14; wy < base - 10; wy += 22) {
-        for (let wx = x + 10; wx < x + b.w - 10; wx += 18) {
-          if (((wx * 13 + wy * 7) | 0) % 5 < 2 * b.lit) ctx.fillRect(wx, wy, 7, 10);
+      if (x + b.w < -60 || x > W + 60) continue;
+      const top = base - b.h;
+      const col = facades[b.tone % facades.length];
+      // façade + ombre latérale
+      ctx.fillStyle = col;
+      ctx.fillRect(x, top, b.w, b.h + 60);
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(x + b.w - 8, top, 8, b.h + 60);
+      // corniche
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(x - 3, top, b.w + 6, 5);
+      // fenêtres
+      const cols = Math.max(2, Math.floor((b.w - 14) / 16));
+      const gap = (b.w - 14) / cols;
+      for (let wy = top + 14; wy < base - 14; wy += near ? 24 : 20) {
+        for (let i = 0; i < cols; i++) {
+          const wx = x + 9 + i * gap;
+          ctx.fillStyle = near ? '#cfe6f7' : '#dbe9f4';
+          ctx.fillRect(wx, wy, gap - 6, near ? 13 : 10);
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.fillRect(wx, wy, (gap - 6) * 0.35, near ? 13 : 10);
+          if (near) {
+            ctx.fillStyle = 'rgba(0,0,0,0.18)';
+            ctx.fillRect(wx - 1, wy + 13, gap - 4, 2);
+          }
         }
       }
+      if (!near) {
+        // brume : les immeubles du fond paraissent plus clairs
+        ctx.fillStyle = 'rgba(214,236,251,0.35)';
+        ctx.fillRect(x, top, b.w, b.h + 60);
+      }
+      drawRoof(x, top, b.w, b.roof, near ? '#4a4f57' : '#7d8794');
     }
   }
 
@@ -842,12 +916,12 @@ export function createGame(canvas, opts = {}) {
   function drawFinish() {
     const x = level.finishX;
     // immeuble de la fête
-    ctx.fillStyle = '#1c1014';
+    ctx.fillStyle = '#d2c2a2';
     ctx.strokeStyle = '#141018';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 4;
     ctx.fillRect(x - 40, 470, 380, 400);
     ctx.strokeRect(x - 40, 470, 380, 400);
-    ctx.fillStyle = '#ffd400';
+    ctx.fillStyle = '#ffd86a';
     for (let wy = 500; wy < 760; wy += 46) for (let wx = x - 10; wx < x + 320; wx += 50) ctx.fillRect(wx, wy, 22, 28);
     // enseigne
     const glow = 0.75 + 0.25 * Math.sin(state.time * 6);
@@ -1026,7 +1100,7 @@ export function createGame(canvas, opts = {}) {
     const vh = H + offY;
     const k = Math.min(1, state.focus / 0.25, (FOCUS_TIME - state.focus) / 0.15 + 0.2);
     ctx.save();
-    ctx.globalAlpha = 0.42 * k;
+    ctx.globalAlpha = 0.32 * k;
     ctx.fillStyle = '#4a0008';
     ctx.fillRect(0, -offY, W, vh);
     ctx.globalAlpha = 1;
@@ -1093,8 +1167,8 @@ export function createGame(canvas, opts = {}) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(scale, 0, 0, scale, 0, offY * scale);
     drawBackground();
-    drawCity(level.far, 0.25, '#1a0c10', 'rgba(255,90,98,0.35)', 690);
-    drawCity(level.near, 0.55, '#0f0a0d', 'rgba(255,214,120,0.55)', 740);
+    drawCity(level.far, 0.25, false, 700);
+    drawCity(level.near, 0.55, true, 750);
 
     const sx = state.shake > 0 ? (Math.random() - 0.5) * 18 * state.shake : 0;
     const sy = state.shake > 0 ? (Math.random() - 0.5) * 18 * state.shake : 0;
@@ -1102,11 +1176,13 @@ export function createGame(canvas, opts = {}) {
     ctx.translate(-state.cam.x + sx, sy);
 
     // immeuble de départ
-    ctx.fillStyle = '#1c1014';
+    ctx.fillStyle = '#b5714f';
     ctx.strokeStyle = '#141018';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 4;
     ctx.fillRect(40, 600, 230, 260);
     ctx.strokeRect(40, 600, 230, 260);
+    ctx.fillStyle = '#cfe6f7';
+    for (let wy = 622; wy < 760; wy += 30) for (let wx = 58; wx < 250; wx += 38) ctx.fillRect(wx, wy, 24, 16);
 
     drawFinish();
     for (const a of level.anchors) {
@@ -1170,10 +1246,13 @@ export function createGame(canvas, opts = {}) {
 
     // sol
     ctx.restore();
-    ctx.fillStyle = '#120c20';
+    ctx.fillStyle = '#5b6068';
     ctx.fillRect(0, GROUND, W, H - GROUND + 40);
-    ctx.fillStyle = 'rgba(255,90,54,0.5)';
-    ctx.fillRect(0, GROUND, W, 3);
+    ctx.fillStyle = '#9aa0a8';
+    ctx.fillRect(0, GROUND, W, 6);
+    ctx.fillStyle = '#f2f2f2';
+    const dash = (-state.cam.x) % 60;
+    for (let x = dash; x < W; x += 60) ctx.fillRect(x, GROUND + 18, 30, 4);
     if (state.focus > 0) drawFocusOverlay();
     if (state.banner) drawBanner();
   }

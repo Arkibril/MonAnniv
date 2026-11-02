@@ -12,6 +12,7 @@ import { getGuestTheme, getGuestLang } from './themes/guestTheme';
 import { LangProvider } from './i18n';
 import { TR_STRINGS } from './i18n/tr';
 import KebabStickers from './themes/kebab/KebabStickers';
+import HalloweenWebs from './themes/comic/HalloweenWebs';
 import { trollPassedKey } from './components/customIntros/ErayIntro';
 import './themes/kebab/kebab.css';
 import './themes/comic/comic.css';
@@ -202,6 +203,7 @@ export default function App() {
   return (
     <LangProvider value={lang}>
       {guestTheme === 'kebab' && !showIntro && <KebabStickers />}
+      {guestTheme === 'comic' && !showIntro && <HalloweenWebs />}
       <ConfigBanner />
 
       {/* Animation d'entrée plein écran personnalisée */}

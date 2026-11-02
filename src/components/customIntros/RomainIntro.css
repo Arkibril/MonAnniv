@@ -41,6 +41,7 @@
 }
 .rc-cover-panel {
   position: relative;
+  z-index: 1;
   width: min(100%, 440px);
   padding: 18px 20px 22px;
   background: var(--rc-paper);

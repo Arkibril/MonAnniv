@@ -7,6 +7,7 @@ import {
   sfxFocusIn, sfxFocusOut, sfxMission, setMuted, isMuted
 } from '../../themes/heist/sound';
 import RomainEmblem from '../../themes/comic/RomainEmblem';
+import HalloweenWebs from '../../themes/comic/HalloweenWebs';
 import './RomainIntro.css';
 
 // =============================================================================
@@ -178,6 +179,7 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
     <div ref={rootRef} className="rc-intro" role="dialog" aria-modal="true" aria-label={`Mini-jeu de ${name}`}>
       {screen === 'cover' && (
         <div className="rc-cover">
+          <HalloweenWebs corners={['tl', 'tr', 'bl', 'br']} />
           <div className="rc-cover-panel">
             <RomainEmblem size={78} className="rc-cover-emblem" />
             <div className="rc-cover-top">

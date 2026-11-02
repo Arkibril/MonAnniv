@@ -220,3 +220,11 @@
 [data-theme='comic'] .dock { background: #fff; border-color: #000; box-shadow: 5px 5px 0 #000; }
 [data-theme='comic'] .dock__item { color: #000; }
 [data-theme='comic'] .dock__item[aria-current='page'] { background: #000; color: #fff; }
+
+/* ==========================================================================
+   Halloween : toiles d'araignée blanches dans les coins du menu de Romain
+   (uniquement les toiles, pas dans le mini-jeu)
+   ========================================================================== */
+.hw-webs { pointer-events: none; }
+.hw-web { z-index: 45; width: clamp(96px, 26vw, 180px); height: auto; pointer-events: none; }
+.rc-cover .hw-web { z-index: 0; }
