@@ -8,7 +8,7 @@ import ConfigBanner from './components/ConfigBanner';
 import Dock from './components/Dock';
 import { LogOut } from 'lucide-react';
 import { loginWithCode, fetchAnswers } from './lib/supabase';
-import { getGuestTheme, getGuestLang } from './themes/guestTheme';
+import { getGuestTheme, getPageTheme, getGuestLang } from './themes/guestTheme';
 import { LangProvider } from './i18n';
 import { TR_STRINGS } from './i18n/tr';
 import KebabStickers from './themes/kebab/KebabStickers';
@@ -17,7 +17,6 @@ import { trollPassedKey } from './components/customIntros/ErayIntro';
 import './themes/kebab/kebab.css';
 import './themes/comic/comic.css';
 import './themes/cinema/cinema.css';
-import './themes/dank/dank.css';
 import MissionPassed from './themes/heist/MissionPassed';
 import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';
@@ -35,7 +34,7 @@ export default function App() {
   const [showMissionPassed, setShowMissionPassed] = useState(false);
 
   // Thème propre à l'invité (ex. Alexia : toute la session en mode jeu)
-  const guestTheme = getGuestTheme(currentGuest);
+  const guestTheme = getPageTheme(currentGuest);
   useEffect(() => {
     const root = document.documentElement;
     if (guestTheme) root.dataset.theme = guestTheme;

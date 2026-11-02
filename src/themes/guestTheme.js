@@ -19,3 +19,11 @@ export function getGuestTheme(guest) {
 export function getGuestLang(guest) {
   return getGuestTheme(guest) === 'kebab' ? 'tr' : 'fr';
 }
+
+// Thèmes qui ne servent qu'à l'intro : le quiz garde le design de base
+// (Baptiste : intro MLG, puis quiz clean comme la page d'accueil).
+const INTRO_ONLY = new Set(['dank']);
+export function getPageTheme(guest) {
+  const theme = getGuestTheme(guest);
+  return INTRO_ONLY.has(theme) ? null : theme;
+}
