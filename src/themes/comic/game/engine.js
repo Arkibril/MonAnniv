@@ -724,32 +724,47 @@ export function createGame(canvas, opts = {}) {
     ctx.rotate(h.rot);
     const flap = Math.sin(state.time * 18) * 6;
     const speed = Math.min(1, Math.hypot(h.vx, h.vy) / 1200);
-    // cape rouge
-    ctx.fillStyle = '#e5212e';
+    // cape noire doublée de rouge
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 4;
+    ctx.fillStyle = '#0d0d10';
     ctx.beginPath();
-    ctx.moveTo(-6, -16);
-    ctx.quadraticCurveTo(-48, -4 + flap, -62, 20 + flap);
-    ctx.lineTo(-18, 16);
+    ctx.moveTo(-8, -22);
+    ctx.quadraticCurveTo(-52, -6 + flap, -66, 24 + flap);
+    ctx.lineTo(-16, 18);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // jambes (pantalon noir)
+    ctx.fillStyle = '#e5212e';
+    ctx.beginPath();
+    ctx.moveTo(-10, -18);
+    ctx.quadraticCurveTo(-44, -4 + flap, -56, 20 + flap);
+    ctx.lineTo(-18, 14);
+    ctx.closePath();
+    ctx.fill();
+    // jambes : combinaison rouge + bottes noires
+    ctx.lineCap = 'round';
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 13;
-    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(-5, 16);
     ctx.lineTo(-14, 40);
     ctx.moveTo(6, 16);
     ctx.lineTo(17, 38);
     ctx.stroke();
-    ctx.strokeStyle = '#2a2730';
+    ctx.strokeStyle = '#e5212e';
     ctx.lineWidth = 8;
     ctx.stroke();
-    // polaire beige avec panneaux noirs sur les côtés
-    ctx.fillStyle = '#d8d1b4';
+    ctx.strokeStyle = '#0d0d10';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(-11, 32);
+    ctx.lineTo(-14, 40);
+    ctx.moveTo(13, 30);
+    ctx.lineTo(17, 38);
+    ctx.stroke();
+    // torse : combinaison rouge, flancs noirs
+    ctx.fillStyle = '#e5212e';
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -757,69 +772,78 @@ export function createGame(canvas, opts = {}) {
     ctx.fill();
     ctx.save();
     ctx.clip();
-    ctx.fillStyle = '#1d1b22';
-    ctx.fillRect(-20, -25, 5, 50);
-    ctx.fillRect(15, -25, 5, 50);
+    ctx.fillStyle = '#0d0d10';
+    ctx.fillRect(-20, -25, 6, 50);
+    ctx.fillRect(14, -25, 6, 50);
+    // ceinture noire + boucle dorée
+    ctx.fillRect(-20, 12, 40, 6);
+    ctx.fillStyle = '#ffd21a';
+    ctx.fillRect(-4, 11, 8, 8);
     ctx.restore();
     ctx.beginPath();
     ctx.ellipse(0, 0, 20, 25, 0, 0, TAU);
     ctx.stroke();
-    // col noir + fermeture éclair + chaîne
-    ctx.fillStyle = '#1d1b22';
+    // col noir
+    ctx.fillStyle = '#0d0d10';
     ctx.beginPath();
-    ctx.moveTo(-11, -22);
-    ctx.lineTo(0, -12);
-    ctx.lineTo(11, -22);
+    ctx.moveTo(-10, -23);
+    ctx.quadraticCurveTo(0, -14, 10, -23);
     ctx.lineTo(8, -26);
     ctx.lineTo(-8, -26);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#8a8470';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, -12);
-    ctx.lineTo(0, 4);
-    ctx.stroke();
-    ctx.strokeStyle = '#d9d9d9';
-    ctx.beginPath();
-    ctx.arc(0, -20, 8, 0.2, Math.PI - 0.2);
-    ctx.stroke();
-    // emblème personnel : le geste ✌️ en "V" avec un éclair, sur un blason
+    // blason ✌️ éclair au centre de la poitrine
     ctx.save();
-    ctx.translate(9, 2);
+    ctx.translate(0, -3);
     ctx.fillStyle = '#0d0d10';
-    ctx.strokeStyle = '#e5212e';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
       const a = -Math.PI / 2 + (i * Math.PI) / 3;
-      ctx.lineTo(Math.cos(a) * 8, Math.sin(a) * 8);
+      ctx.lineTo(Math.cos(a) * 9.5, Math.sin(a) * 9.5);
     }
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.moveTo(-4.5, -4);
+    ctx.moveTo(-5.5, -5);
+    ctx.lineTo(-1, 5);
+    ctx.lineTo(1, 5);
+    ctx.lineTo(5.5, -5);
+    ctx.lineTo(3.2, -5);
+    ctx.lineTo(0, 2.5);
+    ctx.lineTo(-3.2, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffd21a';
+    ctx.beginPath();
+    ctx.moveTo(1.5, -4);
+    ctx.lineTo(-1.5, 0.5);
+    ctx.lineTo(0.8, 0.5);
     ctx.lineTo(-0.8, 4);
-    ctx.lineTo(0.8, 4);
-    ctx.lineTo(4.5, -4);
-    ctx.lineTo(2.6, -4);
-    ctx.lineTo(0, 2);
-    ctx.lineTo(-2.6, -4);
+    ctx.lineTo(2.6, -0.8);
+    ctx.lineTo(0.4, -0.8);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-    // bras (vers le crochet si accroché), manches beiges
+    // bras : manche rouge + gant noir (vers le crochet si accroché)
+    const hx2 = state.rope ? 20 : 24;
+    const hy2 = state.rope ? -32 : -2;
     ctx.strokeStyle = '#141018';
     ctx.lineWidth = 11;
     ctx.beginPath();
     ctx.moveTo(8, -12);
-    ctx.lineTo(state.rope ? 20 : 24, state.rope ? -32 : -2);
+    ctx.lineTo(hx2, hy2);
     ctx.stroke();
-    ctx.strokeStyle = '#d8d1b4';
+    ctx.strokeStyle = '#e5212e';
     ctx.lineWidth = 7;
     ctx.stroke();
+    ctx.fillStyle = '#0d0d10';
+    ctx.beginPath();
+    ctx.arc(hx2, hy2, 5.5, 0, TAU);
+    ctx.fill();
     // cheveux longs châtains qui flottent derrière
     const hx = 2;
     const hy = -42;

@@ -200,24 +200,30 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
                 {/* corde du grappin */}
                 <path d="M158,-10 L100,64" stroke="#141018" strokeWidth="7" />
                 <path d="M158,-10 L100,64" stroke="#e8e2d4" strokeWidth="3" />
-                {/* cape */}
-                <path d="M72,70 Q26,80 12,114 L58,102 Z" fill="#e5212e" stroke="#141018" strokeWidth="5" strokeLinejoin="round" />
+                {/* cape noire doublée de rouge */}
+                <path d="M70,66 Q22,78 8,118 L58,104 Z" fill="#0d0d10" stroke="#141018" strokeWidth="5" strokeLinejoin="round" />
+                <path d="M68,72 Q30,84 18,112 L56,100 Z" fill="#e5212e" />
                 {/* cheveux longs */}
                 <path d="M62,30 Q40,52 36,92 Q60,96 92,74 Q114,52 104,26 Z" fill="#5a3a22" stroke="#141018" strokeWidth="4" strokeLinejoin="round" />
-                {/* polaire beige, côtés noirs */}
-                <ellipse cx="80" cy="96" rx="25" ry="30" fill="#d8d1b4" stroke="#141018" strokeWidth="5" />
-                <path d="M57,84 Q55,100 60,116" stroke="#1d1b22" strokeWidth="6" fill="none" />
-                <path d="M103,84 Q105,100 100,116" stroke="#1d1b22" strokeWidth="6" fill="none" />
-                <path d="M68,70 L80,82 L92,70 L88,66 L72,66 Z" fill="#1d1b22" />
-                <path d="M80,82 L80,104" stroke="#8a8470" strokeWidth="2" />
-                <polygon points="93,85 102,90 102,100 93,105 84,100 84,90" fill="#0d0d10" stroke="#e5212e" strokeWidth="2" />
-                <path d="M88,90 L92,100 L94,100 L98,90 L96,90 L93,97 L90,90 Z" fill="#fff" />
-                {/* bras vers le grappin */}
+                {/* combinaison rouge, flancs et ceinture noirs */}
+                <ellipse cx="80" cy="96" rx="25" ry="30" fill="#e5212e" stroke="#141018" strokeWidth="5" />
+                <path d="M57,84 Q55,100 60,116" stroke="#0d0d10" strokeWidth="7" fill="none" />
+                <path d="M103,84 Q105,100 100,116" stroke="#0d0d10" strokeWidth="7" fill="none" />
+                <rect x="57" y="110" width="46" height="7" fill="#0d0d10" />
+                <rect x="76" y="109" width="9" height="9" fill="#ffd21a" stroke="#141018" strokeWidth="1.5" />
+                <path d="M68,68 Q80,78 92,68 L88,64 L72,64 Z" fill="#0d0d10" />
+                {/* blason ✌️ éclair */}
+                <polygon points="80,80 91,86 91,98 80,104 69,98 69,86" fill="#0d0d10" stroke="#fff" strokeWidth="2" />
+                <path d="M73,85 L78.5,98 L81.5,98 L87,85 L84,85 L80,94 L76,85 Z" fill="#fff" />
+                <path d="M81.5,86 L78,92 L80.5,92 L78.6,97 L83,90.5 L80.6,90.5 Z" fill="#ffd21a" />
+                {/* bras vers le grappin, gant noir */}
                 <path d="M92,74 L102,62" stroke="#141018" strokeWidth="13" strokeLinecap="round" />
-                <path d="M92,74 L102,62" stroke="#d8d1b4" strokeWidth="8" strokeLinecap="round" />
-                {/* jambes */}
+                <path d="M92,74 L102,62" stroke="#e5212e" strokeWidth="8" strokeLinecap="round" />
+                <circle cx="102" cy="62" r="6.5" fill="#0d0d10" />
+                {/* jambes rouges, bottes noires */}
                 <path d="M70,122 L58,150 M90,122 L102,148" stroke="#141018" strokeWidth="14" strokeLinecap="round" />
-                <path d="M70,122 L58,150 M90,122 L102,148" stroke="#2a2730" strokeWidth="9" strokeLinecap="round" />
+                <path d="M70,122 L58,150 M90,122 L102,148" stroke="#e5212e" strokeWidth="9" strokeLinecap="round" />
+                <path d="M62,140 L58,150 M98,138 L102,148" stroke="#0d0d10" strokeWidth="10" strokeLinecap="round" />
                 {/* visage de Romain */}
                 <image href="/romain/visage.png" x="57" y="17" width="54" height="54" clipPath="url(#rc-face-clip)" />
                 <circle cx="84" cy="44" r="27" fill="none" stroke="#141018" strokeWidth="5" />
