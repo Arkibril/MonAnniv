@@ -162,9 +162,18 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
       } else el.volume = v;
     }, 40);
   };
-  useEffect(() => () => {
-    clearAll();
-    stopSong();
+  useEffect(() => {
+    // on précharge l'aboiement dès l'arrivée, pour qu'il soit prêt au "WOAF"
+    const probe = new Audio(WOUF);
+    probe.preload = 'auto';
+    const ok = () => { woufOkRef.current = true; };
+    probe.addEventListener('canplaythrough', ok, { once: true });
+    probe.addEventListener('loadeddata', ok, { once: true });
+    probe.load();
+    return () => {
+      clearAll();
+      stopSong();
+    };
   }, []);
 
   const finish = useCallback(() => {
@@ -234,10 +243,6 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
   const start = async () => {
     if (loading) return;
     setLoading(true);
-    const probe = new Audio(WOUF);
-    probe.preload = 'auto';
-    probe.addEventListener('canplaythrough', () => { woufOkRef.current = true; }, { once: true });
-    probe.load();
     // Le son démarre juste avant son drop, pour que le drop tombe sur le flash
     const el = new Audio(`${SONG}#t=${(DROP - FLASH_AT).toFixed(2)}`);
     el.volume = 0.75;
@@ -298,12 +303,28 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     tl.call(sfxFlashCharge, null, 3.5);
     tl.to('.bp-cam__bulb', { fill: '#ffffff', duration: 0.1, yoyo: true, repeat: 7 }, 3.5);
     tl.to('.bp-front', { scale: 1.06, duration: 0.8, ease: 'power1.in' }, 3.5);
-    // 5. FLASH
-    tl.call(() => {
+    // 5. FLASH : calé sur l'horloge du son (le drop) s'il joue, sinon sur la timeline
+    let fired = false;
+    const flash = () => {
+      if (fired) return;
+      fired = true;
       sfxShutter();
       setPhase('chaos');
-    }, null, 4.4);
-    return () => tl.kill();
+    };
+    const song = songRef.current;
+    let poll = 0;
+    if (song) {
+      poll = setInterval(() => {
+        if (song.currentTime >= DROP - 0.03) flash();
+      }, 15);
+      tl.call(flash, null, FLASH_AT + 1.5); // filet de sécurité
+    } else {
+      tl.call(flash, null, FLASH_AT);
+    }
+    return () => {
+      tl.kill();
+      clearInterval(poll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, reduced]);
 
