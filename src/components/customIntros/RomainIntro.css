@@ -322,3 +322,12 @@
 .rc-results li.is-done { background: var(--rc-teal); color: #fff; }
 .rc-tuto { bottom: 22%; }
 @media (prefers-reduced-motion: reduce) { .rc-power.is-ready { animation: none; } }
+
+/* Variante : fond rouge pur + boutons blancs */
+.rc-intro { background: #e5212e; }
+.rc-cover { background: #e5212e; }
+.rc-cover-panel { box-shadow: 10px 10px 0 #000; }
+.rc-btn { background: #fff; color: #000; border-color: #000; box-shadow: 6px 6px 0 #000; }
+.rc-btn:focus-visible { outline-color: #000; }
+.rc-overlay { background: rgba(229, 33, 46, 0.55); }
+.rc-skip { background: #fff; color: #000; border: 3px solid #000; }

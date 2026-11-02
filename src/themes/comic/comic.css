@@ -153,3 +153,70 @@
   [data-theme='comic'] .option[aria-checked='true'] { transition: none; transform: none; }
   .cm-burst { display: none; }
 }
+
+/* ==========================================================================
+   Variante demandée : fond rouge pur + boutons blancs (session de Romain)
+   ========================================================================== */
+:root[data-theme='comic'] {
+  --bg: #e5212e;
+  --cm-line: #000;
+}
+[data-theme='comic'] body { background: #e5212e; }
+[data-theme='comic'] .topbar { background: #e5212e; border-bottom: 4px solid #000; }
+[data-theme='comic'] .cta-bar { background: linear-gradient(to top, #e5212e 62%, rgba(229, 33, 46, 0)); }
+[data-theme='comic'] .display,
+[data-theme='comic'] .title-2,
+[data-theme='comic'] .hero-vote__leader { text-shadow: 4px 4px 0 #000; }
+[data-theme='comic'] .title { text-shadow: 3px 3px 0 #000; }
+[data-theme='comic'] .lede,
+[data-theme='comic'] .caption,
+[data-theme='comic'] .field-hint { color: rgba(255, 255, 255, 0.9); }
+
+/* Boutons blancs, texte noir */
+[data-theme='comic'] .btn--ink,
+[data-theme='comic'] .btn--soft,
+[data-theme='comic'] .btn--white {
+  background: #fff;
+  color: #000;
+  border: 4px solid #000;
+  box-shadow: 5px 5px 0 #000;
+}
+[data-theme='comic'] .btn--ink:hover:not(:disabled) { background: #f2f2f2; }
+[data-theme='comic'] .btn__knob { background: #e5212e; color: #fff; border-color: #000; }
+[data-theme='comic'] .round { background: #fff; color: #000; border: 3px solid #000; }
+
+/* Réponses du quiz : cartes blanches, la choisie passe en noir */
+[data-theme='comic'] .option { background: #fff; color: #000; box-shadow: 5px 5px 0 #000; }
+[data-theme='comic'] .option:hover { background: #f4f4f4; }
+[data-theme='comic'] .option__sub { color: #444; }
+[data-theme='comic'] .option__emoji { background: #fff; border-color: #000; }
+[data-theme='comic'] .option__check { border-color: #000; }
+[data-theme='comic'] .option[aria-checked='true'] { background: #000; color: #fff; }
+[data-theme='comic'] .option[aria-checked='true'] .option__sub { color: rgba(255, 255, 255, 0.8); }
+[data-theme='comic'] .option[aria-checked='true'] .option__emoji { background: #1a1a1a; border-color: #fff; }
+[data-theme='comic'] .field { background: #fff; color: #000; border-color: #000; }
+
+/* Progression */
+[data-theme='comic'] .dots__dot { border-color: #fff; }
+[data-theme='comic'] .dots__dot--done { background: #fff; }
+[data-theme='comic'] .dots__dot--on { background: #000; border-color: #000; }
+
+/* Tableau de bord : cartes noires sur fond rouge */
+[data-theme='comic'] .card,
+[data-theme='comic'] .note,
+[data-theme='comic'] .stat,
+[data-theme='comic'] .person { background: #0d0d10; color: #fff; box-shadow: 5px 5px 0 #000; }
+[data-theme='comic'] .card--ink { background: #fff; color: #000; }
+[data-theme='comic'] .card--ink .card__meta,
+[data-theme='comic'] .card--ink .hero-vote__note { color: #444; }
+[data-theme='comic'] .card--ink .hero-vote__leader { color: #e5212e; text-shadow: 3px 3px 0 #000; }
+[data-theme='comic'] .card--ink .bar__track { background: #eee; }
+[data-theme='comic'] .card--ink .bar__fill { background: #bbb; }
+[data-theme='comic'] .card--ink .bar--lead .bar__fill { background: #e5212e; }
+[data-theme='comic'] .card--ink .bar__pct { color: #444; }
+[data-theme='comic'] .card--ink .bar--lead .bar__pct { color: #000; }
+[data-theme='comic'] .note--mine { background: #fff; color: #000; }
+[data-theme='comic'] .live { background: #fff; color: #000; }
+[data-theme='comic'] .dock { background: #fff; border-color: #000; box-shadow: 5px 5px 0 #000; }
+[data-theme='comic'] .dock__item { color: #000; }
+[data-theme='comic'] .dock__item[aria-current='page'] { background: #000; color: #fff; }
