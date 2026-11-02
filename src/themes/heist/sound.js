@@ -270,6 +270,11 @@ export function sfxClick(theme) {
     // "pow" : coup sourd + claquement
     tone({ freq: 260, type: 'sine', dur: 0.1, vol: 0.28, to: 120, filter: 1200 });
     noiseHit({ dur: 0.04, vol: 0.08, freq: 2400 });
+  } else if (theme === 'cinema') {
+    // petite note de boîte à musique + "tic" de projecteur
+    tone({ freq: 1568, type: 'sine', dur: 0.32, vol: 0.09, filter: 7000 });
+    tone({ freq: 2349, type: 'sine', start: 0.04, dur: 0.22, vol: 0.04, filter: 7000 });
+    noiseHit({ dur: 0.012, vol: 0.05, freq: 5200 });
   } else if (theme === 'kebab') {
     // "düm" grave + "tek" sec, façon darbuka
     tone({ freq: 190, type: 'sine', dur: 0.14, vol: 0.32, to: 85, filter: 900 });
@@ -292,6 +297,26 @@ function comicBurst(x, y) {
   setTimeout(() => b.remove(), 700);
 }
 
+function popcornBurst(x, y) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const cx = x || window.innerWidth / 2;
+  const cy = y || window.innerHeight / 2;
+  for (let i = 0; i < 7; i++) {
+    const b = document.createElement('span');
+    b.className = i % 3 === 0 ? 'cn-pop cn-pop--star' : 'cn-pop';
+    b.textContent = i % 3 === 0 ? '✦' : '🍿';
+    const a = (-Math.PI / 2) + (Math.random() - 0.5) * 2.2;
+    const d = 40 + Math.random() * 46;
+    b.style.left = `${cx}px`;
+    b.style.top = `${cy}px`;
+    b.style.setProperty('--dx', `${Math.cos(a) * d}px`);
+    b.style.setProperty('--dy', `${Math.sin(a) * d}px`);
+    b.style.setProperty('--rot', `${Math.round(Math.random() * 300 - 150)}deg`);
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 900);
+  }
+}
+
 let clicksInstalled = false;
 export function installClickSounds() {
   if (clicksInstalled || typeof document === 'undefined') return;
@@ -307,6 +332,8 @@ export function installClickSounds() {
       sfxClick(theme);
       // Session de Romain : éclat de BD à l'endroit du clic
       if (theme === 'comic' && !el.closest('.rc-intro')) comicBurst(e.clientX, e.clientY);
+      // Session de Lola : pop-corn et paillettes dorées
+      if (theme === 'cinema' && !el.closest('.lo-intro')) popcornBurst(e.clientX, e.clientY);
     },
     true
   );
@@ -351,4 +378,61 @@ export function sfxMission() {
   tone({ freq: 784, type: 'square', dur: 0.09, vol: 0.05, filter: 3000 });
   tone({ freq: 988, type: 'square', start: 0.09, dur: 0.09, vol: 0.05, filter: 3000 });
   tone({ freq: 1319, type: 'square', start: 0.18, dur: 0.22, vol: 0.05, filter: 3000 });
+}
+
+// -----------------------------------------------------------------------------
+// Session de Lola : musique de comédie romantique (boîte à musique synthétisée)
+// Grille I – vi – IV – V en do majeur, arpèges doux + basse.
+// -----------------------------------------------------------------------------
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+let romanceTimer = null;
+let romanceBar = 0;
+const ROMANCE = [
+  [48, [60, 64, 67, 72], [76, 74, 72, 74]],
+  [45, [57, 60, 64, 69], [72, 71, 69, 67]],
+  [41, [57, 60, 65, 69], [69, 72, 77, 76]],
+  [43, [55, 59, 62, 67], [74, 72, 71, 74]]
+];
+function romanceStep() {
+  const [bass, chord, melody] = ROMANCE[romanceBar % ROMANCE.length];
+  const e = 0.3; // croche
+  tone({ freq: mtof(bass), type: 'sine', dur: 2.2, vol: 0.12, filter: 900 });
+  [0, 1, 2, 3, 2, 1, 2, 3].forEach((n, i) =>
+    tone({ freq: mtof(chord[n]), type: 'triangle', start: i * e, dur: 0.9, vol: 0.045, filter: 3000 })
+  );
+  if (romanceBar % 8 >= 4 || romanceBar > 0) {
+    melody.forEach((m, i) => tone({ freq: mtof(m), type: 'sine', start: i * e * 2, dur: 1.1, vol: 0.06, filter: 5000 }));
+  }
+  romanceBar++;
+}
+export function startRomance() {
+  if (romanceTimer || !audio()) return;
+  romanceBar = 0;
+  romanceStep();
+  romanceTimer = setInterval(() => {
+    if (document.hidden) return;
+    romanceStep();
+  }, 2400);
+}
+export function stopRomance() {
+  clearInterval(romanceTimer);
+  romanceTimer = null;
+}
+export const isRomancePlaying = () => Boolean(romanceTimer);
+
+// Ronronnement + cliquetis du projecteur
+export function sfxProjector() {
+  for (let i = 0; i < 10; i++) noiseHit({ start: i * 0.06, dur: 0.02, vol: 0.05, freq: 1800 + (i % 2) * 900 });
+}
+// Impression du ticket
+export function sfxTicket() {
+  for (let i = 0; i < 14; i++) noiseHit({ start: i * 0.045, dur: 0.03, vol: 0.06, freq: 2600 });
+  tone({ freq: 1318, type: 'sine', start: 0.7, dur: 0.4, vol: 0.08 });
+}
+// Rideau qui s'ouvre : souffle de velours
+export function sfxCurtain() {
+  noiseHit({ dur: 1.2, vol: 0.14, freq: 500 });
+  tone({ freq: 523, type: 'sine', start: 0.3, dur: 1.2, vol: 0.07 });
+  tone({ freq: 784, type: 'sine', start: 0.45, dur: 1.2, vol: 0.06 });
+  tone({ freq: 1046, type: 'sine', start: 0.6, dur: 1.4, vol: 0.05 });
 }

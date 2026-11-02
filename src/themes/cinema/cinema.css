@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Josefin+Sans:wght@400;600;700&display=swap');
+
+/* ==========================================================================
+   Thème "cinema" : session de Lola (quiz + tableau de bord) façon ciné-club.
+   Velours bordeaux, or, papier crème des tickets, ampoules de marquise.
+   Activé par <html data-theme="cinema">.
+   ========================================================================== */
+:root[data-theme='cinema'] {
+  --font: 'Josefin Sans', system-ui, sans-serif;
+  --cn-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --cn-velvet: #6d0f22;
+  --cn-velvet-2: #8f1a2e;
+  --cn-deep: #22050b;
+  --cn-gold: #d9b45a;
+  --cn-gold-pale: #f3dfa2;
+  --cn-paper: #f6ecd8;
+  --cn-ink: #1b0a0e;
+
+  --bg: #22050b;
+  --card: #34070f;
+  --card-strong: #420a15;
+  --ink: #f6ecd8;
+  --ink-2: rgba(246, 236, 216, 0.74);
+  --ink-3: rgba(246, 236, 216, 0.52);
+  --on-ink: #1b0a0e;
+  --on-ink-2: rgba(27, 10, 14, 0.66);
+  --line: rgba(217, 180, 90, 0.16);
+  --line-strong: rgba(217, 180, 90, 0.4);
+  --accent: var(--cn-gold);
+  --accent-ink: var(--cn-gold-pale);
+  --accent-soft: rgba(217, 180, 90, 0.16);
+
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --lift: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --lift-2: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --float: 0 14px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Velours : plis verticaux + halo de projecteur en haut */
+[data-theme='cinema'] body {
+  background:
+    radial-gradient(70% 38% at 50% -6%, rgba(255, 226, 160, 0.2), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 26px, rgba(255, 255, 255, 0.025) 26px 34px, transparent 34px 52px),
+    linear-gradient(180deg, #3a0712, #22050b 60%, #160307);
+  background-attachment: fixed;
+  color: var(--ink);
+}
+
+/* ---------- Titres en serif d'affiche ---------- */
+[data-theme='cinema'] .display,
+[data-theme='cinema'] .title,
+[data-theme='cinema'] .title-2,
+[data-theme='cinema'] .hero-vote__leader {
+  font-family: var(--cn-serif);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #fff;
+}
+[data-theme='cinema'] .display { font-style: italic; }
+[data-theme='cinema'] .title { font-style: italic; line-height: 1.12; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5); }
+[data-theme='cinema'] .hero-vote__leader {
+  background: linear-gradient(180deg, #fff6dc 10%, #d9b45a 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme='cinema'] .lede,
+[data-theme='cinema'] .caption,
+[data-theme='cinema'] .field-hint { color: var(--ink-2); }
+
+/* ---------- Barre du haut : marquise à ampoules ---------- */
+[data-theme='cinema'] .topbar {
+  position: sticky;
+  background: rgba(22, 3, 7, 0.92);
+  border-bottom: 1px solid var(--cn-gold);
+}
+[data-theme='cinema'] .topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 8px;
+  pointer-events: none;
+  background: radial-gradient(circle, #ffe9a8 0 2.4px, rgba(255, 210, 110, 0.5) 3px, transparent 4.5px) 0 50% / 22px 8px repeat-x;
+  animation: cn-bulbs 1.4s steps(1) infinite;
+}
+@keyframes cn-bulbs { 50% { background-position: 11px 50%; } }
+[data-theme='cinema'] .round {
+  background: transparent;
+  color: var(--cn-gold-pale);
+  border: 1px solid var(--line-strong);
+}
+[data-theme='cinema'] .round:disabled { opacity: 0.35; }
+
+/* Progression : pellicule (une image par question) */
+[data-theme='cinema'] .dots {
+  gap: 3px;
+  padding: 5px 6px;
+  border-radius: 3px;
+  background:
+    radial-gradient(circle, #22050b 1.3px, transparent 1.8px) 0 0 / 7px 4px repeat-x,
+    radial-gradient(circle, #22050b 1.3px, transparent 1.8px) 0 100% / 7px 4px repeat-x,
+    #0d0204;
+}
+[data-theme='cinema'] .dots__dot {
+  width: 12px;
+  height: 10px;
+  border-radius: 1px;
+  background: #3a2a2d;
+}
+[data-theme='cinema'] .dots__dot--done { background: rgba(217, 180, 90, 0.55); }
+[data-theme='cinema'] .dots__dot--on { width: 18px; background: var(--cn-gold-pale); box-shadow: 0 0 8px rgba(243, 223, 162, 0.7); }
+
+/* ---------- Boutons : or ---------- */
+[data-theme='cinema'] .btn { font-family: var(--font); font-weight: 700; letter-spacing: 0.03em; }
+[data-theme='cinema'] .btn--ink {
+  color: var(--cn-deep);
+  background: linear-gradient(180deg, #f6e3a8, #d9b45a 55%, #b88c35);
+  box-shadow: 0 0 0 1px rgba(255, 240, 200, 0.5) inset, 0 10px 28px rgba(217, 180, 90, 0.25);
+}
+[data-theme='cinema'] .btn--ink:hover:not(:disabled) { box-shadow: 0 0 0 1px rgba(255, 240, 200, 0.6) inset, 0 14px 36px rgba(217, 180, 90, 0.4); }
+[data-theme='cinema'] .btn--ink .btn__knob { background: var(--cn-velvet); color: var(--cn-gold-pale); }
+[data-theme='cinema'] .btn--soft,
+[data-theme='cinema'] .btn--white {
+  background: transparent;
+  color: var(--cn-gold-pale);
+  box-shadow: 0 0 0 1px var(--line-strong) inset;
+}
+[data-theme='cinema'] .cta-bar { background: linear-gradient(to top, #1a0408 62%, rgba(26, 4, 8, 0)); }
+
+/* ---------- Options : tickets de cinéma ---------- */
+[data-theme='cinema'] .options { gap: 12px; }
+[data-theme='cinema'] .option {
+  position: relative;
+  border-radius: 6px;
+  background: var(--cn-paper);
+  color: var(--cn-ink);
+  /* encoches des deux côtés */
+  -webkit-mask: radial-gradient(circle 9px at 0 50%, transparent 8.5px, #000 9px) left / 51% 100% no-repeat,
+    radial-gradient(circle 9px at 100% 50%, transparent 8.5px, #000 9px) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 9px at 0 50%, transparent 8.5px, #000 9px) left / 51% 100% no-repeat,
+    radial-gradient(circle 9px at 100% 50%, transparent 8.5px, #000 9px) right / 51% 100% no-repeat;
+  padding-left: 18px;
+  padding-right: 20px;
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1), background 200ms ease;
+}
+[data-theme='cinema'] .option:hover { background: #fff6e4; transform: translateY(-1px); }
+[data-theme='cinema'] .option__emoji {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-right: 2px dashed rgba(109, 15, 34, 0.3);
+  width: 56px;
+}
+[data-theme='cinema'] .option__label { font-family: var(--cn-serif); font-weight: 700; font-size: 17px; letter-spacing: 0; }
+[data-theme='cinema'] .option__sub { color: rgba(27, 10, 14, 0.66); }
+[data-theme='cinema'] .option__tag { background: var(--cn-velvet); color: var(--cn-gold-pale); }
+[data-theme='cinema'] .option__check { border-color: rgba(109, 15, 34, 0.4); }
+[data-theme='cinema'] .option[aria-checked='true'] {
+  background: linear-gradient(180deg, #f6e3a8, #e2bf68);
+  color: var(--cn-ink);
+  transform: rotate(-0.6deg) scale(1.01);
+  box-shadow: none;
+  filter: drop-shadow(0 0 14px rgba(243, 223, 162, 0.45));
+}
+[data-theme='cinema'] .option[aria-checked='true'] .option__sub { color: rgba(27, 10, 14, 0.75); }
+[data-theme='cinema'] .option[aria-checked='true'] .option__emoji { background: transparent; border-right-color: rgba(109, 15, 34, 0.5); }
+[data-theme='cinema'] .option[aria-checked='true'] .option__tag { background: var(--cn-velvet); color: var(--cn-gold-pale); }
+[data-theme='cinema'] .option[aria-checked='true'] .option__check { background: var(--cn-velvet); border-color: var(--cn-velvet); color: var(--cn-gold-pale); }
+[data-theme='cinema'] .field {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--cn-paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+}
+
+/* ---------- Tableau de bord ---------- */
+[data-theme='cinema'] .card,
+[data-theme='cinema'] .stat,
+[data-theme='cinema'] .note,
+[data-theme='cinema'] .person {
+  background: rgba(52, 7, 15, 0.82);
+  box-shadow: 0 0 0 1px var(--line) inset, var(--lift);
+}
+/* La carte du vote en tête : l'affiche du film */
+[data-theme='cinema'] .card--ink {
+  background:
+    radial-gradient(80% 60% at 50% 0, rgba(255, 220, 160, 0.18), transparent 70%),
+    linear-gradient(180deg, #13203f, #3c1b3e 55%, #6d0f22);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(217, 180, 90, 0.5), 0 0 0 5px #0d0608, 0 0 0 6px rgba(217, 180, 90, 0.35), var(--lift-2);
+}
+[data-theme='cinema'] .card--ink .card__meta,
+[data-theme='cinema'] .card--ink .hero-vote__note { color: rgba(246, 236, 216, 0.75); }
+[data-theme='cinema'] .bar__track { background: rgba(0, 0, 0, 0.35); }
+[data-theme='cinema'] .bar__fill { background: rgba(246, 236, 216, 0.35); }
+[data-theme='cinema'] .bar--lead .bar__fill,
+[data-theme='cinema'] .card--ink .bar--lead .bar__fill { background: linear-gradient(90deg, #b88c35, #f3dfa2); }
+[data-theme='cinema'] .card--ink .bar__fill { background: rgba(246, 236, 216, 0.4); }
+[data-theme='cinema'] .card--ink .bar__pct,
+[data-theme='cinema'] .card--ink .bar--lead .bar__pct { color: #fff; }
+[data-theme='cinema'] .note--mine { background: var(--cn-paper); color: var(--cn-ink); }
+[data-theme='cinema'] .chip--soft { background: rgba(217, 180, 90, 0.16) !important; color: var(--cn-gold-pale); }
+[data-theme='cinema'] .live { background: var(--cn-velvet-2); color: var(--cn-gold-pale); }
+[data-theme='cinema'] .dock {
+  background: #12030a;
+  box-shadow: 0 0 0 1px var(--cn-gold), var(--float);
+}
+[data-theme='cinema'] .dock__item { color: var(--cn-gold-pale); }
+[data-theme='cinema'] .dock__item[aria-current='page'] { background: var(--cn-gold); color: var(--cn-deep); }
+
+/* ---------- Pop-corn au clic ---------- */
+.cn-pop {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 18px;
+  line-height: 1;
+  animation: cn-pop 820ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.cn-pop--star { color: #f3dfa2; font-size: 14px; text-shadow: 0 0 8px rgba(243, 223, 162, 0.9); }
+@keyframes cn-pop {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  60% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 40px)) scale(1) rotate(var(--rot)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='cinema'] .topbar::after { animation: none; }
+  [data-theme='cinema'] .option,
+  [data-theme='cinema'] .option[aria-checked='true'] { transition: none; transform: none; }
+  .cn-pop { display: none; }
+}
