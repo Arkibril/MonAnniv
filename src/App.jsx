@@ -17,6 +17,7 @@ import { trollPassedKey } from './components/customIntros/ErayIntro';
 import './themes/kebab/kebab.css';
 import './themes/comic/comic.css';
 import './themes/cinema/cinema.css';
+import './themes/dank/dank.css';
 import MissionPassed from './themes/heist/MissionPassed';
 import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';

@@ -270,6 +270,8 @@ export function sfxClick(theme) {
     // "pow" : coup sourd + claquement
     tone({ freq: 260, type: 'sine', dur: 0.1, vol: 0.28, to: 120, filter: 1200 });
     noiseHit({ dur: 0.04, vol: 0.08, freq: 2400 });
+  } else if (theme === 'dank') {
+    sfxHitmarker();
   } else if (theme === 'cinema') {
     // petite note de boîte à musique + "tic" de projecteur
     tone({ freq: 1568, type: 'sine', dur: 0.32, vol: 0.09, filter: 7000 });
@@ -317,6 +319,17 @@ function popcornBurst(x, y) {
   }
 }
 
+export function hitmarkerBurst(x, y, parent = document.body) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const b = document.createElement('span');
+  b.className = 'dk-hit';
+  b.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 4 L15 15 M36 4 L25 15 M4 36 L15 25 M36 36 L25 25" stroke="#fff" stroke-width="4" stroke-linecap="square"/><path d="M4 4 L15 15 M36 4 L25 15 M4 36 L15 25 M36 36 L25 25" stroke="#000" stroke-width="1.4"/></svg>';
+  b.style.left = `${x ?? window.innerWidth / 2}px`;
+  b.style.top = `${y ?? window.innerHeight / 2}px`;
+  parent.appendChild(b);
+  setTimeout(() => b.remove(), 420);
+}
+
 let clicksInstalled = false;
 export function installClickSounds() {
   if (clicksInstalled || typeof document === 'undefined') return;
@@ -334,6 +347,8 @@ export function installClickSounds() {
       if (theme === 'comic' && !el.closest('.rc-intro')) comicBurst(e.clientX, e.clientY);
       // Session de Lola : pop-corn et paillettes dorées
       if (theme === 'cinema' && !el.closest('.lo-intro')) popcornBurst(e.clientX, e.clientY);
+      // Session de Baptiste : hitmarker à l'endroit du clic
+      if (theme === 'dank' && !el.closest('.bp-intro')) hitmarkerBurst(e.clientX, e.clientY);
     },
     true
   );
@@ -435,4 +450,74 @@ export function sfxCurtain() {
   tone({ freq: 523, type: 'sine', start: 0.3, dur: 1.2, vol: 0.07 });
   tone({ freq: 784, type: 'sine', start: 0.45, dur: 1.2, vol: 0.06 });
   tone({ freq: 1046, type: 'sine', start: 0.6, dur: 1.4, vol: 0.05 });
+}
+
+// -----------------------------------------------------------------------------
+// Session de Baptiste : chien qui aboie, flash d'appareil photo, sons "MLG"
+// (tout est synthétisé, aucun fichier)
+// -----------------------------------------------------------------------------
+export function sfxWoaf(start = 0, pitch = 1) {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime + start;
+  const osc = ac.createOscillator();
+  const bp = ac.createBiquadFilter();
+  const g = ac.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(430 * pitch, t);
+  osc.frequency.linearRampToValueAtTime(620 * pitch, t + 0.04);
+  osc.frequency.exponentialRampToValueAtTime(190 * pitch, t + 0.24);
+  bp.type = 'bandpass';
+  bp.frequency.setValueAtTime(1100, t);
+  bp.frequency.exponentialRampToValueAtTime(600, t + 0.24);
+  bp.Q.value = 1.4;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.5, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+  osc.connect(bp).connect(g).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.3);
+  noiseHit({ start, dur: 0.07, vol: 0.18, freq: 1600 });
+}
+export function sfxFlashCharge() {
+  tone({ freq: 1400, type: 'sine', dur: 0.9, vol: 0.05, to: 9000, filter: 12000 });
+}
+export function sfxShutter() {
+  noiseHit({ dur: 0.03, vol: 0.35, freq: 4000 });
+  noiseHit({ start: 0.07, dur: 0.05, vol: 0.3, freq: 2500 });
+  tone({ freq: 180, type: 'square', dur: 0.05, vol: 0.12, filter: 1500 });
+}
+export function sfxHitmarker() {
+  tone({ freq: 1950, type: 'square', dur: 0.035, vol: 0.06, filter: 6000 });
+  noiseHit({ dur: 0.02, vol: 0.08, freq: 6000 });
+}
+export function sfxAirhorn(start = 0) {
+  const ac = audio();
+  if (!ac) return;
+  const blasts = [[0, 0.13], [0.17, 0.13], [0.34, 0.13], [0.52, 0.75]];
+  blasts.forEach(([s0, d]) => {
+    [370, 466, 554, 740].forEach((f, i) => {
+      const t = ac.currentTime + start + s0;
+      const osc = ac.createOscillator();
+      const lp = ac.createBiquadFilter();
+      const g = ac.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f * 0.94, t);
+      osc.frequency.exponentialRampToValueAtTime(f * (1 + (i - 1.5) * 0.004), t + 0.05);
+      lp.type = 'lowpass';
+      lp.frequency.value = 3200;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.06, t + 0.02);
+      g.gain.setValueAtTime(0.06, t + d - 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      osc.connect(lp).connect(g).connect(master);
+      osc.start(t);
+      osc.stop(t + d + 0.02);
+    });
+  });
+}
+export function sfxWow(start = 0) {
+  // "wooow" de synthé qui monte et redescend
+  tone({ freq: 220, type: 'sawtooth', start, dur: 0.25, vol: 0.1, to: 520, filter: 1800 });
+  tone({ freq: 520, type: 'sawtooth', start: start + 0.25, dur: 0.45, vol: 0.1, to: 260, filter: 1800 });
 }

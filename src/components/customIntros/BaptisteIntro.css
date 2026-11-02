@@ -1,0 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Comic+Neue:wght@700&display=swap');
+
+/* ==========================================================================
+   Intro de Baptiste : chien photographe + chaos "MLG / YouTube 2015"
+   ========================================================================== */
+.bp-intro {
+  --bp-orange: #fe941d;
+  --bp-impact: 'Anton', Impact, 'Arial Black', sans-serif;
+  --bp-comic: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', cursive;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--bp-orange);
+  color: #000;
+  font-family: var(--bp-comic);
+}
+.bp-stage { position: absolute; inset: 0; }
+
+/* Fond arc-en-ciel qui tourne, "deep fried" */
+.bp-rainbow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 230vmax;
+  height: 230vmax;
+  margin: -115vmax 0 0 -115vmax;
+  background: conic-gradient(from 0deg, #ff0040, #ff8a00, #ffe600, #00ff5e, #00e5ff, #6a00ff, #ff00e6, #ff0040);
+  animation: bp-spin 3s linear infinite;
+  filter: saturate(1.6) contrast(1.2);
+}
+.bp-intro--end .bp-rainbow { animation-duration: 9s; opacity: 0.85; }
+@keyframes bp-spin { to { transform: rotate(360deg); } }
+.bp-intro--chaos .bp-scene { filter: contrast(1.35) saturate(2.2); }
+
+/* ---------- Viseur de caméscope ---------- */
+.bp-viewfinder {
+  position: absolute;
+  inset: 16px;
+  z-index: 20;
+  pointer-events: none;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+}
+.bp-vf { position: absolute; width: 34px; height: 34px; border: 4px solid #fff; filter: drop-shadow(0 0 2px #000); }
+.bp-vf--tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.bp-vf--tr { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.bp-vf--bl { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.bp-vf--br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.bp-rec { position: absolute; top: 10px; left: 48px; display: flex; align-items: center; gap: 6px; }
+.bp-rec i { width: 12px; height: 12px; border-radius: 50%; background: #ff1a1a; animation: bp-blink 1s steps(1) infinite; }
+@keyframes bp-blink { 50% { opacity: 0; } }
+.bp-tc { position: absolute; bottom: 10px; left: 48px; }
+.bp-res { position: absolute; bottom: 10px; right: 48px; }
+.bp-batt {
+  position: absolute;
+  top: 12px;
+  right: 48px;
+  width: 30px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #fff 0 70%, transparent 70%);
+  background-clip: content-box;
+  padding: 2px;
+}
+
+/* ---------- Écran de départ ---------- */
+.bp-start,
+.bp-end {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 24px;
+  text-align: center;
+}
+.bp-badge {
+  width: min(64vw, 280px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bp-orange);
+  box-shadow: 0 0 0 6px #000, 10px 12px 0 6px #000;
+}
+.bp-badge img { width: 72%; height: auto; transform: translateX(-3%); }
+.bp-intro--start { background: #fff4e3; background-image: radial-gradient(#ffd8a8 2px, transparent 2.5px); background-size: 22px 22px; }
+.bp-start__hi { margin: 10px 0 0; font-family: var(--bp-impact); font-size: clamp(36px, 10vw, 56px); letter-spacing: 0.01em; }
+.bp-start__hint { margin: 0; font-size: 16px; }
+
+.bp-btn {
+  min-height: 56px;
+  padding: 0 30px;
+  border: 4px solid #000;
+  border-radius: 16px;
+  background: #fff;
+  color: #000;
+  font-family: var(--bp-impact);
+  font-size: 22px;
+  letter-spacing: 0.03em;
+  box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 120ms ease;
+}
+.bp-btn:hover { transform: translate(-1px, -1px) rotate(-1deg); }
+.bp-btn:active { transform: translate(5px, 5px); box-shadow: 1px 1px 0 #000; }
+.bp-btn:focus-visible { outline: 3px dashed #000; outline-offset: 5px; }
+
+/* ---------- Scène du chien ---------- */
+.bp-scene { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; }
+.bp-dog-wrap {
+  position: relative;
+  width: min(74vw, 340px);
+  aspect-ratio: 300 / 380;
+  display: grid;
+  place-items: center;
+}
+.bp-logo,
+.bp-front { grid-area: 1 / 1; }
+.bp-logo { width: 100%; height: auto; user-select: none; }
+.bp-front { display: none; width: 100%; height: 100%; overflow: visible; }
+.bp-front__mouth-open { display: none; }
+.bp--bark .bp-front__mouth-open { display: inline; }
+.bp--bark .bp-front__mouth-closed { display: none; }
+.bp-front__head { transform-origin: 150px 170px; transform-box: view-box; }
+.bp-front__tail { animation: bp-wag 0.35s ease-in-out infinite alternate; transform-origin: 200px 290px; transform-box: view-box; }
+@keyframes bp-wag { to { transform: rotate(-22deg); } }
+.bp-cam { opacity: 0; }
+.bp-shades { opacity: 0; }
+
+.bp-bubble {
+  position: absolute;
+  top: -6%;
+  right: -12%;
+  padding: 10px 18px;
+  border: 4px solid #000;
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--bp-impact);
+  font-size: clamp(30px, 9vw, 46px);
+  transform: scale(0);
+  box-shadow: 5px 5px 0 #000;
+}
+.bp-bubble::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  bottom: -20px;
+  border: 12px solid transparent;
+  border-top: 16px solid #000;
+}
+.bp-deal {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  translate: -50% 0;
+  padding: 4px 10px;
+  background: #000;
+  color: #fff;
+  font-family: var(--bp-impact);
+  font-size: clamp(26px, 8vw, 40px);
+  white-space: nowrap;
+  transform: scale(0);
+}
+.bp-illu {
+  position: absolute;
+  top: 16%;
+  left: 8%;
+  width: min(26vw, 130px);
+  transform: scale(0);
+  filter: drop-shadow(0 0 18px #00ff5e);
+}
+
+/* ---------- Flash ---------- */
+.bp-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: radial-gradient(circle at 50% 50%, #fff 40%, #fffbe0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Textes et emojis qui popent ---------- */
+.bp-chaos { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+.bp-float {
+  position: absolute;
+  white-space: nowrap;
+  line-height: 1;
+  pointer-events: none;
+  transform-origin: center;
+}
+.bp-float--impact { font-family: var(--bp-impact); -webkit-text-stroke: 2px #000; text-shadow: 4px 4px 0 #000; }
+.bp-float--comic { font-family: var(--bp-comic); font-weight: 700; text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; }
+.bp-float--outline { font-family: var(--bp-impact); color: transparent !important; -webkit-text-stroke: 2.5px #fff; text-shadow: 0 0 12px #ff00e6; }
+.bp-float--emoji { filter: drop-shadow(3px 3px 0 #000); }
+
+/* Hitmarker (aussi utilisé dans le quiz de Baptiste) */
+.dk-hit {
+  position: fixed;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: dk-hit 400ms ease-out forwards;
+}
+.bp-chaos .dk-hit { position: absolute; width: 60px; height: 60px; }
+.dk-hit svg { width: 100%; height: 100%; }
+@keyframes dk-hit {
+  0% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+}
+
+/* ---------- Écran final ---------- */
+.bp-end__dog { width: min(46vw, 200px); }
+.bp-end__dog .bp-front { display: block; }
+.bp-end__dog .bp-cam,
+.bp-end__dog .bp-shades { opacity: 1; }
+.bp-end__title {
+  margin: 0;
+  font-family: var(--bp-impact);
+  font-weight: 400;
+  font-size: clamp(54px, 17vw, 96px);
+  line-height: 0.95;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  text-shadow: 6px 6px 0 #000;
+}
+.bp-end__title span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--bp-comic);
+  font-size: clamp(20px, 5.5vw, 28px);
+  -webkit-text-stroke: 0;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+}
+.bp-end__sub {
+  margin: 0;
+  max-width: 30ch;
+  padding: 6px 12px;
+  background: #fff;
+  border: 3px solid #000;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.bp-mute,
+.bp-skip {
+  position: absolute;
+  z-index: 50;
+  top: max(52px, calc(env(safe-area-inset-top) + 40px));
+  border: 3px solid #000;
+  background: #fff;
+  font-family: var(--bp-comic);
+  font-weight: 700;
+  cursor: pointer;
+}
+.bp-mute { left: 22px; width: 42px; height: 42px; border-radius: 50%; font-size: 17px; }
+.bp-skip { right: 22px; padding: 8px 14px; border-radius: 999px; font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-rainbow,
+  .bp-rec i,
+  .bp-front__tail { animation: none; }
+}
+
+/* Viseur lisible sur le fond clair du départ */
+.bp-intro--start .bp-viewfinder { color: #000; text-shadow: none; }
+.bp-intro--start .bp-vf { border-color: #000; filter: none; }
+.bp-intro--start .bp-batt { border-color: #000; background: linear-gradient(90deg, #000 0 70%, transparent 70%); background-clip: content-box; }

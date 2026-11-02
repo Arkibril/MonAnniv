@@ -11,6 +11,7 @@ export function getGuestTheme(guest) {
   if (name.trim() === 'eray') return 'kebab';
   if (name.trim() === 'romain') return 'comic';
   if (name.trim() === 'lola') return 'cinema';
+  if (name.trim() === 'baptiste') return 'dank';
   return null;
 }
 

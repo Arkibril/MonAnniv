@@ -8,6 +8,7 @@ import AlexiaIntro from './customIntros/AlexiaIntro';
 import ErayIntro from './customIntros/ErayIntro';
 import RomainIntro from './customIntros/RomainIntro';
 import LolaIntro from './customIntros/LolaIntro';
+import BaptisteIntro from './customIntros/BaptisteIntro';
 import { getGuestTheme } from '../themes/guestTheme';
 import { WelcomeComposition, WELCOME_SIZE } from '../motion/WelcomeComposition';
 import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
@@ -21,6 +22,9 @@ export default function PersonalizedIntro({ guest, onComplete, isReplay = false 
 
   if (isLenaik) {
     return <LenaikIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
+  }
+  if (getGuestTheme(guest) === 'dank') {
+    return <BaptisteIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }
   if (getGuestTheme(guest) === 'cinema') {
     return <LolaIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
