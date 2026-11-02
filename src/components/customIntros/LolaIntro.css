@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Josefin+Sans:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Josefin+Sans:wght@400;600;700&family=Great+Vibes&display=swap');
 
 /* ==========================================================================
    Intro de Lola : "Lola, le film" (bande-annonce + ciné-club)
@@ -12,6 +12,7 @@
   --lo-ink: #1b0a0e;
   --lo-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --lo-sans: 'Josefin Sans', system-ui, sans-serif;
+  --lo-script: 'Great Vibes', 'Snell Roundhand', cursive;
 
   position: fixed;
   inset: 0;
@@ -154,8 +155,8 @@
   gap: 18px;
   padding: 90px 24px 40px;
   text-align: center;
-  background: radial-gradient(50% 40% at 50% 48%, rgba(0, 0, 0, 0.55), transparent 80%);
 }
+.lo-lobby .lo-neon { margin-bottom: 8px; }
 .lo-lobby__small {
   margin: 0;
   font-size: 13px;
@@ -434,33 +435,8 @@
   color: var(--lo-gold-pale);
 }
 
-/* Titre */
-.lo-titlecard {
-  background: radial-gradient(55% 45% at 50% 50%, #4a0a16, #050304 80%);
-  align-content: center;
-  gap: 0;
-}
-.lo-titlecard__title {
-  margin: 0;
-  font-family: var(--lo-serif);
-  font-weight: 900;
-  font-size: clamp(90px, 30vw, 220px);
-  line-height: 0.9;
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #fff6dc 10%, #d9b45a 60%, #8a6420);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.lo-titlecard__letter { display: inline-block; background: inherit; -webkit-background-clip: text; background-clip: text; }
-.lo-titlecard__sub {
-  margin: 4px 0 0;
-  font-family: var(--lo-serif);
-  font-style: italic;
-  font-size: clamp(22px, 6vw, 34px);
-  text-align: center;
-  color: var(--lo-paper);
-}
+/* Titre : le néon s'allume */
+.lo-titlecard { background: #050304; }
 
 .lo-skip {
   position: absolute;
@@ -477,110 +453,157 @@
   cursor: pointer;
 }
 
+/* ---------- Scène : rideau sous un projecteur + titre néon ---------- */
+.lo-stage {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 25%, transparent 70%, rgba(0, 0, 0, 0.7)),
+    repeating-linear-gradient(90deg, #2a040b 0px, #5c0b19 16px, #7a1022 28px, #5c0b19 40px, #2a040b 56px);
+}
+.lo-spot {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(118vw, 760px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 70, 70, 0.55) 0%, rgba(230, 30, 40, 0.38) 38%, rgba(200, 10, 30, 0.12) 58%, transparent 70%);
+  mix-blend-mode: screen;
+  z-index: 1;
+}
+.lo-corners {
+  position: absolute;
+  inset: max(18px, env(safe-area-inset-top)) 20px 20px;
+  z-index: 3;
+  pointer-events: none;
+  font-family: var(--lo-sans);
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255, 240, 228, 0.88);
+}
+.lo-corners span { position: absolute; max-width: 44%; }
+.lo-corners__tl { top: 0; left: 46px; }
+.lo-corners__tr { top: 0; right: 0; text-align: right; }
+.lo-corners__bl { bottom: 0; left: 0; font-size: 11.5px; max-width: 220px !important; }
+.lo-corners__br { bottom: 0; right: 0; text-align: right; }
+
+.lo-neon {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--lo-script);
+  font-weight: 400;
+  line-height: 0.9;
+  color: #fff4ea;
+  opacity: 0.22;
+  text-shadow: none;
+}
+.lo-neon__name {
+  font-size: clamp(110px, 34vw, 210px);
+  padding: 0 0.15em;
+  transform: rotate(-6deg);
+}
+.lo-neon__sub {
+  margin-top: -0.1em;
+  margin-left: 1.6em;
+  font-size: clamp(44px, 13vw, 78px);
+  transform: rotate(-6deg);
+}
+.lo-neon--on,
+.lo-neon--ignite {
+  opacity: 1;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 8px #ffd6c8,
+    0 0 18px #ff8f7a,
+    0 0 36px #ff3b4e,
+    0 0 70px #e0102e;
+}
+.lo-neon--on { animation: lo-neon-hum 6s ease-in-out infinite; }
+.lo-neon--ignite { animation: lo-neon-ignite 1.3s steps(1) both, lo-neon-hum 6s ease-in-out 1.3s infinite; }
+@keyframes lo-neon-ignite {
+  0% { opacity: 0.2; }
+  10% { opacity: 1; }
+  16% { opacity: 0.25; }
+  30% { opacity: 1; }
+  36% { opacity: 0.4; }
+  44%, 100% { opacity: 1; }
+}
+@keyframes lo-neon-hum {
+  0%, 100% { filter: brightness(1); }
+  48% { filter: brightness(1); }
+  50% { filter: brightness(0.82); }
+  52% { filter: brightness(1.05); }
+}
+.lo-sparkle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #ffb4a8);
+  animation: lo-twinkle 2.6s ease-in-out infinite;
+}
+.lo-sparkle--a { top: 6%; left: 62%; }
+.lo-sparkle--b { top: 54%; right: -2%; width: 46px; height: 46px; animation-delay: 0.9s; }
+.lo-sparkle--c { bottom: 2%; left: 8%; width: 22px; height: 22px; animation-delay: 1.6s; }
+@keyframes lo-twinkle {
+  0%, 100% { opacity: 1; scale: 1; }
+  50% { opacity: 0.45; scale: 0.7; }
+}
+
+.lo-btn--neon {
+  color: #fff4ea;
+  background: rgba(40, 0, 6, 0.35);
+  border: 1.5px solid rgba(255, 220, 210, 0.85);
+  box-shadow: 0 0 10px rgba(255, 90, 100, 0.55), inset 0 0 10px rgba(255, 90, 100, 0.35);
+  text-shadow: 0 0 8px rgba(255, 120, 120, 0.9);
+}
+.lo-btn--neon:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 18px rgba(255, 90, 100, 0.8), inset 0 0 14px rgba(255, 90, 100, 0.5); }
+.lo-btn--neon:active:not(:disabled) { transform: scale(0.97); }
+
 /* ---------- Affiche ---------- */
 .lo-poster-wrap {
   position: absolute;
   inset: 0;
   z-index: 10;
   overflow-y: auto;
-  display: grid;
-  place-items: center;
-  padding: 70px 18px 30px;
-  background: radial-gradient(70% 60% at 50% 30%, #2a060d, #050304 80%);
 }
 .lo-poster {
-  width: min(100%, 420px);
-  padding: 22px 22px 26px;
-  border-radius: 4px;
-  background:
-    radial-gradient(90% 50% at 50% 30%, rgba(255, 220, 160, 0.18), transparent 70%),
-    linear-gradient(180deg, #13203f 0%, #3c1b3e 48%, #6d0f22 100%);
-  box-shadow: 0 0 0 1px rgba(217, 180, 90, 0.45), 0 0 0 7px #0d0608, 0 0 0 8px rgba(217, 180, 90, 0.35), 0 40px 80px rgba(0, 0, 0, 0.7);
+  position: relative;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 70px 20px 80px;
   text-align: center;
 }
+.lo-poster__center { position: relative; z-index: 2; display: grid; justify-items: center; gap: 14px; }
+.lo-poster__tagline {
+  margin: 6px 0 0;
+  max-width: 26ch;
+  font-family: var(--lo-serif);
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.35;
+  color: #fff;
+}
 .lo-poster__quotes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  gap: 22px;
   font-family: var(--lo-serif);
   font-style: italic;
   font-size: 14px;
   line-height: 1.3;
-  color: #fff;
+  color: rgba(255, 244, 234, 0.92);
 }
-.lo-poster__quotes p { margin: 0; }
-.lo-poster__quotes span { display: block; margin-top: 4px; font-family: var(--lo-sans); font-style: normal; font-size: 11px; color: var(--lo-gold-pale); }
-.lo-poster__art {
-  position: relative;
-  height: 210px;
-  margin: 10px 0 0;
-}
-.lo-poster__moon {
-  position: absolute;
-  left: 50%;
-  top: 14px;
-  width: 150px;
-  height: 150px;
-  margin-left: -75px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #fff8e6, #f3dfa2 60%, #d9b45a);
-  box-shadow: 0 0 60px rgba(243, 223, 162, 0.5);
-}
-.lo-poster__art .lo-umbrella {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 130px;
-  margin-left: -65px;
-}
-.lo-poster__hearts span {
-  position: absolute;
-  left: calc(18% + var(--i) * 16%);
-  bottom: 30%;
-  font-size: 14px;
-  color: #ff8fa3;
-  opacity: 0;
-  animation: lo-heart 4s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.7s);
-}
-@keyframes lo-heart {
-  0% { transform: translateY(0) scale(0.6); opacity: 0; }
-  20% { opacity: 0.9; }
-  100% { transform: translateY(-120px) scale(1.1); opacity: 0; }
-}
-.lo-poster__title {
-  margin: 6px 0 0;
-  font-family: var(--lo-serif);
-  font-weight: 900;
-  font-size: clamp(76px, 24vw, 112px);
-  line-height: 0.9;
-  background: linear-gradient(180deg, #fff6dc 10%, #d9b45a 65%, #a37a2c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
-}
-.lo-poster__tagline {
-  margin: 10px auto 0;
-  max-width: 26ch;
-  font-family: var(--lo-serif);
-  font-style: italic;
-  font-size: 18px;
-  line-height: 1.35;
-  color: #fff;
-}
-.lo-poster__credits {
-  margin: 16px 0 0;
-  font-family: var(--lo-sans);
-  font-size: 10.5px;
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  color: rgba(246, 236, 216, 0.7);
-  /* bloc de crédits serré, façon affiche */
-  transform: scaleY(1.15);
-}
-.lo-poster__date { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--lo-gold-pale); }
-.lo-poster__cta { margin-top: 18px; width: 100%; }
+.lo-poster__quotes p { margin: 0; max-width: 16ch; }
+.lo-poster__quotes span { display: block; margin-top: 4px; font-family: var(--lo-sans); font-style: normal; font-size: 11.5px; color: #ffc9bd; }
+.lo-poster__date { margin: 0; font-size: 13px; font-weight: 600; color: #ffd9cf; }
+.lo-poster__cta { margin-top: 4px; min-width: 240px; }
 
 /* ---------- Ciné-club : choix du siège ---------- */
 .lo-club {
@@ -777,5 +800,8 @@
   .lo-bulbs i,
   .lo-poster__hearts span,
   .lo-win-blink,
+  .lo-neon--on,
+  .lo-neon--ignite,
+  .lo-sparkle,
   .lo-intro--trailer .lo-vignette { animation: none; }
 }

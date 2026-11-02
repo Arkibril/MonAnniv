@@ -122,6 +122,40 @@ function HeartMark({ size = 46 }) {
   );
 }
 
+function Sparkle({ className = '', style }) {
+  // Étincelle à quatre branches, comme un reflet sur le néon
+  return (
+    <svg className={`lo-sparkle ${className}`} style={style} viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M20,0 C21,14 26,19 40,20 C26,21 21,26 20,40 C19,26 14,21 0,20 C14,19 19,14 20,0 Z" fill="#fff" />
+    </svg>
+  );
+}
+
+// Titre en néon écrit à la main : le prénom + "le film", avec étincelles
+function NeonTitle({ name, as: Tag = 'h1', className = '' }) {
+  return (
+    <Tag className={`lo-neon ${className}`} aria-label={`${name}, le film`}>
+      <span className="lo-neon__name" aria-hidden="true">{name}</span>
+      <span className="lo-neon__sub" aria-hidden="true">le film</span>
+      <Sparkle className="lo-sparkle--a" />
+      <Sparkle className="lo-sparkle--b" />
+      <Sparkle className="lo-sparkle--c" />
+    </Tag>
+  );
+}
+
+// Les quatre petites mentions dans les coins, façon générique d'émission
+function Corners({ tl, tr, bl, br }) {
+  return (
+    <div className="lo-corners" aria-hidden="true">
+      <span className="lo-corners__tl">{tl}</span>
+      <span className="lo-corners__tr">{tr}</span>
+      <span className="lo-corners__bl">{bl}</span>
+      <span className="lo-corners__br">{br}</span>
+    </div>
+  );
+}
+
 function Barcode() {
   const bars = useMemo(() => Array.from({ length: 34 }, (_, i) => 1 + ((i * 7 + 3) % 4)), []);
   let x = 0;
@@ -244,9 +278,11 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
       // 9. Titre
       const tStart = 21.9 + quotes.length * 0.95 + 0.2;
       tl.fromTo('.lo-titlecard', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, tStart);
-      tl.fromTo(qa('.lo-titlecard__letter'), { autoAlpha: 0, y: 30, filter: 'blur(8px)' }, { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', stagger: 0.12 }, tStart + 0.1);
-      tl.fromTo('.lo-titlecard__sub', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.8 }, tStart + 0.9);
-      tl.to('.lo-titlecard', { autoAlpha: 0, duration: 0.7 }, tStart + 2.8);
+      // le néon s'allume en grésillant
+      tl.fromTo('.lo-titlecard .lo-spot', { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.8, ease: 'expo.out' }, tStart);
+      tl.call(() => root.querySelector('.lo-titlecard .lo-neon')?.classList.add('lo-neon--ignite'), null, tStart + 0.4);
+      tl.fromTo('.lo-titlecard .lo-sparkle', { scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.6, ease: 'back.out(2)', stagger: 0.15 }, tStart + 1.6);
+      tl.to('.lo-titlecard', { autoAlpha: 0, duration: 0.7 }, tStart + 3.6);
     }, root);
     return () => {
       ctx.revert();
@@ -263,7 +299,9 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
   useLayoutEffect(() => {
     if (phase !== 'poster' || reduced) return undefined;
     const ctx = gsap.context(() => {
-      gsap.fromTo('.lo-poster', { autoAlpha: 0, y: 40, rotate: -1.5 }, { autoAlpha: 1, y: 0, rotate: 0, duration: 1.1, ease: 'expo.out' });
+      gsap.fromTo('.lo-poster', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.8, ease: 'power2.out' });
+      gsap.fromTo('.lo-poster .lo-spot', { scale: 0.7 }, { scale: 1, duration: 1.4, ease: 'expo.out' });
+      gsap.fromTo('.lo-poster .lo-corners span', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, stagger: 0.08, delay: 0.5 });
       gsap.fromTo('.lo-poster [data-rise]', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'expo.out', stagger: 0.09, delay: 0.35 });
     }, rootRef.current);
     return () => ctx.revert();
@@ -343,13 +381,10 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
       {/* ------------------------------------------------------------- lobby */}
       {phase === 'lobby' && (
         <div className="lo-lobby">
-          <p className="lo-lobby__small">Séance privée</p>
-          <h1 className="lo-lobby__title">
-            Ce soir, une avant-première
-            <br />
-            rien que pour {name}.
-          </h1>
-          <button type="button" className="lo-btn lo-btn--gold" onClick={startTrailer} autoFocus>
+          <div className="lo-spot" aria-hidden="true" />
+          <Corners tl="Séance privée" tr="Avant-première" bl="Une comédie romantique où l'invitée, c'est toi" br="Invitée spéciale" />
+          <NeonTitle name={name} className="lo-neon--on" />
+          <button type="button" className="lo-btn lo-btn--neon" onClick={startTrailer} autoFocus>
             <span className="lo-btn__play" aria-hidden="true">▶</span>
             {isReplay ? 'Revoir la bande-annonce' : 'Lancer la bande-annonce'}
           </button>
@@ -429,12 +464,9 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
           </div>
 
           <div className="lo-scene lo-titlecard">
-            <h2 className="lo-titlecard__title" aria-label={name}>
-              {NAME.split('').map((c, i) => (
-                <span key={i} className="lo-titlecard__letter">{c}</span>
-              ))}
-            </h2>
-            <p className="lo-titlecard__sub">le film</p>
+            <div className="lo-stage" aria-hidden="true" />
+            <div className="lo-spot" aria-hidden="true" />
+            <NeonTitle name={name} as="h2" />
           </div>
 
           <button type="button" className="lo-skip" onClick={skipTrailer}>
@@ -446,29 +478,22 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
       {/* ------------------------------------------------------------- affiche */}
       {phase === 'poster' && (
         <div className="lo-poster-wrap">
+          <div className="lo-stage" aria-hidden="true" />
           <article className="lo-poster" aria-label={`Affiche : ${name}, le film`}>
-            <div className="lo-poster__quotes" data-rise>
-              <p>« Le film de l'année. »<span>— Jibril</span></p>
-              <p>« Je ne m'en suis pas remis. »<span>— Un invité</span></p>
-            </div>
-            <div className="lo-poster__art" data-rise aria-hidden="true">
-              <div className="lo-poster__moon" />
-              <div className="lo-poster__hearts">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <span key={i} style={{ '--i': i }}>♥</span>
-                ))}
+            <div className="lo-spot" aria-hidden="true" />
+            <Corners tl="Histoire vraie" tr="Hiver 2026" bl="Une soirée où les souvenirs se jouent comme des scènes de film" br={`Avec ${name}`} />
+            <div className="lo-poster__center">
+              <NeonTitle name={name} className="lo-neon--on" />
+              <p className="lo-poster__tagline" data-rise>Elle avait tout prévu. Sauf cette invitation.</p>
+              <div className="lo-poster__quotes" data-rise>
+                <p>« Le film de l'année. »<span>Jibril</span></p>
+                <p>« Je ne m'en suis pas remis. »<span>Un invité</span></p>
               </div>
-              <Umbrella />
+              <p className="lo-poster__date" data-rise>Prochainement · {date ? `à partir du ${date}` : 'cet hiver'}</p>
+              <button type="button" className="lo-btn lo-btn--neon lo-poster__cta" data-rise onClick={() => setPhase('club')}>
+                Prendre mon ticket
+              </button>
             </div>
-            <h1 className="lo-poster__title" data-rise>{name}</h1>
-            <p className="lo-poster__tagline" data-rise>Elle avait tout prévu. Sauf cette invitation.</p>
-            <p className="lo-poster__credits" data-rise>
-              Jibril Pictures présente une production d'anniversaire · avec {name} dans son propre rôle · et tous les invités · musique composée par un ordinateur très ému · aucun budget
-            </p>
-            <p className="lo-poster__date" data-rise>Prochainement · {date ? `à partir du ${date}` : 'cet hiver'}</p>
-            <button type="button" className="lo-btn lo-btn--gold lo-poster__cta" data-rise onClick={() => setPhase('club')}>
-              Prendre mon ticket
-            </button>
           </article>
         </div>
       )}

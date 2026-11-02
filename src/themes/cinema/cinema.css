@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Josefin+Sans:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Josefin+Sans:wght@400;600;700&family=Great+Vibes&display=swap');
 
 /* ==========================================================================
    Thème "cinema" : session de Lola (quiz + tableau de bord) façon ciné-club.
@@ -41,7 +41,7 @@
 /* Velours : plis verticaux + halo de projecteur en haut */
 [data-theme='cinema'] body {
   background:
-    radial-gradient(70% 38% at 50% -6%, rgba(255, 226, 160, 0.2), transparent 70%),
+    radial-gradient(60% 34% at 50% 8%, rgba(255, 60, 70, 0.32), rgba(220, 20, 40, 0.12) 55%, transparent 75%),
     repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 26px, rgba(255, 255, 255, 0.025) 26px 34px, transparent 34px 52px),
     linear-gradient(180deg, #3a0712, #22050b 60%, #160307);
   background-attachment: fixed;
@@ -58,7 +58,16 @@
   letter-spacing: 0;
   color: #fff;
 }
-[data-theme='cinema'] .display { font-style: italic; }
+/* Grands titres : néon écrit à la main, comme sur l'affiche de l'intro */
+[data-theme='cinema'] .display {
+  font-family: 'Great Vibes', 'Snell Roundhand', cursive;
+  font-weight: 400;
+  font-size: clamp(60px, 17vw, 96px);
+  line-height: 1;
+  color: #fff4ea;
+  text-shadow: 0 0 2px #fff, 0 0 8px #ffd6c8, 0 0 18px #ff8f7a, 0 0 36px #ff3b4e, 0 0 64px #e0102e;
+}
+[data-theme='cinema'] .display .display__pre { font-family: var(--font); font-size: 0.32em; text-shadow: none; color: var(--ink-2); }
 [data-theme='cinema'] .title { font-style: italic; line-height: 1.12; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5); }
 [data-theme='cinema'] .hero-vote__leader {
   background: linear-gradient(180deg, #fff6dc 10%, #d9b45a 70%);
