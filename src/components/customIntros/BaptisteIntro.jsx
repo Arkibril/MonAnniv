@@ -21,6 +21,32 @@ import './BaptisteIntro.css';
 // =============================================================================
 
 const LOGO = '/baptiste/logo-chien.png';
+// Fichiers que Jibril dépose lui-même dans public/baptiste/ (optionnels) :
+// le son MLG (le drop tombe pile sur le flash) et la vidéo fond vert
+// dont on retire le vert en direct pour l'incruster pendant le chaos.
+const SONG = '/baptiste/son.mp3';
+const GREEN = '/baptiste/greenscreen.mp4';
+const WOUF = '/baptiste/wouf.mp3';
+const DROP = 17.4; // seconde du drop dans le son
+const FLASH_AT = 4.4; // seconde du flash après le clic
+const BEAT = 0.69; // tempo du drop
+
+// Retire le fond vert d'une image de la vidéo (incrustation)
+function keyGreen(data) {
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const m = r > b ? r : b;
+    const diff = g - m;
+    if (g > 90 && diff > 40) {
+      data[i + 3] = 0;
+    } else if (diff > 10) {
+      data[i + 3] = 255 - ((diff - 10) * 255) / 30;
+      data[i + 1] = m; // enlève le reflet vert
+    }
+  }
+}
 
 const WORDS = [
   'WOAF', 'WOW', 'SUCH PHOTO', 'VERY FLASH', 'MUCH 4K', '360 NO SCOPE', 'GET REKT',
@@ -104,6 +130,11 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
   const doneRef = useRef(false);
   const [phase, setPhase] = useState('start'); // start | show | chaos | end
   const [muted, setMutedState] = useState(isMuted());
+  const [loading, setLoading] = useState(false);
+  const songRef = useRef(null);
+  const woufOkRef = useRef(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const name = (guest?.first_name || 'Baptiste').trim();
 
@@ -116,12 +147,31 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     });
     timersRef.current = [];
   };
-  useEffect(() => () => clearAll(), []);
+  const stopSong = () => {
+    const el = songRef.current;
+    songRef.current = null;
+    if (!el) return;
+    let v = el.volume;
+    const fade = setInterval(() => {
+      v -= 0.08;
+      if (v <= 0) {
+        clearInterval(fade);
+        el.pause();
+        el.removeAttribute('src');
+        el.load();
+      } else el.volume = v;
+    }, 40);
+  };
+  useEffect(() => () => {
+    clearAll();
+    stopSong();
+  }, []);
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
     clearAll();
+    stopSong();
     onComplete?.();
   }, [onComplete]);
 
@@ -167,7 +217,45 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
   };
 
   // ------------------------------------------------------------ séquence
-  const start = () => {
+  // Aboiement : le vrai son s'il est là, sinon l'aboiement synthétisé
+  const bark = (rate = 1) => {
+    if (!woufOkRef.current) {
+      sfxWoaf(0, rate);
+      return;
+    }
+    const a = new Audio(WOUF);
+    a.playbackRate = rate;
+    a.preservesPitch = false;
+    a.volume = 0.9;
+    a.muted = isMuted();
+    a.play().catch(() => sfxWoaf(0, rate));
+  };
+
+  const start = async () => {
+    if (loading) return;
+    setLoading(true);
+    const probe = new Audio(WOUF);
+    probe.preload = 'auto';
+    probe.addEventListener('canplaythrough', () => { woufOkRef.current = true; }, { once: true });
+    probe.load();
+    // Le son démarre juste avant son drop, pour que le drop tombe sur le flash
+    const el = new Audio(`${SONG}#t=${(DROP - FLASH_AT).toFixed(2)}`);
+    el.volume = 0.75;
+    el.muted = isMuted();
+    const ok = await Promise.race([
+      el.play().then(() => true, () => false),
+      new Promise((r) => setTimeout(() => r(false), 2500))
+    ]);
+    if (ok) {
+      if (Math.abs(el.currentTime - (DROP - FLASH_AT)) > 0.5) el.currentTime = DROP - FLASH_AT;
+      songRef.current = el;
+      el.addEventListener('ended', () => {
+        if (songRef.current === el) songRef.current = null;
+      });
+    } else {
+      el.pause();
+    }
+    setLoading(false);
     setPhase('show');
   };
 
@@ -175,7 +263,7 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     if (phase !== 'show') return undefined;
     const root = rootRef.current;
     if (reduced) {
-      sfxWoaf();
+      bark(1);
       later(() => setPhase('end'), 900);
       return undefined;
     }
@@ -192,7 +280,7 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     // 3. WOAF
     tl.call(() => {
       root.classList.add('bp--bark');
-      sfxWoaf(0, 1);
+      bark(1);
       shake(10);
     }, null, 2.0);
     tl.fromTo('.bp-bubble', { scale: 0, rotate: -12 }, { scale: 1, rotate: -4, duration: 0.3, ease: 'back.out(3)' }, 2.0);
@@ -200,8 +288,8 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     tl.call(() => root.classList.remove('bp--bark'), null, 2.3);
     tl.call(() => {
       root.classList.add('bp--bark');
-      sfxWoaf(0, 1.15);
-      sfxWoaf(0.16, 1.25);
+      bark(1.25);
+      setTimeout(() => bark(1.45), 180);
     }, null, 2.55);
     tl.call(() => root.classList.remove('bp--bark'), null, 2.95);
     tl.to('.bp-bubble', { scale: 0, duration: 0.18, ease: 'power2.in' }, 3.15);
@@ -223,34 +311,71 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     if (phase !== 'chaos') return undefined;
     const root = rootRef.current;
     const tl = gsap.timeline({ onComplete: () => setPhase('end') });
+    const song = Boolean(songRef.current);
+    const len = song ? 10.2 : 7; // avec le son : jusqu'à la fin du morceau
     tl.fromTo('.bp-flash', { opacity: 1 }, { opacity: 0, duration: 1.1, ease: 'power2.in' }, 0);
-    tl.call(() => sfxAirhorn(0), null, 0.15);
+    if (!song) tl.call(() => sfxAirhorn(0), null, 0.15);
     // lunettes pixel qui tombent
     tl.fromTo('.bp-shades', { y: -260, opacity: 1 }, { y: 0, duration: 0.7, ease: 'bounce.out' }, 0.5);
     tl.fromTo('.bp-deal', { scale: 0 }, { scale: 1, duration: 0.25, ease: 'back.out(3)' }, 1.2);
     // zooms brutaux façon YTP
-    [1.6, 2.6, 3.6, 4.6].forEach((t, i) => {
+    const punches = song
+      ? [2, 4, 6, 8, 10, 12].map((k) => k * BEAT)
+      : [1.6, 2.6, 3.6, 4.6];
+    punches.forEach((t, i) => {
       tl.to('.bp-dog-wrap', { scale: 1.7, rotate: i % 2 ? 12 : -12, duration: 0.08, ease: 'power4.out' }, t);
       tl.to('.bp-dog-wrap', { scale: 1, rotate: 0, duration: 0.35, ease: 'expo.out' }, t + 0.32);
       tl.call(() => {
-        sfxWoaf(0, 0.8 + i * 0.18);
+        bark(0.8 + (i % 4) * 0.2);
         shake(22);
       }, null, t);
     });
-    tl.to('.bp-dog-wrap', { rotate: 360, duration: 0.7, ease: 'power3.inOut' }, 5.2);
-    tl.call(() => sfxWow(0), null, 5.2);
+    const spinAt = song ? 9.2 : 5.2;
+    tl.to('.bp-dog-wrap', { rotate: 360, duration: 0.7, ease: 'power3.inOut' }, spinAt);
+    if (!song) tl.call(() => sfxWow(0), null, spinAt);
     tl.fromTo('.bp-illu', { scale: 0, rotate: -180 }, { scale: 1, rotate: 0, duration: 0.6, ease: 'back.out(2)' }, 2.2);
     tl.to('.bp-illu', { scale: 0, duration: 0.3 }, 4.2);
-    tl.call(() => sfxAirhorn(0), null, 6.1);
-    tl.to({}, { duration: 0.9 }, 6.1);
+    if (song) {
+      tl.fromTo('.bp-illu', { scale: 0, rotate: -180 }, { scale: 1.2, rotate: 0, duration: 0.6, ease: 'back.out(2)', immediateRender: false }, 6.2);
+      tl.to('.bp-illu', { scale: 0, duration: 0.3 }, 8.2);
+    } else {
+      tl.call(() => sfxAirhorn(0), null, 6.1);
+    }
+    tl.to({}, { duration: 0.1 }, len - 0.1);
+
+    // Vidéo fond vert incrustée par-dessus
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    let raf = 0;
+    if (video && canvas) {
+      const ctx2d = canvas.getContext('2d', { willReadFrequently: true });
+      const draw = () => {
+        if (video.readyState >= 2 && video.videoWidth) {
+          if (canvas.width !== video.videoWidth) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+          }
+          ctx2d.drawImage(video, 0, 0);
+          const frame = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+          keyGreen(frame.data);
+          ctx2d.putImageData(frame, 0, 0);
+          canvas.classList.add('bp-gs--on');
+        }
+        raf = requestAnimationFrame(draw);
+      };
+      video.currentTime = 0;
+      video.play().then(() => { raf = requestAnimationFrame(draw); }, () => {});
+    }
 
     every(spawnWord, 140);
     every(spawnHit, 420);
-    later(() => clearAll(), 7000);
+    later(() => clearAll(), len * 1000);
     void root;
     return () => {
       tl.kill();
       clearAll();
+      cancelAnimationFrame(raf);
+      video?.pause();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -273,6 +398,7 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     const next = !muted;
     setMuted(next);
     setMutedState(next);
+    if (songRef.current) songRef.current.muted = next;
   };
 
   return (
@@ -292,6 +418,12 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
           <span className="bp-batt" />
         </div>
 
+        {(phase === 'show' || phase === 'chaos') && (
+          <>
+            <video ref={videoRef} className="bp-gs-src" src={GREEN} muted loop playsInline preload="auto" aria-hidden="true" />
+            <canvas ref={canvasRef} className="bp-gs" aria-hidden="true" />
+          </>
+        )}
         <div className="bp-chaos" ref={chaosRef} aria-hidden="true" />
 
         {phase === 'start' && (
@@ -300,8 +432,8 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
               <img src={LOGO} alt="" draggable="false" />
             </div>
             <p className="bp-start__hi">Salut {name} 📸</p>
-            <button type="button" className="bp-btn" onClick={start} autoFocus>
-              {isReplay ? 'Encore une photo' : 'Dis « cheese »'}
+            <button type="button" className="bp-btn" onClick={start} disabled={loading} autoFocus>
+              {loading ? 'Chargement…' : isReplay ? 'Encore une photo' : 'Dis « cheese »'}
             </button>
             <p className="bp-start__hint">Monte le son. Vraiment.</p>
           </div>

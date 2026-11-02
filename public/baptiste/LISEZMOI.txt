@@ -1,0 +1,5 @@
+Fichiers de l'intro de Baptiste (à déposer ici, noms exacts) :
+- son.mp3          : le son MLG. Le drop (à 17,4 s) tombe pile sur le flash.
+- wouf.mp3         : l'aboiement du chien ("WOAF").
+- greenscreen.mp4  : la vidéo fond vert. Le vert est retiré en direct.
+Sans ces fichiers, l'intro marche quand même avec des sons synthétisés.
