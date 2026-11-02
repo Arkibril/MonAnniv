@@ -13,7 +13,7 @@ import {
 import './LolaIntro.css';
 
 // =============================================================================
-// Intro de Lola : "Lola, le film"
+// Intro de Lola : "L'Anniv de Jibril", le film
 // 1. Salle obscure : bouton pour lancer la bande-annonce (débloque le son)
 // 2. Bande-annonce de comédie romantique : décompte, studio, cartons,
 //    ville sous la neige, parapluie rouge sous la pluie, lettre qui s'ouvre
@@ -131,12 +131,15 @@ function Sparkle({ className = '', style }) {
   );
 }
 
-// Titre en néon écrit à la main : le prénom + "le film", avec étincelles
-function NeonTitle({ name, as: Tag = 'h1', className = '' }) {
+// Titre en néon écrit à la main : "L'Anniv" + "de Jibril", avec étincelles
+const HOST = EVENT_CONFIG.hostName || 'Jibril';
+const FILM = `L'Anniv de ${HOST}`;
+
+function NeonTitle({ as: Tag = 'h1', className = '' }) {
   return (
-    <Tag className={`lo-neon ${className}`} aria-label={`${name}, le film`}>
-      <span className="lo-neon__name" aria-hidden="true">{name}</span>
-      <span className="lo-neon__sub" aria-hidden="true">le film</span>
+    <Tag className={`lo-neon ${className}`} aria-label={FILM}>
+      <span className="lo-neon__name" aria-hidden="true">L'Anniv</span>
+      <span className="lo-neon__sub" aria-hidden="true">de {HOST}</span>
       <Sparkle className="lo-sparkle--a" />
       <Sparkle className="lo-sparkle--b" />
       <Sparkle className="lo-sparkle--c" />
@@ -180,7 +183,6 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   const name = (guest?.first_name || 'Lola').trim();
-  const NAME = name.toUpperCase();
 
   useEffect(() => () => stopRomance(), []);
 
@@ -360,7 +362,7 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
   const showCurtains = phase === 'club' || phase === 'ticket' || phase === 'opening' || phase === 'lobby';
 
   return (
-    <div className={`lo-intro lo-intro--${phase}`} ref={rootRef} role="dialog" aria-modal="true" aria-label={`${name}, le film`}>
+    <div className={`lo-intro lo-intro--${phase}`} ref={rootRef} role="dialog" aria-modal="true" aria-label={`${FILM}, avec ${name}`}>
       <div className="lo-grain" aria-hidden="true" />
       <div className="lo-vignette" aria-hidden="true" />
 
@@ -382,8 +384,8 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
       {phase === 'lobby' && (
         <div className="lo-lobby">
           <div className="lo-spot" aria-hidden="true" />
-          <Corners tl="Séance privée" tr="Avant-première" bl="Une comédie romantique où l'invitée, c'est toi" br="Invitée spéciale" />
-          <NeonTitle name={name} className="lo-neon--on" />
+          <Corners tl="Séance privée" tr="Avant-première" bl="Une comédie romantique avec du gâteau, des bougies et toute la bande" br={`Invitée spéciale : ${name}`} />
+          <NeonTitle className="lo-neon--on" />
           <button type="button" className="lo-btn lo-btn--neon" onClick={startTrailer} autoFocus>
             <span className="lo-btn__play" aria-hidden="true">▶</span>
             {isReplay ? 'Revoir la bande-annonce' : 'Lancer la bande-annonce'}
@@ -466,7 +468,7 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
           <div className="lo-scene lo-titlecard">
             <div className="lo-stage" aria-hidden="true" />
             <div className="lo-spot" aria-hidden="true" />
-            <NeonTitle name={name} as="h2" />
+            <NeonTitle as="h2" />
           </div>
 
           <button type="button" className="lo-skip" onClick={skipTrailer}>
@@ -479,11 +481,11 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
       {phase === 'poster' && (
         <div className="lo-poster-wrap">
           <div className="lo-stage" aria-hidden="true" />
-          <article className="lo-poster" aria-label={`Affiche : ${name}, le film`}>
+          <article className="lo-poster" aria-label={`Affiche : ${FILM}`}>
             <div className="lo-spot" aria-hidden="true" />
             <Corners tl="Histoire vraie" tr="Hiver 2026" bl="Une soirée où les souvenirs se jouent comme des scènes de film" br={`Avec ${name}`} />
             <div className="lo-poster__center">
-              <NeonTitle name={name} className="lo-neon--on" />
+              <NeonTitle className="lo-neon--on" />
               <p className="lo-poster__tagline" data-rise>Elle avait tout prévu. Sauf cette invitation.</p>
               <div className="lo-poster__quotes" data-rise>
                 <p>« Le film de l'année. »<span>Jibril</span></p>
@@ -506,7 +508,7 @@ export default function LolaIntro({ guest, onComplete, isReplay = false }) {
               {Array.from({ length: 18 }, (_, i) => <i key={i} style={{ '--i': i }} />)}
             </div>
             <p className="lo-club__kicker">Ciné-club de Jibril</p>
-            <p className="lo-club__film">{name}, le film</p>
+            <p className="lo-club__film">{FILM}</p>
             <div className="lo-bulbs" aria-hidden="true">
               {Array.from({ length: 18 }, (_, i) => <i key={i} style={{ '--i': i + 1 }} />)}
             </div>

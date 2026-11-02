@@ -487,7 +487,8 @@
 .lo-corners span { position: absolute; max-width: 44%; }
 .lo-corners__tl { top: 0; left: 46px; }
 .lo-corners__tr { top: 0; right: 0; text-align: right; }
-.lo-corners__bl { bottom: 0; left: 0; font-size: 11.5px; max-width: 220px !important; }
+.lo-corners__bl { bottom: 0; left: 0; font-size: 11.5px; max-width: min(220px, 52%) !important; }
+.lo-corners__br { max-width: 38% !important; }
 .lo-corners__br { bottom: 0; right: 0; text-align: right; }
 
 .lo-neon {
@@ -505,13 +506,13 @@
   text-shadow: none;
 }
 .lo-neon__name {
-  font-size: clamp(110px, 34vw, 210px);
+  font-size: clamp(84px, 25vw, 180px);
   padding: 0 0.15em;
   transform: rotate(-6deg);
 }
 .lo-neon__sub {
-  margin-top: -0.1em;
-  margin-left: 1.6em;
+  margin-top: -0.05em;
+  margin-left: 1.4em;
   font-size: clamp(44px, 13vw, 78px);
   transform: rotate(-6deg);
 }
