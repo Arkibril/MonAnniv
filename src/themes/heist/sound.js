@@ -521,3 +521,9 @@ export function sfxWow(start = 0) {
   tone({ freq: 220, type: 'sawtooth', start, dur: 0.25, vol: 0.1, to: 520, filter: 1800 });
   tone({ freq: 520, type: 'sawtooth', start: start + 0.25, dur: 0.45, vol: 0.1, to: 260, filter: 1800 });
 }
+
+// "Kill" dans le kill feed de Baptiste : petit double bip de confirmation
+export function sfxKill() {
+  tone({ freq: 1760, type: 'square', dur: 0.05, vol: 0.05, filter: 5000 });
+  tone({ freq: 2349, type: 'square', start: 0.06, dur: 0.09, vol: 0.05, filter: 5000 });
+}

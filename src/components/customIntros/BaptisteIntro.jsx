@@ -7,10 +7,12 @@ import {
   sfxHitmarker,
   sfxAirhorn,
   sfxWow,
+  sfxKill,
   hitmarkerBurst,
   setMuted,
   isMuted
 } from '../../themes/heist/sound';
+import { fetchGuests } from '../../lib/supabase';
 import './BaptisteIntro.css';
 
 // =============================================================================
@@ -59,6 +61,53 @@ const COLORS = ['#ff0040', '#00e5ff', '#ffe600', '#00ff5e', '#ff00e6', '#ffffff'
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const norm = (str = '') =>
+  str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+
+// Prénoms des invités pour le "kill feed" : les couples sont séparés,
+// les homonymes raccourcis ("Solène Tourrillon" → "Solène T."), sans Baptiste lui-même.
+function buildNames(guests, self) {
+  const seen = new Set([norm(self)]);
+  const out = [];
+  guests.forEach((g) => {
+    String(g.first_name || '')
+      .split(/\s*[&+,/]\s*|\s+et\s+/i)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => {
+        const words = part.split(/\s+/);
+        const label = words.length > 1 ? `${words[0]} ${words[1][0]}.` : part;
+        const key = norm(part);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(label);
+      });
+  });
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// Variantes "MLG" avec un prénom, pour les textes qui popent
+const NAME_WORDS = [
+  (n) => n,
+  (n) => `GG ${n}`,
+  (n) => `${n} 360`,
+  (n) => `REKT ${n}`,
+  (n) => `${n}.EXE`,
+  (n) => `${n} 📸`,
+  (n) => `1V1 ${n}`
+];
+
+// Annonces de série, comme dans les jeux de tir
+const STREAKS = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 4: 'MULTI KILL', 5: 'MEGA KILL', 7: 'ULTRA KILL', 9: 'M-M-M-MONSTER KILL' };
+
+const CAM_ICON =
+  '<svg viewBox="0 0 30 20" aria-hidden="true"><rect x="1" y="5" width="28" height="14" rx="3" fill="#fff"/><rect x="5" y="1.5" width="8" height="5" rx="1.5" fill="#fff"/><circle cx="18" cy="12" r="5" fill="#111"/><circle cx="18" cy="12" r="2.4" fill="#fff"/></svg>';
+const HS_ICON =
+  '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="#ff2a2a" stroke-width="2.2"/><path d="M10 0v6M10 14v6M0 10h6M14 10h6" stroke="#ff2a2a" stroke-width="2.2"/></svg>';
 
 // Le chien vu de face, dans le même style que le logo (dessin original)
 function FrontDog() {
@@ -126,6 +175,10 @@ function Illuminati() {
 export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
   const rootRef = useRef(null);
   const chaosRef = useRef(null);
+  const feedRef = useRef(null);
+  const streakRef = useRef(null);
+  const namesRef = useRef([]);
+  const shakeRef = useRef({ base: 0, kick: 0, tick: null, acc: 0, moved: false, beatSync: false, lastBeat: -1, t0: 0 });
   const timersRef = useRef([]);
   const doneRef = useRef(false);
   const [phase, setPhase] = useState('start'); // start | show | chaos | end
@@ -170,9 +223,18 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     probe.addEventListener('canplaythrough', ok, { once: true });
     probe.addEventListener('loadeddata', ok, { once: true });
     probe.load();
+    // les prénoms des invités, pour le kill feed du passage MLG
+    let alive = true;
+    fetchGuests()
+      .then((list) => {
+        if (alive) namesRef.current = buildNames(list || [], guest?.first_name || 'Baptiste');
+      })
+      .catch(() => {});
     return () => {
+      alive = false;
       clearAll();
       stopSong();
+      stopShake();
     };
   }, []);
 
@@ -191,7 +253,9 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     const el = document.createElement('span');
     const emoji = Math.random() < 0.3;
     el.className = emoji ? 'bp-float bp-float--emoji' : `bp-float bp-float--${pick(['impact', 'comic', 'outline'])}`;
-    el.textContent = emoji ? pick(EMOJIS) : pick(WORDS);
+    const names = namesRef.current;
+    const withName = !emoji && names.length > 0 && Math.random() < 0.35;
+    el.textContent = emoji ? pick(EMOJIS) : withName ? pick(NAME_WORDS)(pick(names).toUpperCase()) : pick(WORDS);
     el.style.left = `${rand(4, 86)}%`;
     el.style.top = `${rand(8, 86)}%`;
     el.style.color = pick(COLORS);
@@ -217,13 +281,92 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     const r = box.getBoundingClientRect();
     hitmarkerBurst(rand(r.width * 0.25, r.width * 0.75), rand(r.height * 0.25, r.height * 0.7), box);
     sfxHitmarker();
+    shake(8);
   };
 
-  const shake = (amount = 14) => {
+  // ------------------------------------------------------------ kill feed
+  const addKill = (victim, index, total) => {
+    const feed = feedRef.current;
+    if (!feed) return;
+    const row = document.createElement('div');
+    row.className = index % 2 === 0 ? 'bp-kill bp-kill--hs' : 'bp-kill';
+    const a = document.createElement('span');
+    a.className = 'bp-kill__a';
+    a.textContent = name;
+    const v = document.createElement('span');
+    v.className = 'bp-kill__v';
+    v.textContent = victim;
+    row.append(a);
+    row.insertAdjacentHTML('beforeend', CAM_ICON);
+    if (index % 2 === 0) row.insertAdjacentHTML('beforeend', HS_ICON);
+    row.append(v);
+    feed.append(row);
+    const max = window.innerWidth < 600 ? 4 : 6;
+    while (feed.children.length > max) feed.firstElementChild.remove();
+    gsap.fromTo(row, { x: 60, opacity: 0, backgroundColor: 'rgba(255,255,255,0.9)' }, { x: 0, opacity: 1, backgroundColor: 'rgba(8,8,8,0.74)', duration: 0.28, ease: 'expo.out' });
+    sfxKill();
+
+    // annonce de série au centre
+    const count = index + 1;
+    const label = count === total && total >= 3 ? 'SQUAD WIPE 📸' : STREAKS[count];
+    const streak = streakRef.current;
+    if (label && streak) {
+      streak.textContent = label;
+      gsap.killTweensOf(streak);
+      gsap.fromTo(streak, { scale: 2.4, opacity: 0, rotate: rand(-8, 8) }, { scale: 1, opacity: 1, rotate: rand(-4, 4), duration: 0.22, ease: 'power4.out' });
+      gsap.to(streak, { scale: 0.6, opacity: 0, duration: 0.25, delay: label.startsWith('SQUAD') ? 1.4 : 0.55, ease: 'power2.in' });
+    }
+  };
+
+  // ------------------------------------------------------------ tremblement
+  // Une seule boucle qui secoue toute la scène : un tremblement de fond
+  // ("base") + des coups ("kick") qui retombent, calés sur les temps du drop.
+  function startShake() {
+    const st = shakeRef.current;
+    if (st.tick) return;
     const stage = rootRef.current?.querySelector('.bp-stage');
     if (!stage) return;
-    gsap.fromTo(stage, { x: rand(-amount, amount), y: rand(-amount, amount) }, { x: 0, y: 0, duration: 0.3, ease: 'elastic.out(1, 0.3)' });
-  };
+    st.tick = (time, deltaMs = 16.7) => {
+      st.kick *= Math.pow(0.9, deltaMs / 16.7);
+      if (st.beatSync) {
+        const song = songRef.current;
+        const t = song ? song.currentTime - DROP : (performance.now() - st.t0) / 1000;
+        const beat = Math.floor(t / BEAT);
+        if (t >= 0 && beat > st.lastBeat) {
+          st.lastBeat = beat;
+          st.kick = Math.max(st.kick, beat % 2 ? 18 : 30);
+        }
+      }
+      st.acc += deltaMs;
+      if (st.acc < 32) return; // ~30 secousses par seconde
+      st.acc = 0;
+      const amp = st.base + st.kick;
+      if (amp < 0.4) {
+        if (st.moved) gsap.set(stage, { x: 0, y: 0, rotation: 0 });
+        st.moved = false;
+        return;
+      }
+      st.moved = true;
+      gsap.set(stage, { x: rand(-amp, amp), y: rand(-amp, amp), rotation: rand(-amp, amp) * 0.05 });
+    };
+    gsap.ticker.add(st.tick);
+  }
+  function stopShake() {
+    const st = shakeRef.current;
+    if (st.tick) gsap.ticker.remove(st.tick);
+    st.tick = null;
+    st.base = 0;
+    st.kick = 0;
+    st.beatSync = false;
+    const stage = rootRef.current?.querySelector('.bp-stage');
+    if (stage) gsap.set(stage, { x: 0, y: 0, rotation: 0 });
+  }
+
+  function shake(amount = 14) {
+    startShake();
+    const st = shakeRef.current;
+    st.kick = Math.max(st.kick, amount);
+  }
 
   // ------------------------------------------------------------ séquence
   // Aboiement : le vrai son s'il est là, sinon l'aboiement synthétisé
@@ -336,6 +479,21 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     const len = song ? 10.2 : 7; // avec le son : jusqu'à la fin du morceau
     tl.fromTo('.bp-flash', { opacity: 1 }, { opacity: 0, duration: 1.1, ease: 'power2.in' }, 0);
     if (!song) tl.call(() => sfxAirhorn(0), null, 0.15);
+
+    // tremblement continu pendant tout le passage MLG, plus fort sur chaque temps
+    startShake();
+    Object.assign(shakeRef.current, { base: 6, kick: 34, beatSync: true, lastBeat: 0, t0: performance.now() });
+    if (!isMuted()) navigator.vibrate?.([160, 60, 260]);
+
+    // kill feed : Baptiste "prend en photo" chaque invité, un par temps
+    const victims = namesRef.current.slice();
+    const avail = len - 1.4;
+    let step = BEAT;
+    if (victims.length * BEAT > avail) step = Math.max(BEAT / 2, avail / Math.max(victims.length, 1));
+    victims.forEach((v, i) => {
+      const t = BEAT + i * step;
+      if (t <= len - 0.4) tl.call(() => addKill(v, i, victims.length), null, t);
+    });
     // lunettes pixel qui tombent
     tl.fromTo('.bp-shades', { y: -260, opacity: 1 }, { y: 0, duration: 0.7, ease: 'bounce.out' }, 0.5);
     tl.fromTo('.bp-deal', { scale: 0 }, { scale: 1, duration: 0.25, ease: 'back.out(3)' }, 1.2);
@@ -397,12 +555,15 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
       clearAll();
       cancelAnimationFrame(raf);
       video?.pause();
+      stopShake();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== 'end' || reduced) return undefined;
+    if (phase !== 'end') return undefined;
+    stopShake();
+    if (reduced) return undefined;
     const ctx = gsap.context(() => {
       gsap.fromTo('.bp-end [data-pop]', { scale: 0, rotate: () => rand(-20, 20) }, { scale: 1, rotate: 0, duration: 0.4, ease: 'back.out(2.5)', stagger: 0.08 });
     }, rootRef.current);
@@ -446,6 +607,12 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
           </>
         )}
         <div className="bp-chaos" ref={chaosRef} aria-hidden="true" />
+        {phase === 'chaos' && (
+          <>
+            <div className="bp-feed" ref={feedRef} aria-hidden="true" />
+            <div className="bp-streak" ref={streakRef} aria-hidden="true" />
+          </>
+        )}
 
         {phase === 'start' && (
           <div className="bp-start">
