@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+/* ==========================================================================
+   Intro "carnet de croquis" (Julien, Assiya) + niveau de Julien
+   ========================================================================== */
+.sk-intro {
+  --sk-ink: #2b2522;
+  --sk-paper: #fbf6ea;
+  --sk-yellow: #ffd43b;
+  --sk-hand: 'Patrick Hand', 'Comic Sans MS', 'Chalkboard SE', cursive;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--sk-paper);
+  color: var(--sk-ink);
+  font-family: var(--sk-hand);
+}
+.sk-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0, rgba(0, 0, 0, 0) 60%, rgba(120, 90, 40, 0.12)),
+    radial-gradient(#d9cfbf 1px, transparent 1.4px) 0 0 / 22px 22px,
+    var(--sk-paper);
+}
+/* reliure à spirale en haut de la page */
+.sk-paper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 22px;
+  background: radial-gradient(circle at 50% 50%, #fff 0 4px, var(--sk-ink) 4.5px 6.5px, transparent 7px) 0 0 / 34px 22px repeat-x;
+  opacity: 0.85;
+}
+
+/* ---------- Boutons dessinés à la main ---------- */
+.sk-btn {
+  min-height: 56px;
+  padding: 0 30px;
+  border: 3px solid var(--sk-ink);
+  border-radius: 255px 18px 225px 18px / 18px 225px 18px 255px;
+  background: var(--sk-yellow);
+  color: var(--sk-ink);
+  font-family: var(--sk-hand);
+  font-size: 24px;
+  box-shadow: 4px 4px 0 var(--sk-ink);
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 140ms ease;
+}
+.sk-btn:hover { transform: rotate(-1.2deg) translateY(-1px); }
+.sk-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--sk-ink); }
+.sk-btn:focus-visible { outline: 3px dashed var(--sk-ink); outline-offset: 5px; }
+.sk-btn--ghost { background: #fffdf7; }
+.sk-link {
+  border: 0;
+  background: none;
+  color: var(--sk-ink);
+  font-family: var(--sk-hand);
+  font-size: 19px;
+  text-decoration: underline wavy rgba(43, 37, 34, 0.5);
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
+.sk-hint { margin: 0; font-size: 19px; opacity: 0.75; }
+
+/* ---------- Couverture du carnet ---------- */
+.sk-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 40px 20px;
+}
+.sk-book {
+  position: relative;
+  width: min(72vw, 300px);
+  aspect-ratio: 200 / 260;
+  border: 3px solid var(--sk-ink);
+  border-radius: 8px 22px 22px 8px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 7%, rgba(255, 255, 255, 0.08) 7% 8%, transparent 8%),
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 60%),
+    #3d5a80;
+  box-shadow: 8px 10px 0 var(--sk-ink);
+  transform: rotate(-2deg);
+}
+.sk-book__strap {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  right: 16%;
+  width: 14px;
+  background: #ff8fab;
+  border-left: 3px solid var(--sk-ink);
+  border-right: 3px solid var(--sk-ink);
+}
+.sk-book__label {
+  position: absolute;
+  left: 16%;
+  right: 22%;
+  top: 30%;
+  padding: 10px 8px 12px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  background: var(--sk-paper);
+  border: 3px solid var(--sk-ink);
+  border-radius: 6px 14px 8px 12px;
+  transform: rotate(3deg);
+  text-align: center;
+}
+.sk-book__small { font-size: 18px; }
+.sk-book__name { font-size: 42px; line-height: 1; }
+.sk-book__doodles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* ---------- Scène animée ---------- */
+.sk-stage { position: absolute; inset: 0; z-index: 2; }
+.sk-svg { width: 100%; height: 100%; display: block; }
+.sk-skip,
+.sk-mute {
+  position: absolute;
+  z-index: 5;
+  top: max(34px, env(safe-area-inset-top));
+  border: 3px solid var(--sk-ink);
+  background: #fffdf7;
+  color: var(--sk-ink);
+  font-family: var(--sk-hand);
+  cursor: pointer;
+}
+.sk-skip { right: 16px; padding: 6px 16px; border-radius: 18px 255px 15px 225px / 225px 15px 255px 18px; font-size: 18px; }
+.sk-mute { left: 16px; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; }
+.sk-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(26px, env(safe-area-inset-bottom));
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- Carte "prêt ?" / pause ---------- */
+.sk-ready {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(27, 21, 48, 0.55);
+}
+.sk-intro--ready .sk-ready { background: radial-gradient(circle, rgba(27, 21, 48, 0.75), #1b1530 80%); }
+.sk-card {
+  width: min(100%, 440px);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px 22px 22px;
+  background: var(--sk-paper);
+  border: 3px solid var(--sk-ink);
+  border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  box-shadow: 6px 6px 0 var(--sk-ink);
+  text-align: center;
+}
+.sk-card__kicker { margin: 0; font-size: 18px; opacity: 0.7; }
+.sk-card__title { margin: 0; font-family: var(--sk-hand); font-weight: 400; font-size: 40px; line-height: 1; }
+.sk-card__text { margin: 0; font-size: 20px; }
+.sk-card__list {
+  margin: 4px 0 6px;
+  padding: 0 0 0 4px;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  font-size: 19px;
+  line-height: 1.25;
+}
+.sk-card__list li { position: relative; padding-left: 26px; }
+.sk-card__list li::before { content: '✎'; position: absolute; left: 0; top: 0; }
+.sk-card .sk-btn { width: 100%; }
+
+/* ---------- Niveau ---------- */
+.sk-intro--level { background: #1b1530; }
+.sk-level {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.sk-canvas { width: 100%; height: 100%; display: block; }
+.sk-pause {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.sk-pause span { width: 6px; height: 18px; border-radius: 2px; background: #fff; }

@@ -697,3 +697,64 @@ button.chip:active { transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* ---------------------------------------------------------------------------
+   Accueil explicatif (Sacha et accueils simples)
+   --------------------------------------------------------------------------- */
+.welcome--general { justify-content: center; }
+.welcome__body--general { padding-top: 40px; padding-bottom: 40px; }
+.gw-emoji {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--card);
+  font-size: 30px;
+}
+.gw-steps {
+  list-style: none;
+  margin: 26px auto 0;
+  padding: 0;
+  max-width: 440px;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+.gw-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+.gw-step__n {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--on-ink, #fff);
+  font-weight: 800;
+  font-size: 15px;
+}
+.gw-step__title { display: block; font-weight: 800; font-size: 16px; color: var(--ink); }
+.gw-step__text { display: block; margin-top: 3px; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.gw-note { margin: 16px auto 0; max-width: 440px; font-size: 14px; color: var(--ink-2); }
+
+/* Chargement d'une intro lourde (plateau 3D) */
+.intro-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: #2d1b10;
+  color: #fff6e5;
+  font-size: 18px;
+  font-weight: 700;
+}

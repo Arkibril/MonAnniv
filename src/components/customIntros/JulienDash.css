@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap');
+
+/* ==========================================================================
+   Intro de Julien : écran titre de jeu de rythme + niveau (création originale)
+   ========================================================================== */
+.jd {
+  --jd-ink: #1b1530;
+  --jd-display: 'Lilita One', 'Arial Rounded MT Bold', 'Arial Black', sans-serif;
+  --jd-hand: 'Nunito', system-ui, sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: #2b1d6b;
+  color: #fff;
+  font-family: var(--jd-display);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.jd-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ---------- Écran titre ---------- */
+.jd-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 70px 16px 120px;
+  text-align: center;
+}
+.jd-title {
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--jd-display);
+  font-weight: 400;
+  line-height: 0.88;
+  letter-spacing: 0.02em;
+  transform: rotate(-3deg);
+  animation: jd-float 3.4s ease-in-out infinite;
+}
+.jd-title span {
+  background: linear-gradient(180deg, #fff6b0 0%, #ffd43b 45%, #ff9f1c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 4px var(--jd-ink);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 6px 0 var(--jd-ink));
+}
+.jd-title__a { font-size: clamp(54px, 15vw, 104px); }
+.jd-title__b { font-size: clamp(66px, 19vw, 132px); margin-left: 0.6em; }
+@keyframes jd-float {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50% { transform: rotate(-2deg) translateY(-6px); }
+}
+
+.jd-row { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 5vw, 34px); }
+.jd-play,
+.jd-round {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 5px solid var(--jd-ink);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.22), inset 0 6px 0 rgba(255, 255, 255, 0.35), 0 6px 0 var(--jd-ink);
+  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.jd-play {
+  width: clamp(112px, 32vw, 150px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 40% 30%, #b9ffb0, #3ccf63 55%, #1f9a45);
+  animation: jd-beat 0.857s ease-out infinite; /* 2 temps à 140 BPM */
+}
+.jd-play svg { width: 64%; height: 64%; }
+.jd-round {
+  width: clamp(66px, 19vw, 84px);
+  aspect-ratio: 1;
+  font-family: var(--jd-display);
+  font-size: 40px;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--jd-ink);
+}
+.jd-round--kit { background: radial-gradient(circle at 40% 30%, #ffc9f0, #ff6bd6 60%, #c43aa6); }
+.jd-round--info { background: radial-gradient(circle at 40% 30%, #c9ecff, #4dabf7 60%, #1c7ed6); }
+.jd-play:hover,
+.jd-round:hover { transform: scale(1.06); }
+.jd-play:active,
+.jd-round:active { transform: scale(0.94); }
+.jd-play:focus-visible,
+.jd-round:focus-visible,
+.jd-btn:focus-visible { outline: 4px solid #fff; outline-offset: 4px; }
+@keyframes jd-beat {
+  0% { transform: scale(1.07); }
+  35% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+.jd-level,
+.jd-stats {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--jd-hand);
+  font-size: 18px;
+  letter-spacing: 0.01em;
+}
+.jd-level strong { font-family: var(--jd-display); font-weight: 400; color: #ffd43b; }
+.jd-stats { font-size: 16px; opacity: 0.9; }
+.jd-skip { margin-top: 4px; }
+.jd-rotate { display: none; margin: 0; font-family: var(--jd-hand); font-size: 14px; opacity: 0.85; }
+@media (orientation: portrait) and (max-width: 700px) {
+  .jd-rotate { display: block; }
+}
+
+/* ---------- Boutons et panneaux façon jeu ---------- */
+.jd-btn {
+  min-width: 220px;
+  min-height: 54px;
+  padding: 0 24px;
+  border: 4px solid var(--jd-ink);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #8cff7a, #36c45a);
+  color: #fff;
+  font-family: var(--jd-display);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 1.5px var(--jd-ink);
+  paint-order: stroke fill;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.2), 0 5px 0 var(--jd-ink);
+  cursor: pointer;
+  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.jd-btn:active { transform: translateY(4px); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2), 0 1px 0 var(--jd-ink); }
+.jd-btn--blue { background: linear-gradient(180deg, #8fd3ff, #339af0); }
+.jd-btn--dark { background: linear-gradient(180deg, #7b6fc6, #4b3f99); }
+.jd-textbtn {
+  border: 0;
+  background: none;
+  color: #fff;
+  font-family: var(--jd-hand);
+  font-size: 18px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.jd-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 6, 24, 0.6);
+}
+.jd-overlay--clear { background: rgba(10, 6, 24, 0.35); }
+.jd-panel {
+  width: min(100%, 440px);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 22px 20px;
+  border: 5px solid var(--jd-ink);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #4b3aa8, #2c2275);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.25), 0 8px 0 var(--jd-ink);
+  text-align: center;
+}
+.jd-panel__title {
+  margin: 0 0 4px;
+  font-family: var(--jd-display);
+  font-weight: 400;
+  font-size: 34px;
+  color: #ffd43b;
+  -webkit-text-stroke: 3px var(--jd-ink);
+  paint-order: stroke fill;
+}
+.jd-panel__title--win { font-size: clamp(30px, 9vw, 42px); color: #8cff7a; }
+.jd-panel__text { margin: 0; font-family: var(--jd-hand); font-size: 20px; }
+.jd-panel .jd-btn { width: 100%; }
+.jd-rules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  font-family: var(--jd-hand);
+  font-size: 18px;
+  line-height: 1.25;
+}
+.jd-rules li { position: relative; padding-left: 24px; }
+.jd-rules li::before { content: '▸'; position: absolute; left: 4px; color: #ffd43b; }
+.jd-kit { display: grid; grid-template-columns: repeat(3, auto); gap: 12px; margin: 4px 0 8px; }
+.jd-swatch {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 4px solid var(--jd-ink);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.jd-swatch--on { background: rgba(255, 255, 255, 0.25); box-shadow: 0 0 0 3px #ffd43b; }
+.jd-result { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin: 4px 0 8px; }
+.jd-result div { padding: 10px 6px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); }
+.jd-result dt { font-family: var(--jd-hand); font-size: 15px; opacity: 0.85; }
+.jd-result dd { margin: 4px 0 0; font-family: var(--jd-display); font-size: 22px; }
+
+.jd-mute {
+  position: absolute;
+  z-index: 9;
+  left: 14px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--jd-ink);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ---------- Niveau ---------- */
+.jd--level { background: #1b1530; }
+.jd-level-wrap { position: absolute; inset: 0; touch-action: none; -webkit-touch-callout: none; }
+.jd-canvas { width: 100%; height: 100%; display: block; }
+.jd-pause {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 3px solid var(--jd-ink);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+.jd-pause span { width: 6px; height: 18px; border-radius: 2px; background: var(--jd-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .jd-title,
+  .jd-play { animation: none; }
+}
+
+/* téléphone à l'horizontale : tout tient en hauteur */
+@media (max-height: 520px) {
+  .jd-menu { padding: 12px 16px 56px; gap: 8px; }
+  .jd-title { margin-bottom: 2px; }
+  .jd-title__a { font-size: clamp(28px, 10vh, 56px); }
+  .jd-title__b { font-size: clamp(36px, 13vh, 72px); }
+  .jd-play { width: clamp(78px, 23vh, 118px); }
+  .jd-round { width: clamp(50px, 14vh, 70px); font-size: 30px; }
+  .jd-level,
+  .jd-stats { font-size: 13px; padding: 4px 12px; }
+  .jd-panel { gap: 8px; padding: 14px 16px; max-height: 92vh; overflow-y: auto; }
+  .jd-rules { font-size: 15px; gap: 5px; }
+}

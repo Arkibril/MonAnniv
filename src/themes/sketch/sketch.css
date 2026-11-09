@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+/* ==========================================================================
+   Thème "sketch" : quiz d'Assiya façon carnet de croquis.
+   Bordures dessinées à la main qui frémissent (line boil) : <html data-boil>
+   change toutes les 125 ms entre 3 tracés (piloté par App).
+   ========================================================================== */
+:root[data-theme='sketch'] {
+  --font: 'Patrick Hand', 'Comic Sans MS', system-ui, sans-serif;
+  --sk-ink: #2b2522;
+  --bg: #fbf6ea;
+  --card: #fffdf7;
+  --card-strong: #fff3d6;
+  --ink: #2b2522;
+  --ink-2: rgba(43, 37, 34, 0.75);
+  --ink-3: rgba(43, 37, 34, 0.55);
+  --on-ink: #fffdf7;
+  --line: rgba(43, 37, 34, 0.2);
+  --line-strong: #2b2522;
+  --accent: #ff8fab;
+  --accent-soft: rgba(255, 143, 171, 0.2);
+  --lift: 3px 3px 0 #2b2522;
+  --lift-2: 4px 4px 0 #2b2522;
+  --sk-r0: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --sk-r1: 15px 255px 15px 225px / 225px 15px 255px 15px;
+  --sk-r2: 225px 20px 245px 18px / 20px 245px 18px 225px;
+}
+:root[data-theme='sketch'][data-boil='1'] { --sk-r0: 245px 18px 235px 12px / 12px 235px 18px 245px; --sk-r1: 18px 245px 12px 235px / 235px 12px 245px 18px; --sk-r2: 235px 14px 225px 22px / 14px 225px 22px 235px; }
+:root[data-theme='sketch'][data-boil='2'] { --sk-r0: 235px 12px 245px 20px / 20px 245px 12px 235px; --sk-r1: 12px 235px 20px 245px / 245px 20px 235px 12px; --sk-r2: 245px 22px 235px 14px / 22px 235px 14px 245px; }
+
+[data-theme='sketch'] body {
+  background: radial-gradient(#d9cfbf 1px, transparent 1.4px) 0 0 / 22px 22px, #fbf6ea;
+  color: var(--ink);
+}
+[data-theme='sketch'] .display,
+[data-theme='sketch'] .title,
+[data-theme='sketch'] .title-2,
+[data-theme='sketch'] .hero-vote__leader {
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+[data-theme='sketch'] .title { font-size: clamp(30px, 7.5vw, 40px); line-height: 1.1; }
+/* surligneur sous les grands titres */
+[data-theme='sketch'] .display {
+  background: linear-gradient(transparent 62%, rgba(255, 212, 59, 0.55) 62% 90%, transparent 90%);
+  display: inline;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+[data-theme='sketch'] .lede,
+[data-theme='sketch'] .caption { color: var(--ink-2); font-size: 1.08em; }
+
+[data-theme='sketch'] .topbar { background: rgba(251, 246, 234, 0.92); border-bottom: 2.5px solid var(--ink); }
+[data-theme='sketch'] .round { background: var(--card); color: var(--ink); border: 2.5px solid var(--ink); border-radius: var(--sk-r1); }
+[data-theme='sketch'] .dots__dot { background: transparent; border: 2px solid var(--ink); border-radius: var(--sk-r0); }
+[data-theme='sketch'] .dots__dot--done { background: #74c0fc; }
+[data-theme='sketch'] .dots__dot--on { width: 26px; background: #ffd43b; }
+
+[data-theme='sketch'] .btn { font-family: var(--font); font-weight: 400; font-size: 21px; letter-spacing: 0; }
+[data-theme='sketch'] .btn--ink {
+  background: #ffd43b;
+  color: var(--ink);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--sk-r0);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+[data-theme='sketch'] .btn--ink:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+[data-theme='sketch'] .btn--ink .btn__knob { background: var(--ink); color: #ffd43b; border-radius: var(--sk-r2); }
+[data-theme='sketch'] .btn--soft,
+[data-theme='sketch'] .btn--white { background: var(--card); color: var(--ink); border: 2.5px solid var(--ink); border-radius: var(--sk-r1); }
+[data-theme='sketch'] .cta-bar { background: linear-gradient(to top, #fbf6ea 62%, rgba(251, 246, 234, 0)); }
+
+[data-theme='sketch'] .option {
+  background: var(--card);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--sk-r0);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+[data-theme='sketch'] .option:nth-child(even) { border-radius: var(--sk-r1); }
+[data-theme='sketch'] .option__label { font-size: 20px; }
+[data-theme='sketch'] .option__emoji { background: transparent; border: 2px dashed var(--ink-3); border-radius: var(--sk-r2); }
+[data-theme='sketch'] .option__tag { background: #ff8fab; color: var(--ink); }
+[data-theme='sketch'] .option__check { border: 2.5px solid var(--ink); border-radius: var(--sk-r2); }
+[data-theme='sketch'] .option[aria-checked='true'] {
+  background: linear-gradient(transparent 8%, rgba(255, 212, 59, 0.6) 8% 92%, transparent 92%), var(--card);
+  color: var(--ink);
+  transform: rotate(-0.6deg);
+}
+[data-theme='sketch'] .option[aria-checked='true'] .option__check { background: var(--ink); color: #ffd43b; }
+[data-theme='sketch'] .option[aria-checked='true'] .option__sub { color: var(--ink-2); }
+[data-theme='sketch'] .field { background: var(--card); border: 2.5px solid var(--ink); border-radius: var(--sk-r2); font-family: var(--font); font-size: 19px; }
+
+[data-theme='sketch'] .card,
+[data-theme='sketch'] .note,
+[data-theme='sketch'] .stat,
+[data-theme='sketch'] .person {
+  background: var(--card);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--sk-r1);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+[data-theme='sketch'] .card--ink { background: #3d5a80; color: #fffdf7; border-radius: var(--sk-r0); }
+[data-theme='sketch'] .bar__track { background: transparent; border: 2px solid currentColor; border-radius: var(--sk-r2); }
+[data-theme='sketch'] .bar__fill { background: #74c0fc; }
+[data-theme='sketch'] .bar--lead .bar__fill { background: #ff8fab; }
+[data-theme='sketch'] .card--ink .bar__fill { background: rgba(255, 253, 247, 0.55); }
+[data-theme='sketch'] .card--ink .bar--lead .bar__fill { background: #ffd43b; }
+[data-theme='sketch'] .note--mine { background: #fff3bf; }
+[data-theme='sketch'] .chip--soft { background: #fff3bf !important; color: var(--ink); border: 2px solid var(--ink); }
+[data-theme='sketch'] .dock { background: var(--card); border: 2.5px solid var(--ink); border-radius: var(--sk-r0); box-shadow: 4px 4px 0 var(--ink); }
+[data-theme='sketch'] .dock__item { color: var(--ink); }
+[data-theme='sketch'] .dock__item[aria-current='page'] { background: #ffd43b; color: var(--ink); border-radius: var(--sk-r2); }
+
+/* gribouillis au clic */
+.sk-doodle {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  font-family: 'Patrick Hand', sans-serif;
+  font-size: 20px;
+  color: #2b2522;
+  animation: sk-doodle 600ms steps(6) forwards;
+}
+@keyframes sk-doodle {
+  0% { transform: translate(-50%, -50%) scale(0.4) rotate(0deg); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(var(--rot)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-doodle { display: none; }
+}

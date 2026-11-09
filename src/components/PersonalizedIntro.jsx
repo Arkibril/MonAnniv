@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { Player } from '@remotion/player';
 import gsap from 'gsap';
 import { ArrowRight } from 'lucide-react';
@@ -9,6 +9,13 @@ import ErayIntro from './customIntros/ErayIntro';
 import RomainIntro from './customIntros/RomainIntro';
 import LolaIntro from './customIntros/LolaIntro';
 import BaptisteIntro from './customIntros/BaptisteIntro';
+import JulienDash from './customIntros/JulienDash';
+import SketchIntro from './customIntros/SketchIntro';
+import GeneralWelcome from './customIntros/GeneralWelcome';
+import SabrinaIntro from './customIntros/SabrinaIntro';
+
+// Le plateau 3D (three.js) n'est chargé que pour Mathilde & Guillaume
+const BoardIntro = lazy(() => import('./customIntros/BoardIntro'));
 import { getGuestTheme } from '../themes/guestTheme';
 import { WelcomeComposition, WELCOME_SIZE } from '../motion/WelcomeComposition';
 import { usePrefersReducedMotion } from '../motion/usePrefersReducedMotion';
@@ -23,6 +30,18 @@ export default function PersonalizedIntro({ guest, onComplete, isReplay = false 
   if (isLenaik) {
     return <LenaikIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }
+  const theme = getGuestTheme(guest);
+  if (theme === 'dash') return <JulienDash guest={guest} onComplete={onComplete} isReplay={isReplay} />;
+  if (theme === 'sketch') return <SketchIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
+  if (theme === 'welcome') return <GeneralWelcome guest={guest} onComplete={onComplete} />;
+  if (theme === 'board') {
+    return (
+      <Suspense fallback={<div className="intro-loading" role="status">Installation du plateau…</div>}>
+        <BoardIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />
+      </Suspense>
+    );
+  }
+  if (theme === 'kawaii') return <SabrinaIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   if (getGuestTheme(guest) === 'dank') {
     return <BaptisteIntro guest={guest} onComplete={onComplete} isReplay={isReplay} />;
   }

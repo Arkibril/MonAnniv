@@ -12,6 +12,11 @@ export function getGuestTheme(guest) {
   if (name.trim() === 'romain') return 'comic';
   if (name.trim() === 'lola') return 'cinema';
   if (name.trim() === 'baptiste') return 'dank';
+  if (name.trim() === 'julien') return 'dash';
+  if (name.trim() === 'assiya') return 'sketch';
+  if (name.trim() === 'sacha') return 'welcome';
+  if (name.includes('mathilde') || name.includes('guillaume')) return 'board';
+  if (name.trim() === 'sabrina') return 'kawaii';
   return null;
 }
 
@@ -22,7 +27,7 @@ export function getGuestLang(guest) {
 
 // Thèmes qui ne servent qu'à l'intro : le quiz garde le design de base
 // (Baptiste : intro MLG, puis quiz clean comme la page d'accueil).
-const INTRO_ONLY = new Set(['dank']);
+const INTRO_ONLY = new Set(['dank', 'dash', 'welcome', 'board']);
 export function getPageTheme(guest) {
   const theme = getGuestTheme(guest);
   return INTRO_ONLY.has(theme) ? null : theme;

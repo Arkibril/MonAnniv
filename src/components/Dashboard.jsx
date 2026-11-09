@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 're
 import gsap from 'gsap';
 import { useQuestions, useT, usePlural, useLang } from '../i18n';
 import { fetchGuests, fetchAnswers, subscribeToAnswers, isSupabaseConfigured } from '../lib/supabase';
+import { getGuestTheme } from '../themes/guestTheme';
+import RomainTracker from '../themes/comic/RomainTracker';
 
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -241,6 +243,8 @@ export default function Dashboard({ guest }) {
           </section>
         )}
       </header>
+
+      {getGuestTheme(guest) === 'comic' && <RomainTracker guest={guest} guests={guests} answers={answers} totalQuestions={QUESTIONS.length} />}
 
       <section className="section" style={{ marginTop: 44 }}>
         <div className="section__head" data-rise>

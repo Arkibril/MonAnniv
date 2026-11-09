@@ -12,7 +12,7 @@ import {
   setMuted,
   isMuted
 } from '../../themes/heist/sound';
-import { fetchGuests } from '../../lib/supabase';
+import { fetchGuests, fetchAnswers } from '../../lib/supabase';
 import './BaptisteIntro.css';
 
 // =============================================================================
@@ -188,7 +188,9 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
   const woufOkRef = useRef(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  // Demande de Jibril : le passage MLG se joue même si le téléphone a
+  // « Réduire les animations » activé.
+  const reduced = false;
   const name = (guest?.first_name || 'Baptiste').trim();
 
   const later = (fn, ms) => timersRef.current.push(setTimeout(fn, ms));
@@ -223,11 +225,20 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     probe.addEventListener('canplaythrough', ok, { once: true });
     probe.addEventListener('loadeddata', ok, { once: true });
     probe.load();
-    // les prénoms des invités, pour le kill feed du passage MLG
+    // Kill feed : seulement les invités qui ont répondu « Oui » à
+    // « Seras-tu de la fête ? ». Tant que personne n'a confirmé, tout le monde.
     let alive = true;
-    fetchGuests()
-      .then((list) => {
-        if (alive) namesRef.current = buildNames(list || [], guest?.first_name || 'Baptiste');
+    const self = guest?.first_name || 'Baptiste';
+    Promise.all([fetchGuests(), fetchAnswers()])
+      .then(([list, answers]) => {
+        if (!alive) return;
+        const yes = new Set(
+          (answers || [])
+            .filter((a) => a.question_id === 'q_presence' && (a.value === 'yes' || (Array.isArray(a.value) && a.value.includes('yes'))))
+            .map((a) => a.guest_id)
+        );
+        const confirmed = buildNames((list || []).filter((g) => yes.has(g.id)), self);
+        namesRef.current = confirmed.length ? confirmed : buildNames(list || [], self);
       })
       .catch(() => {});
     return () => {
@@ -279,7 +290,7 @@ export default function BaptisteIntro({ guest, onComplete, isReplay = false }) {
     const box = chaosRef.current;
     if (!box) return;
     const r = box.getBoundingClientRect();
-    hitmarkerBurst(rand(r.width * 0.25, r.width * 0.75), rand(r.height * 0.25, r.height * 0.7), box);
+    hitmarkerBurst(rand(r.width * 0.25, r.width * 0.75), rand(r.height * 0.25, r.height * 0.7), box, true);
     sfxHitmarker();
     shake(8);
   };

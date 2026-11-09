@@ -14,9 +14,12 @@ import { TR_STRINGS } from './i18n/tr';
 import KebabStickers from './themes/kebab/KebabStickers';
 import HalloweenWebs from './themes/comic/HalloweenWebs';
 import { trollPassedKey } from './components/customIntros/ErayIntro';
+import { julienGateOk } from './components/customIntros/JulienDash';
 import './themes/kebab/kebab.css';
 import './themes/comic/comic.css';
 import './themes/cinema/cinema.css';
+import './themes/sketch/sketch.css';
+import './themes/kawaii/kawaii.css';
 import MissionPassed from './themes/heist/MissionPassed';
 import { stopMusic } from './themes/heist/sound';
 import './themes/heist/heist.css';
@@ -42,6 +45,22 @@ export default function App() {
     return () => {
       delete root.dataset.theme;
       stopMusic(); // la musique d'Alexia s'arrête à la déconnexion
+    };
+  }, [guestTheme]);
+
+  // Thème carnet de croquis (Assiya) : les bordures dessinées frémissent (8 i/s)
+  useEffect(() => {
+    if (guestTheme !== 'sketch') return undefined;
+    const root = document.documentElement;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    let n = 0;
+    const id = setInterval(() => {
+      n = (n + 1) % 3;
+      root.dataset.boil = String(n);
+    }, 125);
+    return () => {
+      clearInterval(id);
+      delete root.dataset.boil;
     };
   }, [guestTheme]);
 
@@ -83,6 +102,8 @@ export default function App() {
             let trollOk = true;
             try {
               trollOk = getGuestTheme(parsed) !== 'kebab' || Boolean(localStorage.getItem(trollPassedKey(parsed)));
+              // Julien doit d'abord finir son niveau
+              if (getGuestTheme(parsed) === 'dash' && !julienGateOk(parsed)) trollOk = false;
             } catch {
               /* stockage indisponible */
             }

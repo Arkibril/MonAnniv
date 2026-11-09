@@ -268,11 +268,7 @@
 .bp-mute { left: 22px; width: 42px; height: 42px; border-radius: 50%; font-size: 17px; }
 .bp-skip { right: 22px; padding: 8px 14px; border-radius: 999px; font-size: 14px; }
 
-@media (prefers-reduced-motion: reduce) {
-  .bp-rainbow,
-  .bp-rec i,
-  .bp-front__tail { animation: none; }
-}
+/* Pas de version « animations réduites » : le passage MLG se joue pour tout le monde (choix de Jibril). */
 
 /* Viseur lisible sur le fond clair du départ */
 .bp-intro--start .bp-viewfinder { color: #000; text-shadow: none; }

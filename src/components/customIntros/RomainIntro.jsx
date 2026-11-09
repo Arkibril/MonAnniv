@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
 import { createGame, MISSIONS, ITEMS_PER_FOCUS } from '../../themes/comic/game/engine';
+import { saveRomainRun } from '../../themes/comic/RomainTracker';
 import {
   sfxHook, sfxRelease, sfxCollect, sfxFail, sfxMissionPassed, sfxHurt, sfxShoot, sfxBoom,
   sfxFocusIn, sfxFocusOut, sfxMission, setMuted, isMuted
@@ -61,11 +62,13 @@ export default function RomainIntro({ guest, onComplete, isReplay = false }) {
       onProgress: setProgress,
       onHud: setHud,
       onFail: (reason) => {
+        saveRomainRun(guest, null, false);
         setFailReason(reason);
         setFails((f) => f + 1);
         setScreen('fail');
       },
       onWin: (res) => {
+        saveRomainRun(guest, res, true);
         setResult(res);
         setScreen('win');
       },

@@ -29,6 +29,12 @@ export function setMuted(value) {
 }
 export const isMuted = () => muted;
 
+// Accès au contexte audio partagé (pour les musiques synthétisées des niveaux)
+export function getAudioGraph() {
+  const ac = audio();
+  return ac ? { ac, out: master } : null;
+}
+
 function tone({ freq, type = 'square', start = 0, dur = 0.06, vol = 0.12, to, filter = 4200 }) {
   const ac = audio();
   if (!ac) return;
@@ -270,6 +276,12 @@ export function sfxClick(theme) {
     // "pow" : coup sourd + claquement
     tone({ freq: 260, type: 'sine', dur: 0.1, vol: 0.28, to: 120, filter: 1200 });
     noiseHit({ dur: 0.04, vol: 0.08, freq: 2400 });
+  } else if (theme === 'sketch') {
+    noiseHit({ dur: 0.04, vol: 0.06, freq: 2600 });
+    noiseHit({ start: 0.05, dur: 0.03, vol: 0.05, freq: 3400 });
+  } else if (theme === 'kawaii') {
+    tone({ freq: 1568, type: 'sine', dur: 0.18, vol: 0.07, filter: 9000 });
+    tone({ freq: 2093, type: 'sine', start: 0.06, dur: 0.2, vol: 0.05, filter: 9000 });
   } else if (theme === 'dank') {
     sfxHitmarker();
   } else if (theme === 'cinema') {
@@ -319,8 +331,8 @@ function popcornBurst(x, y) {
   }
 }
 
-export function hitmarkerBurst(x, y, parent = document.body) {
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+export function hitmarkerBurst(x, y, parent = document.body, force = false) {
+  if (!force && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const b = document.createElement('span');
   b.className = 'dk-hit';
   b.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 4 L15 15 M36 4 L25 15 M4 36 L15 25 M36 36 L25 25" stroke="#fff" stroke-width="4" stroke-linecap="square"/><path d="M4 4 L15 15 M36 4 L25 15 M4 36 L15 25 M36 36 L25 25" stroke="#000" stroke-width="1.4"/></svg>';
@@ -328,6 +340,27 @@ export function hitmarkerBurst(x, y, parent = document.body) {
   b.style.top = `${y ?? window.innerHeight / 2}px`;
   parent.appendChild(b);
   setTimeout(() => b.remove(), 420);
+}
+
+function symbolBurst(x, y, cls, symbols, colors) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const cx = x || window.innerWidth / 2;
+  const cy = y || window.innerHeight / 2;
+  for (let i = 0; i < 6; i++) {
+    const b = document.createElement('span');
+    b.className = cls;
+    b.textContent = symbols[i % symbols.length];
+    b.style.color = colors[i % colors.length];
+    const a = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+    const d = 28 + Math.random() * 30;
+    b.style.left = `${cx}px`;
+    b.style.top = `${cy}px`;
+    b.style.setProperty('--dx', `${Math.cos(a) * d}px`);
+    b.style.setProperty('--dy', `${Math.sin(a) * d}px`);
+    b.style.setProperty('--rot', `${Math.round(Math.random() * 120 - 60)}deg`);
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 800);
+  }
 }
 
 let clicksInstalled = false;
@@ -347,6 +380,8 @@ export function installClickSounds() {
       if (theme === 'comic' && !el.closest('.rc-intro')) comicBurst(e.clientX, e.clientY);
       // Session de Lola : pop-corn et paillettes dorées
       if (theme === 'cinema' && !el.closest('.lo-intro')) popcornBurst(e.clientX, e.clientY);
+      if (theme === 'sketch' && !el.closest('.sk-intro')) symbolBurst(e.clientX, e.clientY, 'sk-doodle', ['✦', '✎', '☆', '♡', '~'], ['#2b2522']);
+      if (theme === 'kawaii' && !el.closest('.kw')) symbolBurst(e.clientX, e.clientY, 'kw-pop', ['♡', '✦', '★', '♪'], ['#ff8fc0', '#b197fc', '#ffd43b', '#74c0fc']);
       // Session de Baptiste : hitmarker à l'endroit du clic
       if (theme === 'dank' && !el.closest('.bp-intro')) hitmarkerBurst(e.clientX, e.clientY);
     },
@@ -526,4 +561,76 @@ export function sfxWow(start = 0) {
 export function sfxKill() {
   tone({ freq: 1760, type: 'square', dur: 0.05, vol: 0.05, filter: 5000 });
   tone({ freq: 2349, type: 'square', start: 0.06, dur: 0.09, vol: 0.05, filter: 5000 });
+}
+
+// Niveau de Julien : explosion du cube et fanfare de fin de niveau
+export function sfxExplode() {
+  noiseHit({ dur: 0.35, vol: 0.32, freq: 900 });
+  tone({ freq: 140, type: 'square', dur: 0.25, vol: 0.14, to: 40, filter: 900 });
+}
+export function sfxLevelComplete() {
+  [72, 76, 79, 84, 88].forEach((m, i) =>
+    tone({ freq: 440 * Math.pow(2, (m - 69) / 12), type: 'triangle', start: i * 0.09, dur: 0.5, vol: 0.12, filter: 6000 })
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Carnet de croquis (Julien, Assiya) : crayon, pop, page, rebond, mélodie
+// -----------------------------------------------------------------------------
+export function sfxScribble() {
+  noiseHit({ dur: 0.035 + Math.random() * 0.03, vol: 0.05, freq: 2200 + Math.random() * 1800 });
+}
+export function sfxPop(pitch = 1) {
+  tone({ freq: 520 * pitch, type: 'sine', dur: 0.09, vol: 0.12, to: 1100 * pitch, filter: 8000 });
+}
+export function sfxPage() {
+  noiseHit({ dur: 0.22, vol: 0.12, freq: 1400 });
+  noiseHit({ start: 0.08, dur: 0.18, vol: 0.08, freq: 900 });
+}
+export function sfxBoing(pitch = 1) {
+  tone({ freq: 260 * pitch, type: 'triangle', dur: 0.16, vol: 0.1, to: 620 * pitch, filter: 3000 });
+}
+export function sfxSparkle() {
+  [0, 0.05, 0.1].forEach((s, i) => tone({ freq: 1760 + i * 440, type: 'sine', start: s, dur: 0.12, vol: 0.05, filter: 9000 }));
+}
+// Petite mélodie de kalimba (originale), en boucle pendant l'animation
+let storyTimer = null;
+let storyBar = 0;
+const KALIMBA = [
+  [72, 76, 79, 76, 74, 77, 81, 77],
+  [72, 76, 79, 84, 83, 79, 76, 74],
+  [69, 72, 76, 72, 71, 74, 77, 74],
+  [67, 71, 74, 79, 77, 74, 71, 72]
+];
+function kalimbaNote(m, start) {
+  const f = 440 * Math.pow(2, (m - 69) / 12);
+  tone({ freq: f, type: 'sine', start, dur: 0.5, vol: 0.07, filter: 6000 });
+  tone({ freq: f * 2, type: 'sine', start, dur: 0.18, vol: 0.02, filter: 9000 });
+}
+export function startStoryTune() {
+  if (storyTimer || !audio()) return;
+  storyBar = 0;
+  const play = () => {
+    if (document.hidden) return;
+    const notes = KALIMBA[storyBar % KALIMBA.length];
+    notes.forEach((m, i) => kalimbaNote(m, i * 0.25));
+    tone({ freq: 440 * Math.pow(2, (notes[0] - 24 - 69) / 12), type: 'triangle', dur: 1.8, vol: 0.06, filter: 900 });
+    storyBar++;
+  };
+  play();
+  storyTimer = setInterval(play, 2000);
+}
+export function stopStoryTune() {
+  clearInterval(storyTimer);
+  storyTimer = null;
+}
+
+// Plateau 3D de Mathilde & Guillaume : dé qui claque, plouf du bain
+export function sfxDiceHit(v = 1) {
+  noiseHit({ dur: 0.03, vol: 0.12 * v, freq: 2200 });
+  tone({ freq: 340, type: 'triangle', dur: 0.05, vol: 0.06 * v, filter: 2500 });
+}
+export function sfxSplash() {
+  noiseHit({ dur: 0.4, vol: 0.18, freq: 700 });
+  tone({ freq: 500, type: 'sine', dur: 0.3, vol: 0.06, to: 180, filter: 2000 });
 }

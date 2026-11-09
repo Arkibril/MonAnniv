@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* ==========================================================================
+   Tracker du héros (Romain) : pixel art original, noir / rouge / blanc
+   ========================================================================== */
+.rt {
+  --px: 4px;
+  --rt-red: #e5212e;
+  --rt-black: #0d0d10;
+  --rt-yellow: #ffd21a;
+  margin: 26px 0 0;
+  padding: 18px 16px;
+  background: var(--rt-black);
+  color: #fff;
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  /* bordure en escalier façon 8 bits */
+  box-shadow:
+    0 calc(-1 * var(--px)) 0 0 #fff,
+    0 var(--px) 0 0 #fff,
+    calc(-1 * var(--px)) 0 0 0 #fff,
+    var(--px) 0 0 0 #fff,
+    0 calc(-2 * var(--px)) 0 0 var(--rt-black),
+    0 calc(2 * var(--px)) 0 0 var(--rt-black),
+    calc(-2 * var(--px)) 0 0 0 var(--rt-black),
+    calc(2 * var(--px)) 0 0 0 var(--rt-black);
+  image-rendering: pixelated;
+}
+.rt-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.rt-title { margin: 0; font-family: inherit; font-weight: 400; font-size: 13px; line-height: 1.4; color: var(--rt-yellow); text-transform: uppercase; }
+.rt-lv { padding: 6px 8px; background: var(--rt-red); font-size: 10px; box-shadow: 0 0 0 var(--px) #fff; }
+.rt-grid { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
+.rt-id { display: grid; justify-items: center; gap: 6px; }
+.rt-avatar {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  background: var(--rt-red);
+  box-shadow: 0 0 0 var(--px) #fff, 0 0 0 calc(2 * var(--px)) var(--rt-red);
+}
+.rt-name { margin: 8px 0 0; font-size: 11px; }
+.rt-small { margin: 0; font-size: 7px; line-height: 1.5; color: rgba(255, 255, 255, 0.7); text-align: center; }
+.rt-stats { min-width: 0; display: grid; gap: 8px; }
+.rt-row { margin: 0; display: flex; justify-content: space-between; gap: 8px; font-size: 9px; line-height: 1.5; }
+.rt-row b { color: var(--rt-yellow); font-weight: 400; }
+.rt-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.rt-bar i { height: 12px; background: #2a2a33; }
+.rt-bar i.is-on { background: var(--rt-red); box-shadow: inset 0 -3px 0 #a3121c, inset 0 3px 0 #ff6b74; }
+.rt-missions { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 7.5px; line-height: 1.6; }
+.rt-missions li { display: grid; grid-template-columns: 12px 1fr; gap: 8px; align-items: start; color: rgba(255, 255, 255, 0.75); }
+.rt-missions i { width: 12px; height: 12px; margin-top: 1px; background: #2a2a33; box-shadow: 0 0 0 2px #fff; }
+.rt-missions li.is-done { color: #fff; }
+.rt-missions li.is-done i { background: var(--rt-red); }
+.rt-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px; }
+.rt-tile { display: grid; gap: 6px; padding: 10px; background: #1c1c24; box-shadow: inset 0 0 0 2px #3a3a46; }
+.rt-tile span { font-size: 7px; line-height: 1.5; color: rgba(255, 255, 255, 0.7); }
+.rt-tile b { font-weight: 400; font-size: 14px; color: #fff; }
+.rt-tile small { font-size: 7px; line-height: 1.6; color: rgba(255, 255, 255, 0.7); }
+.rt-tile--red { background: var(--rt-red); box-shadow: inset 0 0 0 2px #fff; }
+.rt-tile--red span,
+.rt-tile--red small { color: #fff; }
+@media (min-width: 720px) {
+  .rt-tiles { grid-template-columns: repeat(4, 1fr); }
+  .rt-title { font-size: 15px; }
+}
