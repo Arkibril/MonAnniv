@@ -62,20 +62,16 @@ const CURLY_SWIRLS = [
 // Ce qui passe derrière la tête (dessiné avant le corps)
 // queue de cheval basse, attachée derrière la tête : on la voit dépasser sur le côté
 const PONYTAIL = 'M28,-104 C50,-110 62,-92 58,-72 C56,-60 61,-50 56,-42 C47,-50 43,-64 40,-80 Z';
-// afro : un grand volume rond festonné derrière la tête
-const AFRO_BACK = scallop(
-  Array.from({ length: 15 }, (_, i) => {
-    const a = ((-40 + (i / 14) * 260) * Math.PI) / 180;
-    return [Math.cos(a) * 64, -116 - Math.sin(a) * 60];
-  })
-);
+// afro : un grand volume bien rond derrière la tête
+const AFRO_BACK = ell(0, -114, 66, 60);
 const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL, afro: AFRO_BACK };
 
-const AFRO_SWIRLS = ['M-58,-120 q6,-6 11,1', 'M48,-122 q6,-6 11,1', 'M-36,-160 q6,-6 11,1', 'M20,-162 q6,-6 11,1', 'M-60,-96 q6,-6 11,1', 'M50,-98 q6,-6 11,1'];
+// petites boucles rondes dessinées dans le volume
+const AFRO_CURLS = [[-50, -124], [-36, -154], [-12, -166], [14, -166], [38, -154], [52, -126], [-56, -96], [56, -98], [-24, -144], [24, -146], [0, -156]];
 
 const HAIR = {
   curlyLong: CURLY_FRONT,
-  afro: CURLY_FRONT,
+  afro: 'M-47,-100 C-52,-142 -14,-152 4,-150 C32,-152 54,-134 47,-100 C40,-116 26,-124 4,-125 C-18,-124 -38,-116 -47,-100 Z',
   short: 'M-46,-104 C-50,-140 -16,-152 6,-148 C30,-150 52,-132 46,-104 C38,-118 30,-112 24,-124 C16,-110 4,-122 -2,-112 C-10,-124 -22,-110 -30,-122 C-36,-112 -42,-112 -46,-104 Z',
   long: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L52,-58 C44,-60 40,-64 38,-74 C34,-110 22,-118 6,-124 C-6,-112 -20,-118 -30,-112 C-38,-100 -38,-80 -40,-62 C-46,-60 -52,-62 -54,-60 Z',
   bun: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z M-14,-150 C-16,-172 18,-174 16,-150 Z',
@@ -235,7 +231,7 @@ export function Chibi({
           </g>
         )}
         {hair === 'ponytail' && color > 0 && <path d="M42,-96 l11,3" stroke={INK} strokeWidth="5" strokeLinecap="round" />}
-        {hair === 'afro' && color > 0 && AFRO_SWIRLS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />)}
+        {hair === 'afro' && color > 0 && AFRO_CURLS.map(([cx, cy]) => <circle key={`${cx},${cy}`} cx={cx} cy={cy} r="5" fill="none" stroke={PAPER} strokeWidth="2.2" opacity="0.22" />)}
         {brows && faceProg >= 1 && eyes === 'open' && (
           <g stroke={hairColor} strokeWidth="5" strokeLinecap="round">
             <path d={`M${eyeL - 8},${ey - 17} L${eyeL + 7},${ey - 19}`} />
