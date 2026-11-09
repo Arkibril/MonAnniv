@@ -104,6 +104,8 @@ export function Chibi({
   eyeColor, // couleur d'iris (yeux bleus…)
   eyeShape = 'round', // round | almond
   glasses = false,
+  beard, // 'stubble' (barbe rasée qui se voit) | 'goatee' (bouc + moustache)
+  chubby = false, // silhouette un peu ronde
   children
 }) {
   const p = POSES[pose] || POSES.stand;
@@ -115,7 +117,12 @@ export function Chibi({
   add(rrect(4, -28 + legY * 0.3, 14, 28 + legY * 0.7, 6), PAPER);
   const curly = hair === 'curlyLong';
   if (curly) add(CURLY_BACK, hairColor);
-  add('M-22,-66 C-24,-46 -26,-34 -24,-24 L24,-24 C26,-34 24,-46 22,-66 C10,-72 -10,-72 -22,-66 Z', hoodie);
+  add(
+    chubby
+      ? 'M-24,-66 C-33,-50 -35,-34 -28,-24 L28,-24 C35,-34 33,-50 24,-66 C11,-72 -11,-72 -24,-66 Z'
+      : 'M-22,-66 C-24,-46 -26,-34 -24,-24 L24,-24 C26,-34 24,-46 22,-66 C10,-72 -10,-72 -22,-66 Z',
+    hoodie
+  );
   add(ell(0, -100, 46, 42), skin, { paper: true });
   add(HAIR[hair] || HAIR.short, hairColor);
   // yeux
@@ -143,7 +150,7 @@ export function Chibi({
   const dash = (k) => (k >= 1 ? {} : { pathLength: 1, strokeDasharray: '1 1', strokeDashoffset: 1 - k });
 
   const arm = (side, angle, k) => {
-    const sx = side * 21;
+    const sx = side * (chubby ? 26 : 21);
     return (
       <g transform={`translate(${sx},-60) rotate(${angle * side * -1 * -1})`} key={side}>
         <path d={rrect(-6, 0, 12, 30, 6)} fill={hoodie} fillOpacity={fillOp} stroke={INK} strokeWidth="3.2" {...dash(k)} data-di={side < 0 ? 'armL' : 'armR'} />
@@ -203,6 +210,21 @@ export function Chibi({
             <path d={`M${eyeL + 13},${ey - 2} Q0,${ey - 7} ${eyeR - 13},${ey - 2}`} fill="none" />
           </g>
         )}
+        {beard === 'stubble' && faceProg >= 1 && (
+          <g>
+            <path d="M-42.5,-84 A46,42 0 0 0 42.5,-84 C30,-80 16,-89 0,-88 C-16,-89 -30,-80 -42.5,-84 Z" fill={INK} opacity="0.17" />
+            {STUBBLE_DOTS.map(([dx, dy]) => (
+              <circle key={`${dx},${dy}`} cx={dx} cy={dy} r="1.1" fill={INK} opacity="0.45" />
+            ))}
+          </g>
+        )}
+        {beard === 'goatee' && faceProg >= 1 && (
+          <g fill={hairColor} stroke={INK} strokeWidth="2.2" strokeLinejoin="round">
+            <path d="M-1,-85 C-6,-89 -15,-87 -16,-80 C-11,-83 -6,-82 -1,-82 Z" />
+            <path d="M1,-85 C6,-89 15,-87 16,-80 C11,-83 6,-82 1,-82 Z" />
+            <path d="M-9,-71 C-9,-63 -5,-58 0,-56 C5,-58 9,-63 9,-71 C4,-68 -4,-68 -9,-71 Z" />
+          </g>
+        )}
         {color >= 1 && (
           <g opacity="0.55">
             <ellipse cx="-30" cy="-82" rx="7" ry="4" fill="#ff8fab" />
@@ -240,10 +262,17 @@ export function Chibi({
   );
 }
 
+// Points de barbe naissante sur la mâchoire
+const STUBBLE_DOTS = [
+  [-30, -76], [-24, -70], [-16, -66], [-8, -63], [0, -62], [8, -63], [16, -66], [24, -70], [30, -76],
+  [-20, -78], [-12, -71], [12, -71], [20, -78], [-6, -84], [6, -84], [0, -67]
+];
+
 // Apparence connue de certains invités (d'après Jibril) ; les autres gardent
 // une variante dessinée au hasard (cheveux aux couleurs de feutres).
 const KNOWN = {
-  jibril: { hair: 'curly', hairColor: '#3a2a20', hoodie: '#ffd43b' },
+  jibril: { hair: 'curly', hairColor: '#3a2a20', beard: 'goatee', hoodie: '#ffd43b' },
+  guillaume: { hair: 'short', hairColor: '#6b4a2e', beard: 'stubble', chubby: true, hoodie: '#74c0fc' },
   julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', hoodie: '#5ee6b8' },
   romain: { hair: 'long', hairColor: '#e6c46a', eyeColor: '#4dabf7', hoodie: '#ff6b6b' },
   mathilde: { hair: 'long', hairColor: '#5a3a22', glasses: true, hoodie: '#b197fc' },
