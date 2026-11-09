@@ -29,7 +29,38 @@ const ell = (cx, cy, rx, ry) => `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${2 * rx},
 const rrect = (x, y, w, h, r) =>
   `M${x + r},${y} h${w - 2 * r} a${r},${r} 0 0 1 ${r},${r} v${h - 2 * r} a${r},${r} 0 0 1 ${-r},${r} h${-(w - 2 * r)} a${r},${r} 0 0 1 ${-r},${-r} v${-(h - 2 * r)} a${r},${r} 0 0 1 ${r},${-r} Z`;
 
+// Contour festonné (une boucle par segment) : les cheveux bouclés
+function scallop(points) {
+  let d = `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)}`;
+  for (let i = 1; i < points.length; i++) {
+    const [x0, y0] = points[i - 1];
+    const [x1, y1] = points[i];
+    const r = Math.hypot(x1 - x0, y1 - y0) * 0.56;
+    d += ` A${r.toFixed(1)},${r.toFixed(1)} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }
+  return `${d} Z`;
+}
+// Boucles longues : du volume derrière la tête jusqu'aux épaules…
+const CURLY_BACK = scallop([
+  [-44, -48], [-58, -58], [-68, -74], [-71, -94], [-68, -116], [-58, -136], [-42, -152], [-22, -162], [0, -166],
+  [22, -162], [42, -152], [58, -136], [68, -116], [71, -94], [68, -74], [58, -58], [44, -48]
+]);
+// … et une frange bouclée qui couvre le haut de la tête
+const CURLY_FRONT = scallop([
+  ...Array.from({ length: 9 }, (_, i) => {
+    const a = Math.PI - (i / 8) * Math.PI;
+    return [Math.cos(a) * 51, -104 - Math.sin(a) * 49];
+  }),
+  [36, -117], [22, -122], [7, -125], [-8, -125], [-23, -122], [-37, -117], [-51, -104]
+]);
+const CURLY_SWIRLS = [
+  'M-64,-104 q7,-7 12,1', 'M-62,-82 q7,-7 12,1', 'M-57,-62 q6,-6 11,1',
+  'M52,-104 q7,-7 12,1', 'M50,-82 q7,-7 12,1', 'M46,-62 q6,-6 11,1',
+  'M-30,-150 q6,-6 11,1', 'M14,-152 q6,-6 11,1'
+];
+
 const HAIR = {
+  curlyLong: CURLY_FRONT,
   short: 'M-46,-104 C-50,-140 -16,-152 6,-148 C30,-150 52,-132 46,-104 C38,-118 30,-112 24,-124 C16,-110 4,-122 -2,-112 C-10,-124 -22,-110 -30,-122 C-36,-112 -42,-112 -46,-104 Z',
   long: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L52,-58 C44,-60 40,-64 38,-74 C34,-110 22,-118 6,-124 C-6,-112 -20,-118 -30,-112 C-38,-100 -38,-80 -40,-62 C-46,-60 -52,-62 -54,-60 Z',
   bun: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z M-14,-150 C-16,-172 18,-174 16,-150 Z',
@@ -78,6 +109,8 @@ export function Chibi({
   const legY = p.legs === 'tuck' ? -18 : 0;
   add(rrect(-18, -28 + legY * 0.3, 14, 28 + legY * 0.7, 6), PAPER);
   add(rrect(4, -28 + legY * 0.3, 14, 28 + legY * 0.7, 6), PAPER);
+  const curly = hair === 'curlyLong';
+  if (curly) add(CURLY_BACK, hairColor);
   add('M-22,-66 C-24,-46 -26,-34 -24,-24 L24,-24 C26,-34 24,-46 22,-66 C10,-72 -10,-72 -22,-66 Z', hoodie);
   add(ell(0, -100, 46, 42), PAPER);
   add(HAIR[hair] || HAIR.short, hairColor);
@@ -95,6 +128,7 @@ export function Chibi({
     mouth === 'open' ? 'M-8,-78 Q0,-64 8,-78 Z' : mouth === 'o' ? ell(0, -75, 4.5, 5.5) : 'M-7,-79 Q0,-72 7,-79';
 
   const n = strokes.length + 4;
+  const split = curly ? 4 : 3; // jambes (+ boucles de derrière) + corps, puis la tête
   const prog = (i) => Math.max(0, Math.min(1, draw * n - i));
   const fillOp = color >= 1 ? 1 : color >= 0.5 ? 0.55 : color > 0 ? 0.25 : 0;
   const armProg = prog(strokes.length);
@@ -119,17 +153,18 @@ export function Chibi({
       <g transform={`translate(0,${p.y}) scale(${p.sx},${p.sy})`}>
         {/* ombre */}
         {p.y < 0 && <ellipse cx="0" cy={-p.y} rx={26} ry={5} fill={INK} opacity="0.12" />}
-        {strokes.slice(0, 3).map((s, i) => (
+        {strokes.slice(0, split).map((s, i) => (
           <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
         ))}
+        {curly && color > 0 && CURLY_SWIRLS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2.4" strokeLinecap="round" opacity="0.7" />)}
         {badge && color >= 1 && (
           <text x="0" y="-38" textAnchor="middle" fontSize="16" fontFamily="'Patrick Hand', sans-serif" fill={INK}>
             {badge}
           </text>
         )}
         {arm(-1, p.armL, armProg)}
-        {strokes.slice(3).map((s, j) => {
-          const i = j + 3;
+        {strokes.slice(split).map((s, j) => {
+          const i = j + split;
           return (
             <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
           );

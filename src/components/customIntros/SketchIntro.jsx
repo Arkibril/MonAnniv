@@ -33,7 +33,7 @@ function castFor(guest) {
   if (n === 'assiya') {
     return {
       name: 'Assiya',
-      hero: { hair: 'long', hairColor: '#6b6b78', hoodie: '#ffb3c7', prop: 'stylus', badge: '✎' },
+      hero: { hair: 'curlyLong', hairColor: '#6b6b78', hoodie: '#ffb3c7', prop: 'stylus', badge: '✎' },
       partner: { name: 'Sacha', hair: 'short', hairColor: '#6b6b78', hoodie: '#74c0fc', badge: '🎧' },
       lines: {
         hello: 'Coucou Assiya !\nC’est toi… en chibi !',
