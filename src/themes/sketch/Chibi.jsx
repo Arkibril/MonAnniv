@@ -60,13 +60,22 @@ const CURLY_SWIRLS = [
 ];
 
 // Ce qui passe derrière la tête (dessiné avant le corps)
-const PONYTAIL = 'M26,-142 C58,-156 76,-124 68,-96 C63,-78 72,-64 64,-50 C50,-64 48,-88 42,-110 Z';
-const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL };
-// Petits traits en travers des nattes
-const BRAID_MARKS = [-104, -94, -84, -74].flatMap((y) => [`M-56,${y} l10,4`, `M46,${y} l10,4`]).concat([-112, -102, -92].flatMap((y) => [`M-44,${y} l9,4`, `M35,${y} l9,4`]));
+// queue de cheval basse, attachée derrière la tête : on la voit dépasser sur le côté
+const PONYTAIL = 'M28,-104 C50,-110 62,-92 58,-72 C56,-60 61,-50 56,-42 C47,-50 43,-64 40,-80 Z';
+// afro : un grand volume rond festonné derrière la tête
+const AFRO_BACK = scallop(
+  Array.from({ length: 15 }, (_, i) => {
+    const a = ((-40 + (i / 14) * 260) * Math.PI) / 180;
+    return [Math.cos(a) * 64, -116 - Math.sin(a) * 60];
+  })
+);
+const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL, afro: AFRO_BACK };
+
+const AFRO_SWIRLS = ['M-58,-120 q6,-6 11,1', 'M48,-122 q6,-6 11,1', 'M-36,-160 q6,-6 11,1', 'M20,-162 q6,-6 11,1', 'M-60,-96 q6,-6 11,1', 'M50,-98 q6,-6 11,1'];
 
 const HAIR = {
   curlyLong: CURLY_FRONT,
+  afro: CURLY_FRONT,
   short: 'M-46,-104 C-50,-140 -16,-152 6,-148 C30,-150 52,-132 46,-104 C38,-118 30,-112 24,-124 C16,-110 4,-122 -2,-112 C-10,-124 -22,-110 -30,-122 C-36,-112 -42,-112 -46,-104 Z',
   long: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L52,-58 C44,-60 40,-64 38,-74 C34,-110 22,-118 6,-124 C-6,-112 -20,-118 -30,-112 C-38,-100 -38,-80 -40,-62 C-46,-60 -52,-62 -54,-60 Z',
   bun: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z M-14,-150 C-16,-172 18,-174 16,-150 Z',
@@ -77,10 +86,6 @@ const HAIR = {
   bob: 'M-50,-100 C-58,-148 -14,-154 4,-150 C36,-152 60,-136 50,-100 C54,-84 54,-70 50,-64 C44,-62 38,-66 38,-72 C38,-96 30,-114 8,-124 C-4,-112 -22,-118 -34,-110 C-40,-98 -38,-82 -38,-72 C-38,-66 -44,-62 -50,-64 C-54,-70 -54,-84 -50,-100 Z',
   // tirés en arrière (la queue de cheval est dessinée derrière la tête)
   ponytail: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z',
-  // tresses : un bonnet de cheveux et des nattes qui tombent sur les côtés
-  braids:
-    'M-47,-100 C-52,-142 -14,-152 4,-150 C32,-152 54,-134 47,-100 C40,-116 26,-124 4,-125 C-18,-124 -38,-116 -47,-100 Z ' +
-    'M-56,-112 h10 v52 a5,5 0 0 1 -10,0 Z M-44,-122 h9 v40 a4.5,4.5 0 0 1 -9,0 Z M46,-112 h10 v52 a5,5 0 0 1 -10,0 Z M35,-122 h9 v40 a4.5,4.5 0 0 1 -9,0 Z',
   spiky: 'M-46,-104 L-54,-128 L-34,-130 L-36,-152 L-12,-142 L-2,-164 L14,-144 L36,-156 L34,-132 L54,-126 L46,-104 C36,-116 22,-114 10,-122 C0,-112 -14,-120 -22,-112 C-30,-120 -40,-114 -46,-104 Z'
 };
 
@@ -229,8 +234,8 @@ export function Chibi({
             <path d={`M${eyeL + 13},${ey - 2} Q0,${ey - 7} ${eyeR - 13},${ey - 2}`} fill="none" />
           </g>
         )}
-        {hair === 'braids' && color > 0 && BRAID_MARKS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2" opacity="0.6" />)}
-        {hair === 'ponytail' && color > 0 && <path d="M38,-118 l12,-6" stroke={INK} strokeWidth="5" strokeLinecap="round" />}
+        {hair === 'ponytail' && color > 0 && <path d="M42,-96 l11,3" stroke={INK} strokeWidth="5" strokeLinecap="round" />}
+        {hair === 'afro' && color > 0 && AFRO_SWIRLS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />)}
         {brows && faceProg >= 1 && eyes === 'open' && (
           <g stroke={hairColor} strokeWidth="5" strokeLinecap="round">
             <path d={`M${eyeL - 8},${ey - 17} L${eyeL + 7},${ey - 19}`} />
@@ -301,9 +306,9 @@ const KNOWN = {
   jibril: { hair: 'curly', hairColor: '#3a2a20', beard: 'goatee', brows: true, hoodie: '#ffd43b' },
   guillaume: { hair: 'short', hairColor: '#6b4a2e', beard: 'stubble', chubby: true, brows: true, hoodie: '#74c0fc' },
   julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', brows: true, size: 1.22, hoodie: '#5ee6b8' },
-  lenaik: { hair: 'braids', hairColor: '#1c1512', skin: '#6e4529', beard: 'goatee', glasses: true, brows: true, hoodie: '#ffa94d' },
+  lenaik: { hair: 'afro', hairColor: '#1c1512', skin: '#6e4529', beard: 'goatee', glasses: true, brows: true, hoodie: '#ffa94d' },
   eray: { hair: 'short', hairColor: '#241a15', beard: 'stubbleMustache', brows: true, hoodie: '#ffd43b' },
-  lohan: { hair: 'ponytail', hairColor: '#5a3a22', brows: true, hoodie: '#b197fc' },
+  lohan: { hair: 'ponytail', hairColor: '#1c1714', brows: true, hoodie: '#b197fc' },
   romain: { hair: 'mid', hairColor: '#e6c46a', eyeColor: '#4dabf7', brows: true, hoodie: '#4dabf7' },
   mathilde: { hair: 'long', hairColor: '#5a3a22', glasses: true, hoodie: '#b197fc' },
   alexia: { hair: 'long', hairColor: '#4a3022', glasses: true, eyeShape: 'almond', hoodie: '#ff8fab' },
