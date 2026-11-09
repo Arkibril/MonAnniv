@@ -407,8 +407,10 @@ export default function SketchIntro({ guest, onComplete }) {
               if (inSeg('jump')) fpose = JUMP[(L('jump') + idx) % JUMP.length];
               else if (k > 2 && Math.floor((fr + idx * 5) / 6) % 5 === 0) fpose = 'wave1';
               const party = inSeg('jump');
+              const look = friendLook(fd.label);
+              const sz = look.size || 1;
               return (
-                <Chibi key={fd.label} x={x} y={y} scale={0.4} pose={fpose} eyes={party ? 'happy' : 'open'} mouth={party ? 'open' : 'smile'} {...friendLook(fd.label)} above={fd.emoji} name={fd.label} nameSize={34} />
+                <Chibi key={fd.label} x={x} y={y} scale={0.4 * sz} pose={fpose} eyes={party ? 'happy' : 'open'} mouth={party ? 'open' : 'smile'} {...look} above={fd.emoji} name={fd.label} nameSize={34 / sz} />
               );
             })
           )}

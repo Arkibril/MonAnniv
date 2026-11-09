@@ -59,12 +59,28 @@ const CURLY_SWIRLS = [
   'M-30,-150 q6,-6 11,1', 'M14,-152 q6,-6 11,1'
 ];
 
+// Ce qui passe derrière la tête (dessiné avant le corps)
+const PONYTAIL = 'M26,-142 C58,-156 76,-124 68,-96 C63,-78 72,-64 64,-50 C50,-64 48,-88 42,-110 Z';
+const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL };
+// Petits traits en travers des nattes
+const BRAID_MARKS = [-104, -94, -84, -74].flatMap((y) => [`M-56,${y} l10,4`, `M46,${y} l10,4`]).concat([-112, -102, -92].flatMap((y) => [`M-44,${y} l9,4`, `M35,${y} l9,4`]));
+
 const HAIR = {
   curlyLong: CURLY_FRONT,
   short: 'M-46,-104 C-50,-140 -16,-152 6,-148 C30,-150 52,-132 46,-104 C38,-118 30,-112 24,-124 C16,-110 4,-122 -2,-112 C-10,-124 -22,-110 -30,-122 C-36,-112 -42,-112 -46,-104 Z',
   long: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L52,-58 C44,-60 40,-64 38,-74 C34,-110 22,-118 6,-124 C-6,-112 -20,-118 -30,-112 C-38,-100 -38,-80 -40,-62 C-46,-60 -52,-62 -54,-60 Z',
   bun: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z M-14,-150 C-16,-172 18,-174 16,-150 Z',
   curly: 'M-48,-98 C-60,-108 -52,-128 -40,-128 C-42,-146 -22,-152 -12,-144 C-6,-160 18,-160 22,-146 C34,-154 52,-142 46,-126 C58,-122 58,-102 48,-96 C40,-112 30,-108 22,-118 C12,-106 -2,-116 -10,-108 C-20,-118 -32,-104 -40,-112 Z',
+  // mi-longs lisses, coupe garçon : la mèche s'arrête au niveau des oreilles
+  mid: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L50,-86 C45,-85 41,-89 39,-96 C34,-112 22,-120 6,-126 C-6,-114 -20,-120 -30,-114 C-38,-106 -41,-97 -43,-88 C-46,-86 -50,-87 -52,-86 Z',
+  // carré court qui s'arrête au menton
+  bob: 'M-50,-100 C-58,-148 -14,-154 4,-150 C36,-152 60,-136 50,-100 C54,-84 54,-70 50,-64 C44,-62 38,-66 38,-72 C38,-96 30,-114 8,-124 C-4,-112 -22,-118 -34,-110 C-40,-98 -38,-82 -38,-72 C-38,-66 -44,-62 -50,-64 C-54,-70 -54,-84 -50,-100 Z',
+  // tirés en arrière (la queue de cheval est dessinée derrière la tête)
+  ponytail: 'M-46,-102 C-50,-140 -14,-150 4,-148 C30,-150 52,-132 46,-102 C40,-116 26,-124 4,-124 C-18,-124 -38,-116 -46,-102 Z',
+  // tresses : un bonnet de cheveux et des nattes qui tombent sur les côtés
+  braids:
+    'M-47,-100 C-52,-142 -14,-152 4,-150 C32,-152 54,-134 47,-100 C40,-116 26,-124 4,-125 C-18,-124 -38,-116 -47,-100 Z ' +
+    'M-56,-112 h10 v52 a5,5 0 0 1 -10,0 Z M-44,-122 h9 v40 a4.5,4.5 0 0 1 -9,0 Z M46,-112 h10 v52 a5,5 0 0 1 -10,0 Z M35,-122 h9 v40 a4.5,4.5 0 0 1 -9,0 Z',
   spiky: 'M-46,-104 L-54,-128 L-34,-130 L-36,-152 L-12,-142 L-2,-164 L14,-144 L36,-156 L34,-132 L54,-126 L46,-104 C36,-116 22,-114 10,-122 C0,-112 -14,-120 -22,-112 C-30,-120 -40,-114 -46,-104 Z'
 };
 
@@ -104,8 +120,10 @@ export function Chibi({
   eyeColor, // couleur d'iris (yeux bleus…)
   eyeShape = 'round', // round | almond
   glasses = false,
-  beard, // 'stubble' (barbe rasée qui se voit) | 'goatee' (bouc + moustache)
+  beard, // 'stubble' (barbe rasée qui se voit) | 'stubbleMustache' | 'goatee' (bouc + moustache)
   chubby = false, // silhouette un peu ronde
+  brows = false, // sourcils épais
+  size, // taille relative dans un groupe (lue par l'appelant)
   children
 }) {
   const p = POSES[pose] || POSES.stand;
@@ -116,7 +134,8 @@ export function Chibi({
   add(rrect(-18, -28 + legY * 0.3, 14, 28 + legY * 0.7, 6), PAPER);
   add(rrect(4, -28 + legY * 0.3, 14, 28 + legY * 0.7, 6), PAPER);
   const curly = hair === 'curlyLong';
-  if (curly) add(CURLY_BACK, hairColor);
+  const back = BACK[hair];
+  if (back) add(back, hairColor);
   add(
     chubby
       ? 'M-24,-66 C-33,-50 -35,-34 -28,-24 L28,-24 C35,-34 33,-50 24,-66 C11,-72 -11,-72 -24,-66 Z'
@@ -139,7 +158,7 @@ export function Chibi({
     mouth === 'open' ? 'M-8,-78 Q0,-64 8,-78 Z' : mouth === 'o' ? ell(0, -75, 4.5, 5.5) : 'M-7,-79 Q0,-72 7,-79';
 
   const n = strokes.length + 4;
-  const split = curly ? 4 : 3; // jambes (+ boucles de derrière) + corps, puis la tête
+  const split = back ? 4 : 3; // jambes (+ boucles de derrière) + corps, puis la tête
   const prog = (i) => Math.max(0, Math.min(1, draw * n - i));
   const fillOp = color >= 1 ? 1 : color >= 0.5 ? 0.55 : color > 0 ? 0.25 : 0;
   const armProg = prog(strokes.length);
@@ -210,7 +229,15 @@ export function Chibi({
             <path d={`M${eyeL + 13},${ey - 2} Q0,${ey - 7} ${eyeR - 13},${ey - 2}`} fill="none" />
           </g>
         )}
-        {beard === 'stubble' && faceProg >= 1 && (
+        {hair === 'braids' && color > 0 && BRAID_MARKS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2" opacity="0.6" />)}
+        {hair === 'ponytail' && color > 0 && <path d="M38,-118 l12,-6" stroke={INK} strokeWidth="5" strokeLinecap="round" />}
+        {brows && faceProg >= 1 && eyes === 'open' && (
+          <g stroke={hairColor} strokeWidth="5" strokeLinecap="round">
+            <path d={`M${eyeL - 8},${ey - 17} L${eyeL + 7},${ey - 19}`} />
+            <path d={`M${eyeR - 7},${ey - 19} L${eyeR + 8},${ey - 17}`} />
+          </g>
+        )}
+        {String(beard).startsWith('stubble') && faceProg >= 1 && (
           <g>
             <path d="M-42.5,-84 A46,42 0 0 0 42.5,-84 C30,-80 16,-89 0,-88 C-16,-89 -30,-80 -42.5,-84 Z" fill={INK} opacity="0.17" />
             {STUBBLE_DOTS.map(([dx, dy]) => (
@@ -218,11 +245,11 @@ export function Chibi({
             ))}
           </g>
         )}
-        {beard === 'goatee' && faceProg >= 1 && (
+        {(beard === 'goatee' || beard === 'stubbleMustache') && faceProg >= 1 && (
           <g fill={hairColor} stroke={INK} strokeWidth="2.2" strokeLinejoin="round">
             <path d="M-1,-85 C-6,-89 -15,-87 -16,-80 C-11,-83 -6,-82 -1,-82 Z" />
             <path d="M1,-85 C6,-89 15,-87 16,-80 C11,-83 6,-82 1,-82 Z" />
-            <path d="M-9,-71 C-9,-63 -5,-58 0,-56 C5,-58 9,-63 9,-71 C4,-68 -4,-68 -9,-71 Z" />
+            {beard === 'goatee' && <path d="M-9,-71 C-9,-63 -5,-58 0,-56 C5,-58 9,-63 9,-71 C4,-68 -4,-68 -9,-71 Z" />}
           </g>
         )}
         {color >= 1 && (
@@ -271,12 +298,18 @@ const STUBBLE_DOTS = [
 // Apparence connue de certains invités (d'après Jibril) ; les autres gardent
 // une variante dessinée au hasard (cheveux aux couleurs de feutres).
 const KNOWN = {
-  jibril: { hair: 'curly', hairColor: '#3a2a20', beard: 'goatee', hoodie: '#ffd43b' },
-  guillaume: { hair: 'short', hairColor: '#6b4a2e', beard: 'stubble', chubby: true, hoodie: '#74c0fc' },
-  julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', hoodie: '#5ee6b8' },
-  romain: { hair: 'long', hairColor: '#e6c46a', eyeColor: '#4dabf7', hoodie: '#ff6b6b' },
+  jibril: { hair: 'curly', hairColor: '#3a2a20', beard: 'goatee', brows: true, hoodie: '#ffd43b' },
+  guillaume: { hair: 'short', hairColor: '#6b4a2e', beard: 'stubble', chubby: true, brows: true, hoodie: '#74c0fc' },
+  julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', brows: true, size: 1.22, hoodie: '#5ee6b8' },
+  lenaik: { hair: 'braids', hairColor: '#1c1512', skin: '#6e4529', beard: 'goatee', glasses: true, brows: true, hoodie: '#ffa94d' },
+  eray: { hair: 'short', hairColor: '#241a15', beard: 'stubbleMustache', brows: true, hoodie: '#ffd43b' },
+  lohan: { hair: 'ponytail', hairColor: '#5a3a22', brows: true, hoodie: '#b197fc' },
+  romain: { hair: 'mid', hairColor: '#e6c46a', eyeColor: '#4dabf7', brows: true, hoodie: '#4dabf7' },
   mathilde: { hair: 'long', hairColor: '#5a3a22', glasses: true, hoodie: '#b197fc' },
-  alexia: { hair: 'long', hairColor: '#4a3022', glasses: true, eyeShape: 'almond', hoodie: '#ff8fab' }
+  alexia: { hair: 'long', hairColor: '#4a3022', glasses: true, eyeShape: 'almond', hoodie: '#ff8fab' },
+  sabrina: { hair: 'curlyLong', hairColor: '#4e3324', eyeColor: '#4dabf7', size: 0.86, hoodie: '#f783ac' },
+  solenet: { hair: 'bob', hairColor: '#2e211b', hoodie: '#ffa94d' },
+  solenes: { hair: 'long', hairColor: '#ecd27a', eyeColor: '#4dabf7', hoodie: '#8ce99a' }
 };
 
 // Variante stable d'un ami à partir de son prénom
