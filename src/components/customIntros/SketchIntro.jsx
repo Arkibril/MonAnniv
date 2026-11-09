@@ -77,7 +77,8 @@ function friendList(guests, cast) {
           out.push({ label, emoji: g.emoji || '🎉' });
         });
     });
-  return out.slice(0, 14);
+  // Jibril, l'organisateur, en premier
+  return [{ label: 'Jibril', emoji: '👑' }, ...out].slice(0, 15);
 }
 
 function buildScript(cast, nFriends) {

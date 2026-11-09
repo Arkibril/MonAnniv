@@ -100,6 +100,10 @@ export function Chibi({
   prop, // 'pencil' | 'stylus'
   flip = false,
   nameSize = 19,
+  skin = PAPER, // couleur de peau
+  eyeColor, // couleur d'iris (yeux bleus…)
+  eyeShape = 'round', // round | almond
+  glasses = false,
   children
 }) {
   const p = POSES[pose] || POSES.stand;
@@ -112,7 +116,7 @@ export function Chibi({
   const curly = hair === 'curlyLong';
   if (curly) add(CURLY_BACK, hairColor);
   add('M-22,-66 C-24,-46 -26,-34 -24,-24 L24,-24 C26,-34 24,-46 22,-66 C10,-72 -10,-72 -22,-66 Z', hoodie);
-  add(ell(0, -100, 46, 42), PAPER);
+  add(ell(0, -100, 46, 42), skin, { paper: true });
   add(HAIR[hair] || HAIR.short, hairColor);
   // yeux
   const eyeL = -16;
@@ -143,7 +147,7 @@ export function Chibi({
     return (
       <g transform={`translate(${sx},-60) rotate(${angle * side * -1 * -1})`} key={side}>
         <path d={rrect(-6, 0, 12, 30, 6)} fill={hoodie} fillOpacity={fillOp} stroke={INK} strokeWidth="3.2" {...dash(k)} data-di={side < 0 ? 'armL' : 'armR'} />
-        <path d={ell(0, 32, 7, 7)} fill={PAPER} fillOpacity={fillOp} stroke={INK} strokeWidth="3.2" {...dash(k)} />
+        <path d={ell(0, 32, 7, 7)} fill={skin} fillOpacity={fillOp} stroke={INK} strokeWidth="3.2" {...dash(k)} />
       </g>
     );
   };
@@ -154,7 +158,7 @@ export function Chibi({
         {/* ombre */}
         {p.y < 0 && <ellipse cx="0" cy={-p.y} rx={26} ry={5} fill={INK} opacity="0.12" />}
         {strokes.slice(0, split).map((s, i) => (
-          <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
+          <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER || s.paper ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
         ))}
         {curly && color > 0 && CURLY_SWIRLS.map((d) => <path key={d} d={d} fill="none" stroke={INK} strokeWidth="2.4" strokeLinecap="round" opacity="0.7" />)}
         {badge && color >= 1 && (
@@ -166,7 +170,7 @@ export function Chibi({
         {strokes.slice(split).map((s, j) => {
           const i = j + split;
           return (
-            <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
+            <path key={i} d={s.d} fill={s.fill} fillOpacity={s.fill === PAPER || s.paper ? (draw >= 1 ? 1 : 0) : fillOp} stroke={INK} strokeWidth="3.2" strokeLinejoin="round" {...dash(prog(i))} data-di={i} />
           );
         })}
         {/* yeux, joues, bouche */}
@@ -175,12 +179,30 @@ export function Chibi({
             eyeParts.map((d, i) => <path key={i} d={d} fill="none" stroke={INK} strokeWidth="3.4" strokeLinecap="round" {...dash(faceProg)} />)
           ) : (
             <g opacity={faceProg >= 1 ? 1 : faceProg}>
-              <ellipse cx={eyeL} cy={ey} rx="7.5" ry="10" fill={INK} />
-              <ellipse cx={eyeR} cy={ey} rx="7.5" ry="10" fill={INK} />
-              <circle cx={eyeL + 2.5} cy={ey - 4} r="3" fill={PAPER} />
-              <circle cx={eyeR + 2.5} cy={ey - 4} r="3" fill={PAPER} />
+              {[eyeL, eyeR].map((ex) =>
+                eyeShape === 'almond' ? (
+                  <g key={ex}>
+                    <path d={`M${ex - 9},${ey + 1} Q${ex},${ey - 9} ${ex + 9},${ey + 1} Q${ex},${ey + 6} ${ex - 9},${ey + 1} Z`} fill={eyeColor || INK} />
+                    <circle cx={ex} cy={ey} r="3" fill={INK} />
+                    <circle cx={ex + 2.5} cy={ey - 2.5} r="2" fill={PAPER} />
+                  </g>
+                ) : (
+                  <g key={ex}>
+                    <ellipse cx={ex} cy={ey} rx="7.5" ry="10" fill={eyeColor || INK} />
+                    {eyeColor && <ellipse cx={ex} cy={ey + 1} rx="4" ry="5.5" fill={INK} />}
+                    <circle cx={ex + 2.5} cy={ey - 4} r="3" fill={PAPER} />
+                  </g>
+                )
+              )}
             </g>
           ))}
+        {glasses && faceProg >= 1 && (
+          <g fill="rgba(255,255,255,0.18)" stroke={INK} strokeWidth="3">
+            <circle cx={eyeL} cy={ey} r="13" />
+            <circle cx={eyeR} cy={ey} r="13" />
+            <path d={`M${eyeL + 13},${ey - 2} Q0,${ey - 7} ${eyeR - 13},${ey - 2}`} fill="none" />
+          </g>
+        )}
         {color >= 1 && (
           <g opacity="0.55">
             <ellipse cx="-30" cy="-82" rx="7" ry="4" fill="#ff8fab" />
@@ -218,8 +240,20 @@ export function Chibi({
   );
 }
 
+// Apparence connue de certains invités (d'après Jibril) ; les autres gardent
+// une variante dessinée au hasard (cheveux aux couleurs de feutres).
+const KNOWN = {
+  jibril: { hair: 'curly', hairColor: '#3a2a20', hoodie: '#ffd43b' },
+  julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', hoodie: '#5ee6b8' },
+  romain: { hair: 'long', hairColor: '#e6c46a', eyeColor: '#4dabf7', hoodie: '#ff6b6b' },
+  mathilde: { hair: 'long', hairColor: '#5a3a22', glasses: true, hoodie: '#b197fc' },
+  alexia: { hair: 'long', hairColor: '#4a3022', glasses: true, eyeShape: 'almond', hoodie: '#ff8fab' }
+};
+
 // Variante stable d'un ami à partir de son prénom
 export function friendLook(label) {
+  const key = String(label).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+  if (KNOWN[key]) return KNOWN[key];
   let h = 0;
   for (const c of label) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const styles = ['short', 'long', 'bun', 'curly', 'spiky'];
