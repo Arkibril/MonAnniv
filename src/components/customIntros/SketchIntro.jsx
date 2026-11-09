@@ -34,7 +34,10 @@ function castFor(guest) {
     return {
       name: 'Assiya',
       hero: { hair: 'curlyLong', hairColor: '#6b6b78', hoodie: '#ffb3c7', prop: 'stylus', badge: '✎' },
-      partner: { name: 'Sacha', hair: 'short', hairColor: '#6b6b78', hoodie: '#74c0fc', badge: '🎧' },
+      heroScale: 1.1,
+      // Sacha : un peu blond, et plus grand qu'Assiya (c'est son copain)
+      partner: { name: 'Sacha', hair: 'short', hairColor: '#d6b36a', hoodie: '#74c0fc', badge: '🎧' },
+      partnerScale: 1.38,
       lines: {
         hello: 'Coucou Assiya !\nC’est toi… en chibi !',
         partner: 'Et voilà Sacha ! ♥',
@@ -297,7 +300,7 @@ export default function SketchIntro({ guest, onComplete }) {
 
     const flipFrame = inSeg('flip') ? Math.floor(L('flip') / 3) : 4;
 
-    const heroX = cast.partner ? 196 : 250;
+    const heroX = cast.partner ? 205 : 250;
     const heroY = 430;
     const draw = inSeg('drawHero') ? (L('drawHero') + 1) / script.drawHero.len : after('drawHero') ? 1 : 0;
     const color = inSeg('colorHero') ? steps3((L('colorHero') + 1) / script.colorHero.len) : after('colorHero') ? 1 : 0;
@@ -370,10 +373,10 @@ export default function SketchIntro({ guest, onComplete }) {
       pencil = { x: heroX + Math.sin(k * 1.9) * 52, y: heroY - 190 + (k / script.drawHero.len) * 180 + Math.cos(k * 2.7) * 10 };
     } else if (inSeg('partner') && L('partner') < 16) {
       const k = L('partner');
-      pencil = { x: 345 + Math.sin(k * 1.9) * 40, y: 260 + (k / 16) * 160 };
+      pencil = { x: 335 + Math.sin(k * 1.9) * 44, y: 220 + (k / 16) * 200 };
     } else if (inSeg('cake') && L('cake') < 12) {
       const k = L('cake');
-      pencil = { x: 95 + Math.sin(k * 2.1) * 44, y: 330 + (k / 12) * 96 };
+      pencil = { x: (cast.partner ? 80 : 95) + Math.sin(k * 2.1) * 44, y: 330 + (k / 12) * 96 };
     } else if (inSeg('invite') && L('invite') < 10) {
       const k = L('invite');
       pencil = { x: 80 + (k / 10) * 340, y: 100 + Math.cos(k * 2.2) * 40 };
@@ -389,7 +392,7 @@ export default function SketchIntro({ guest, onComplete }) {
             <Doodle key={i} {...d} draw={after('jump') ? 1 : Math.min(1, (L('jump') - i * 1.5) / 2)} />
           ))}
 
-          {cakeShown && <Cake x={95} y={430} draw={cakeDraw} color={cakeColor} flame={Math.floor(fr / 2) + boil} />}
+          {cakeShown && <Cake x={cast.partner ? 80 : 95} y={430} draw={cakeDraw} color={cakeColor} flame={Math.floor(fr / 2) + boil} />}
 
           {rows.map((row, ri) =>
             row.map((fd, i) => {
@@ -410,7 +413,7 @@ export default function SketchIntro({ guest, onComplete }) {
           )}
 
           {partner && (
-            <Chibi x={345} y={heroY} scale={1.08} {...cast.partner} pose={partner.pose} draw={partner.draw} color={partner.color} eyes={partner.heart ? 'happy' : 'open'} flip>
+            <Chibi x={335} y={heroY} scale={cast.partnerScale || 1.08} {...cast.partner} pose={partner.pose} draw={partner.draw} color={partner.color} eyes={partner.heart ? 'happy' : 'open'} flip>
               {partner.heart && (
                 <text x="-40" y="-150" fontSize="34" transform="scale(-1,1)">
                   ❤️
@@ -419,7 +422,7 @@ export default function SketchIntro({ guest, onComplete }) {
             </Chibi>
           )}
 
-          {(draw > 0 || after('drawHero')) && <Chibi x={heroX} y={heroY} scale={1.22} {...cast.hero} pose={pose} eyes={eyes} mouth={mouth} draw={draw} color={color} />}
+          {(draw > 0 || after('drawHero')) && <Chibi x={heroX} y={heroY} scale={cast.heroScale || 1.22} {...cast.hero} pose={pose} eyes={eyes} mouth={mouth} draw={draw} color={color} />}
 
           {bubble && <Bubble x={cast.partner ? 120 : 150} y={40} w={300} h={104} text={bubble.text} draw={bubble.draw} size={25} />}
 
