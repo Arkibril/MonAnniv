@@ -64,13 +64,29 @@ const CURLY_SWIRLS = [
 const PONYTAIL = 'M28,-104 C50,-110 62,-92 58,-72 C56,-60 61,-50 56,-42 C47,-50 43,-64 40,-80 Z';
 // afro : un grand volume bien rond derrière la tête
 const AFRO_BACK = ell(0, -114, 66, 60);
-const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL, afro: AFRO_BACK };
+// tresses plaquées : les pointes dépassent derrière la nuque, de chaque côté
+const CORNROW_ENDS = [-56, -47, -38, 31, 40, 49].map((x) => `M${x},-104 h7 v44 a3.5,3.5 0 0 1 -7,0 Z`).join(' ');
+const BACK = { curlyLong: CURLY_BACK, ponytail: PONYTAIL, afro: AFRO_BACK, cornrows: CORNROW_ENDS };
+// raies entre les tresses, du front vers l'arrière du crâne
+const CORNROW_PARTS = [-31, -16, 0, 16, 31].map((x) => {
+  const y = -121 + Math.abs(x) * 0.22;
+  return `M${x},${y.toFixed(1)} Q${(x * 0.9).toFixed(1)},-138 ${(x * 0.5).toFixed(1)},-148`;
+});
+// petits chevrons qui dessinent le tressage
+const CORNROW_MARKS = [-39, -23, -8, 8, 23, 39].flatMap((x) =>
+  [0, 1, 2].map((k) => {
+    const y = -118 + Math.abs(x) * 0.22 - k * 9;
+    const cx = x * (1 - k * 0.12);
+    return `M${(cx - 3.5).toFixed(1)},${(y - 3).toFixed(1)} l3.5,3 l3.5,-3`;
+  })
+);
 
 // petites boucles rondes dessinées dans le volume
 const AFRO_CURLS = [[-50, -124], [-36, -154], [-12, -166], [14, -166], [38, -154], [52, -126], [-56, -96], [56, -98], [-24, -144], [24, -146], [0, -156]];
 
 const HAIR = {
   curlyLong: CURLY_FRONT,
+  cornrows: 'M-47,-100 C-51,-140 -16,-150 2,-150 C26,-150 51,-136 47,-100 C42,-110 30,-118 2,-121 C-26,-118 -42,-110 -47,-100 Z',
   afro: 'M-47,-100 C-52,-142 -14,-152 4,-150 C32,-152 54,-134 47,-100 C40,-116 26,-124 4,-125 C-18,-124 -38,-116 -47,-100 Z',
   short: 'M-46,-104 C-50,-140 -16,-152 6,-148 C30,-150 52,-132 46,-104 C38,-118 30,-112 24,-124 C16,-110 4,-122 -2,-112 C-10,-124 -22,-110 -30,-122 C-36,-112 -42,-112 -46,-104 Z',
   long: 'M-48,-100 C-56,-146 -14,-154 4,-150 C34,-152 58,-134 48,-100 L52,-58 C44,-60 40,-64 38,-74 C34,-110 22,-118 6,-124 C-6,-112 -20,-118 -30,-112 C-38,-100 -38,-80 -40,-62 C-46,-60 -52,-62 -54,-60 Z',
@@ -230,6 +246,12 @@ export function Chibi({
             <path d={`M${eyeL + 13},${ey - 2} Q0,${ey - 7} ${eyeR - 13},${ey - 2}`} fill="none" />
           </g>
         )}
+        {hair === 'cornrows' && color > 0 && (
+          <g fill="none" strokeLinecap="round">
+            {CORNROW_PARTS.map((d) => <path key={d} d={d} stroke={skin === PAPER ? '#e9c9a8' : skin} strokeWidth="2.6" />)}
+            {CORNROW_MARKS.map((d) => <path key={d} d={d} stroke={PAPER} strokeWidth="1.6" opacity="0.3" />)}
+          </g>
+        )}
         {hair === 'ponytail' && color > 0 && <path d="M42,-96 l11,3" stroke={INK} strokeWidth="5" strokeLinecap="round" />}
         {hair === 'afro' && color > 0 && AFRO_CURLS.map(([cx, cy]) => <circle key={`${cx},${cy}`} cx={cx} cy={cy} r="5" fill="none" stroke={PAPER} strokeWidth="2.2" opacity="0.22" />)}
         {brows && faceProg >= 1 && eyes === 'open' && (
@@ -302,7 +324,7 @@ const KNOWN = {
   jibril: { hair: 'curly', hairColor: '#3a2a20', beard: 'goatee', brows: true, hoodie: '#ffd43b' },
   guillaume: { hair: 'short', hairColor: '#6b4a2e', beard: 'stubble', chubby: true, brows: true, hoodie: '#74c0fc' },
   julien: { hair: 'short', hairColor: '#1f1714', skin: '#7a4a2c', brows: true, size: 1.22, hoodie: '#5ee6b8' },
-  lenaik: { hair: 'afro', hairColor: '#1c1512', skin: '#6e4529', beard: 'goatee', glasses: true, brows: true, hoodie: '#ffa94d' },
+  lenaik: { hair: 'cornrows', hairColor: '#1c1512', skin: '#6e4529', beard: 'goatee', glasses: true, brows: true, hoodie: '#ffa94d' },
   eray: { hair: 'short', hairColor: '#241a15', beard: 'stubbleMustache', brows: true, hoodie: '#ffd43b' },
   lohan: { hair: 'ponytail', hairColor: '#1c1714', brows: true, hoodie: '#b197fc' },
   romain: { hair: 'mid', hairColor: '#e6c46a', eyeColor: '#4dabf7', brows: true, hoodie: '#4dabf7' },
