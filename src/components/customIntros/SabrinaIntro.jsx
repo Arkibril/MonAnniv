@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { EVENT_CONFIG } from '../../config/event';
-import { sfxSparkle, sfxPop, sfxBoing, startStoryTune, stopStoryTune, getAudioGraph, setMuted, isMuted } from '../../themes/heist/sound';
+import { sfxSparkle, sfxPop, sfxBoing, sfxScratch, startStoryTune, stopStoryTune, startClubBeat, stopClubBeat, getAudioGraph, setMuted, isMuted } from '../../themes/heist/sound';
 import './SabrinaIntro.css';
 
 // =============================================================================
 // Intro de Sabrina : univers kawaii pastel original, avec "Nuage", une petite
-// mascotte inventée pour l'occasion. Elle apporte un cadeau ; Sabrina l'ouvre
-// et découvre l'invitation.
+// mascotte inventée pour l'occasion. Elle apporte un cadeau… et dès que
+// Sabrina l'ouvre, la vanne : tout part en boîte de nuit techno.
 // =============================================================================
 
 function Nuage({ blink, happy }) {
@@ -76,6 +76,93 @@ function Gift({ open }) {
   );
 }
 
+// Boîte de nuit techno (création originale) : boule à facettes, lasers,
+// piste LED, foule qui saute en rythme, et Nuage qui danse au milieu de la piste.
+const BPM_CLUB = 130;
+
+// Nuage qui danse sur la piste (lunettes de soleil, petits bras en l'air)
+function DancingNuage() {
+  return (
+    <svg className="kw-dancer-nuage" viewBox="0 0 240 230" aria-hidden="true">
+      <ellipse className="kw-dn__shadow" cx="120" cy="214" rx="78" ry="12" fill="#000" opacity="0.45" />
+      <g className="kw-dn__body">
+        <g className="kw-dn__arm kw-dn__arm--l">
+          <path d="M58,120 L18,82" stroke="#f08cb4" strokeWidth="18" strokeLinecap="round" />
+          <path d="M58,120 L18,82" stroke="#fff" strokeWidth="10" strokeLinecap="round" />
+        </g>
+        <g className="kw-dn__arm kw-dn__arm--r">
+          <path d="M182,120 L222,82" stroke="#f08cb4" strokeWidth="18" strokeLinecap="round" />
+          <path d="M182,120 L222,82" stroke="#fff" strokeWidth="10" strokeLinecap="round" />
+        </g>
+        {/* petits pieds */}
+        <ellipse cx="94" cy="200" rx="18" ry="11" fill="#fff" stroke="#f08cb4" strokeWidth="5" />
+        <ellipse cx="146" cy="200" rx="18" ry="11" fill="#fff" stroke="#f08cb4" strokeWidth="5" />
+        <path
+          d="M64,190 C30,190 26,150 56,144 C50,104 92,86 114,108 C124,70 178,68 188,108 C218,98 240,128 222,150 C246,164 232,192 206,190 Z"
+          fill="#fff"
+          stroke="#f08cb4"
+          strokeWidth="7"
+          strokeLinejoin="round"
+        />
+        <rect x="84" y="132" width="32" height="16" rx="5" fill="#111" />
+        <rect x="128" y="132" width="32" height="16" rx="5" fill="#111" />
+        <rect x="114" y="136" width="16" height="4" fill="#111" />
+        <path d="M108,160 q14,14 28,0 Z" fill="#e8596f" stroke="#5b3a55" strokeWidth="4" strokeLinejoin="round" />
+        <ellipse cx="74" cy="160" rx="10" ry="6" fill="#ffb3cf" />
+        <ellipse cx="170" cy="160" rx="10" ry="6" fill="#ffb3cf" />
+      </g>
+    </svg>
+  );
+}
+
+function Dancer({ k }) {
+  const arms = k % 3;
+  return (
+    <svg className="kw-dancer" viewBox="0 0 80 120" style={{ '--k': k }} aria-hidden="true">
+      <circle cx="40" cy="24" r="14" />
+      <path d="M22,118 C22,74 26,48 40,46 C54,48 58,74 58,118 Z" />
+      {arms === 0 && <path d="M28,54 L12,10 M52,54 L68,10" strokeWidth="9" strokeLinecap="round" />}
+      {arms === 1 && <path d="M28,54 L10,34 M52,54 L70,8" strokeWidth="9" strokeLinecap="round" />}
+      {arms === 2 && <path d="M28,54 L14,6 M52,54 L72,40" strokeWidth="9" strokeLinecap="round" />}
+    </svg>
+  );
+}
+
+function NightClub() {
+  return (
+    <div className="kw-club" style={{ '--beat': `${60 / BPM_CLUB}s` }} aria-hidden="true">
+      <div className="kw-haze" />
+      <div className="kw-spots">
+        {[0, 1, 2, 3, 4].map((k) => (
+          <i key={k} style={{ '--k': k }} />
+        ))}
+      </div>
+      <div className="kw-lasers">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((k) => (
+          <i key={k} style={{ '--k': k }} />
+        ))}
+      </div>
+      <div className="kw-ball">
+        <span />
+      </div>
+      <div className="kw-floor">
+        {Array.from({ length: 32 }, (_, k) => (
+          <i key={k} style={{ '--k': k, '--c': ['#ff4fd8', '#3ff0ff', '#39ff88', '#ffd43b', '#b14fff'][(k * 7) % 5] }} />
+        ))}
+      </div>
+      <div className="kw-crowd">
+        {Array.from({ length: 9 }, (_, k) => (
+          <Dancer key={k} k={k} />
+        ))}
+      </div>
+      <div className="kw-spotlight" />
+      <div className="kw-dnwrap">
+        <DancingNuage />
+      </div>
+    </div>
+  );
+}
+
 const SPARKS = Array.from({ length: 22 }, (_, i) => {
   const r = (k) => {
     const v = Math.sin(i * 57.3 + k * 11.7) * 10000;
@@ -87,14 +174,39 @@ const SPARKS = Array.from({ length: 22 }, (_, i) => {
 export default function SabrinaIntro({ guest, onComplete }) {
   const name = (guest?.first_name || 'Sabrina').trim();
   const host = EVENT_CONFIG.hostName || 'Jibril';
-  const [step, setStep] = useState('start'); // start | hello | gift | open
+  const [step, setStep] = useState('start'); // start | hello | gift | open | night
+  const [cardIn, setCardIn] = useState(false);
   const [blink, setBlink] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
   const rootRef = useRef(null);
   const doneRef = useRef(false);
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-  useEffect(() => () => stopStoryTune(), []);
+  useEffect(
+    () => () => {
+      stopStoryTune();
+      stopClubBeat();
+    },
+    []
+  );
+
+  // la vanne : juste après l'ouverture du cadeau, tout part en boîte de nuit
+  useEffect(() => {
+    if (step === 'open') {
+      const t = setTimeout(() => {
+        stopStoryTune();
+        sfxScratch();
+        setStep('night');
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+    if (step === 'night') {
+      startClubBeat();
+      const t = setTimeout(() => setCardIn(true), 3600);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [step]);
   // clignement des yeux de Nuage
   useEffect(() => {
     const id = setInterval(() => {
@@ -108,6 +220,7 @@ export default function SabrinaIntro({ guest, onComplete }) {
     if (doneRef.current) return;
     doneRef.current = true;
     stopStoryTune();
+    stopClubBeat();
     onComplete?.();
   }, [onComplete]);
 
@@ -131,7 +244,6 @@ export default function SabrinaIntro({ guest, onComplete }) {
         gsap.to('.kw-gift', { rotate: 4, duration: 0.18, yoyo: true, repeat: -1, repeatDelay: 1.1, delay: 1, ease: 'sine.inOut' });
       }
       if (step === 'open') {
-        gsap.fromTo('.kw-card', { y: 80, scale: 0.6, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.8)', delay: 0.35 });
         gsap.fromTo('.kw-burst span', { x: 0, y: 0, scale: 0, opacity: 1 }, {
           x: () => (Math.random() - 0.5) * 420,
           y: () => -80 - Math.random() * 300,
@@ -187,7 +299,7 @@ export default function SabrinaIntro({ guest, onComplete }) {
       {step === 'start' && (
         <div className="kw-center">
           <p className="kw-kicker">Une surprise pour</p>
-          <h1 className="kw-title">{name} ♡</h1>
+          <h1 className="kw-title">{name}</h1>
           <button type="button" className="kw-btn" onClick={begin} autoFocus>
             Ouvrir la surprise
           </button>
@@ -195,7 +307,7 @@ export default function SabrinaIntro({ guest, onComplete }) {
         </div>
       )}
 
-      {step !== 'start' && (
+      {step !== 'start' && step !== 'night' && (
         <div className="kw-scene">
           <div className="kw-nuage-wrap">
             <div className="kw-bubble" aria-live="polite">
@@ -211,32 +323,47 @@ export default function SabrinaIntro({ guest, onComplete }) {
           )}
 
           {step === 'open' && (
-            <>
-              <div className="kw-burst" aria-hidden="true">
-                {Array.from({ length: 34 }, (_, i) => (
-                  <span key={i} style={{ color: ['#ff8fc0', '#ffd43b', '#b197fc', '#74c0fc', '#8ce99a'][i % 5] }}>
-                    {['♡', '✦', '★', '♪'][i % 4]}
-                  </span>
-                ))}
-              </div>
-              <div className="kw-card">
-                <p className="kw-card__kicker">Invitation ♡</p>
-                <h2 className="kw-card__title">{host} t’invite à son anniv !</h2>
-                <p className="kw-card__text">Réponds au petit quiz pour choisir la date, la ville et le thème de la soirée.</p>
-                <button type="button" className="kw-btn" onClick={finish} autoFocus>
-                  C’est parti ♡
-                </button>
-              </div>
-            </>
+            <div className="kw-burst" aria-hidden="true">
+              {Array.from({ length: 34 }, (_, k) => (
+                <span key={k} style={{ color: ['#ff8fc0', '#ffd43b', '#b197fc', '#74c0fc', '#8ce99a'][k % 5] }}>
+                  {['♡', '✦', '★', '♪'][k % 4]}
+                </span>
+              ))}
+            </div>
           )}
         </div>
+      )}
+
+      {step === 'night' && (
+        <>
+          <NightClub />
+          <p className="kw-night__caption">Et là… ça part en boîte de nuit 🪩</p>
+          {cardIn && (
+            <div className="kw-night__card">
+              <p className="kw-card__kicker">Invitation</p>
+              <h2 className="kw-card__title">{host} t’invite à son anniv !</h2>
+              <p className="kw-card__text">Réponds au petit quiz pour choisir la date, la ville et le thème de la soirée.</p>
+              <button type="button" className="kw-btn" onClick={finish} autoFocus>
+                C’est parti 🪩
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <button type="button" className="kw-mute" onClick={toggleMute} aria-label={muted ? 'Activer le son' : 'Couper le son'}>
         {muted ? '🔇' : '🔊'}
       </button>
-      {step !== 'open' && step !== 'start' && (
-        <button type="button" className="kw-skip" onClick={() => setStep('open')}>
+      {step !== 'night' && step !== 'start' && (
+        <button
+          type="button"
+          className="kw-skip"
+          onClick={() => {
+            stopStoryTune();
+            setCardIn(true);
+            setStep('night');
+          }}
+        >
           Passer
         </button>
       )}

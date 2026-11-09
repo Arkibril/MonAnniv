@@ -634,3 +634,53 @@ export function sfxSplash() {
   noiseHit({ dur: 0.4, vol: 0.18, freq: 700 });
   tone({ freq: 500, type: 'sine', dur: 0.3, vol: 0.06, to: 180, filter: 2000 });
 }
+
+// -----------------------------------------------------------------------------
+// Sabrina : coupure "disque rayé" puis beat de conduite de nuit (original,
+// cloche façon boîte à rythmes, basse 808 qui glisse, charleston)
+// -----------------------------------------------------------------------------
+export function sfxScratch() {
+  tone({ freq: 900, type: 'sawtooth', dur: 0.12, vol: 0.08, to: 180, filter: 2500 });
+  tone({ freq: 300, type: 'sawtooth', start: 0.13, dur: 0.16, vol: 0.08, to: 1200, filter: 2500 });
+  noiseHit({ dur: 0.28, vol: 0.12, freq: 1500 });
+}
+// Beat techno de boîte de nuit (original) : 4 temps à la grosse caisse,
+// charleston ouvert à contretemps, clap sur 2 et 4, basse roulante, accords
+// hypnotiques dont le filtre s'ouvre petit à petit.
+let clubTimer = null;
+let clubBar = 0;
+const m2f = (m) => 440 * Math.pow(2, (m - 69) / 12);
+const CLUB_ROOTS = [33, 33, 36, 31]; // la, la, do, sol (basse)
+const CLUB_STABS = [
+  [57, 60, 64, 67],
+  [57, 60, 64, 69],
+  [60, 64, 67, 71],
+  [55, 59, 62, 67]
+];
+export function startClubBeat() {
+  if (clubTimer || !audio()) return;
+  clubBar = 0;
+  const beat = 60 / 130;
+  const s16 = beat / 4;
+  const play = () => {
+    if (document.hidden) return;
+    const root = CLUB_ROOTS[clubBar % CLUB_ROOTS.length];
+    const stab = CLUB_STABS[clubBar % CLUB_STABS.length];
+    const open = Math.min(5200, 900 + clubBar * 420); // le filtre s'ouvre
+    for (let b = 0; b < 4; b++) {
+      const t = b * beat;
+      tone({ freq: 150, type: 'sine', start: t, dur: 0.26, vol: 0.34, to: 45, filter: 900 });
+      noiseHit({ start: t + beat / 2, dur: 0.07, vol: 0.05, freq: 7600 });
+      if (b === 1 || b === 3) noiseHit({ start: t, dur: 0.11, vol: 0.1, freq: 1500 });
+      for (let k = 1; k < 4; k++) tone({ freq: m2f(root + 12), type: 'sawtooth', start: t + k * s16, dur: s16 * 0.9, vol: 0.07, filter: 420 });
+    }
+    [2, 6, 10, 11, 14].forEach((k) => stab.forEach((m) => tone({ freq: m2f(m), type: 'square', start: k * s16, dur: 0.07, vol: 0.018, filter: open })));
+    clubBar++;
+  };
+  play();
+  clubTimer = setInterval(play, 4 * (60 / 130) * 1000);
+}
+export function stopClubBeat() {
+  clearInterval(clubTimer);
+  clubTimer = null;
+}
